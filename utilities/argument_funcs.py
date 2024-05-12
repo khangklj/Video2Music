@@ -46,7 +46,7 @@ def parse_train_args():
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 def print_train_args(args):
     print(SEPERATOR)

@@ -36,9 +36,7 @@ VIS_MODELS_ARR = [
 
 # main
 def main( vm = "" , isPrintArgs = True ):
-    args = parse_train_args()
-
-    print(vm)
+    args = parse_train_args()[0]
 
     if isPrintArgs:
         print_train_args(args)

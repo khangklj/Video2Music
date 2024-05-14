@@ -20,7 +20,7 @@ def parse_train_args():
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
     parser.add_argument("--no_tensorboard", type=bool, default=True, help="Turns off tensorboard result reporting")
-    parser.add_argument("-continue_weights", type=str, default='./saved_models/AMT/epoch_0029.pickle', help="Model weights to continue training based on")
+    parser.add_argument("-continue_weights", type=str, default='./saved_models/AMT/epoch_0051.pickle', help="Model weights to continue training based on")
     parser.add_argument("-continue_epoch", type=int, default=51, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=0.0001, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=None, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")

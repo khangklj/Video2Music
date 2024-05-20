@@ -91,6 +91,7 @@ def train_epoch(cur_epoch, model, dataloader,
                 tgt = tgt.flatten()
                 tgt_emotion = tgt_emotion.squeeze()
                 loss_chord = train_loss_func.forward(y, tgt)
+                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt.shape[1], tgt_emotion.shape[2])
                 loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
                 total_loss.backward()

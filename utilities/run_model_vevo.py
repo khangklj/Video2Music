@@ -91,8 +91,8 @@ def train_epoch(cur_epoch, model, dataloader,
                 tgt = tgt.flatten()
                 tgt_emotion = tgt_emotion.squeeze()
                 loss_chord = train_loss_func.forward(y, tgt)
-                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt.shape[1], tgt_emotion.shape[2])
-                loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
+                tmp = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt.shape[1], -1)
+                loss_emotion = train_loss_emotion_func.forward(y, tmp)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
                 total_loss.backward()
                 opt.step()
@@ -289,10 +289,10 @@ def eval_model(model, dataloader,
                     tgt_root = tgt_root.flatten()
                     tgt_attr = tgt_attr.flatten()
                     
-                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
+                    tmp = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
 
                     loss_chord = eval_loss_func.forward(y, tgt)
-                    loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)
+                    loss_emotion = eval_loss_emotion_func.forward(y, tmp)
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 
                     sum_loss_chord += float(loss_chord)

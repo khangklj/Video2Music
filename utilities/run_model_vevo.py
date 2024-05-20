@@ -210,7 +210,7 @@ def eval_model(model, dataloader,
             tgt_attr = batch["tgt_attr"].to(get_device())
             tgt_emotion = batch["tgt_emotion"].to(get_device())
             tgt_emotion_prob = batch["tgt_emotion_prob"].to(get_device())
-            
+
             feature_semantic_list = [] 
             for feature_semantic in batch["semanticList"]:
                 feature_semantic_list.append( feature_semantic.to(get_device()) )
@@ -288,7 +288,7 @@ def eval_model(model, dataloader,
                     tgt_root = tgt_root.flatten()
                     tgt_attr = tgt_attr.flatten()
                     
-                    tgt_emotion = tgt_emotion.squeeze()
+                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
 
                     loss_chord = eval_loss_func.forward(y, tgt)
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)
@@ -380,7 +380,6 @@ def eval_model(model, dataloader,
                     
                     sum_acc += float(compute_vevo_accuracy(y, tgt ))
                     cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
-                    
                     if cor >= 0 :
                         n_test_cor +=1
                         sum_cor += cor
@@ -406,7 +405,10 @@ def eval_model(model, dataloader,
         avg_total_loss    = sum_total_loss / n_test
 
         avg_acc     = sum_acc / n_test
-        avg_cor     = sum_cor / n_test_cor
+        if n_test_cor == 0:
+            avg_cor = 0
+        else:
+            avg_cor     = sum_cor / n_test_cor
         
         avg_h1     = sum_h1 / n_test
         avg_h3     = sum_h3 / n_test

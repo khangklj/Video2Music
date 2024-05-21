@@ -268,8 +268,8 @@ def main( vm = "" , isPrintArgs = True ):
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
             writer.writerow([epoch+1, lr, 
-                             train_total_loss, train_loss_chord, train_loss_emotion, 
-                             eval_total_loss, eval_loss_chord, eval_loss_emotion])
+                             train_total_loss, train_loss_chord, train_loss_emotion, train_h1, train_h3, train_h5,
+                             eval_total_loss, eval_loss_chord, eval_loss_emotion, eval_h1, eval_h3, eval_h5])
             
     # Sanity check just to make sure everything is gone
     if(not args.no_tensorboard):

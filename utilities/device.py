@@ -12,7 +12,7 @@ else:
     print("")
     TORCH_CUDA_DEVICE = None
 
-USE_CUDA = False
+USE_CUDA = True
 
 # use_cuda
 def use_cuda(cuda_bool):

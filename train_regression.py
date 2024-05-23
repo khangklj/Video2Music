@@ -110,7 +110,7 @@ def main( vm = "" , isPrintArgs = True ):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
-    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= regModel).to(get_device())
+    model = VideoRegression(max_sequence_video=args.max_sequence_video, d_model=256, total_vf_dim=total_vf_dim, regModel= regModel).to(get_device())
     
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):

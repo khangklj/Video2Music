@@ -83,7 +83,7 @@ def main( vm = "", isPrintArgs = True):
     else:
         total_vf_dim += 5
     
-    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim ,regModel= regModel).to(get_device())
+    model = VideoRegression(max_sequence_video=args.max_sequence_video, d_model=256, total_vf_dim=total_vf_dim ,regModel= regModel).to(get_device())
     model.load_state_dict(torch.load(args.model_weights))
     
     loss = nn.MSELoss()

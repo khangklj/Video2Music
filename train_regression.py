@@ -138,7 +138,7 @@ def main( vm = "" , isPrintArgs = True ):
     else:
         lr = args.lr
 
-    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    opt = Adam(model.parameters(), lr=lr, weight_decay=1e-5)
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:

@@ -127,8 +127,22 @@ def main( vm = "" , isPrintArgs = True ):
     eval_loss_func = nn.MSELoss()
     train_loss_func = nn.MSELoss()
 
+    ##### Lr Scheduler vs static lr #####
+    if(args.lr is None):
+        if(args.continue_epoch is None):
+            init_step = 0
+        else:
+            init_step = args.continue_epoch * len(train_loader)
+        lr = LR_DEFAULT_START
+        lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)
+    else:
+        lr = args.lr
+
     opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    lr_scheduler = None
+    if(args.lr is None):
+        lr_scheduler = LambdaLR(opt, lr_stepper.step)
+    else:
+        lr_scheduler = None
 
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")

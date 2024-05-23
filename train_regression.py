@@ -24,12 +24,12 @@ version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 
-num_epochs = 20
+num_epochs = 100
 VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
 
-regModel = "gru"
+regModel = "bigru"
 # lstm
 # bilstm
 # gru

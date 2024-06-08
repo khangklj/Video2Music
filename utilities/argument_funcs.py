@@ -34,7 +34,7 @@ def parse_train_args():
     parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
-    parser.add_argument("-dim_feedforward", type=int, default=2048, help="Dimension of the feedforward layer")
+    parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument("-dropout", type=float, default=0.1, help="Dropout rate")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
@@ -185,7 +185,7 @@ def parse_generate_args():
     parser.add_argument("-output_dir", type=str, default= outputpath, help="Folder to write generated midi to")
 
     parser.add_argument("-primer_file", type=str, default=None, help="File path or integer index to the evaluation dataset. Default is to select a random index.")
-    parser.add_argument("--force_cpu", action="store_true", help="Forces model to run on a cpu even when gpu is available")
+    parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
 
     parser.add_argument("-target_seq_length_midi", type=int, default=1024, help="Target length you'd like the midi to be")
     parser.add_argument("-target_seq_length_chord", type=int, default=300, help="Target length you'd like the midi to be")
@@ -207,7 +207,7 @@ def parse_generate_args():
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
     parser.add_argument('-regression_version', type=int, default=None, help="Version number. None is original loudness and note density Regression model")
-    
+
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
     if IS_VIDEO:

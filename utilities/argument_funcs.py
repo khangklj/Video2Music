@@ -88,6 +88,8 @@ def print_train_args(args):
     print("dim_feedforward:", args.dim_feedforward)
     print("dropout:", args.dropout)
     print("is_video:", args.is_video)
+    print("music_gen_version:", args.music_gen_version)
+    print("regression_version:", args.regression_version)
 
     print(SEPERATOR)
     print("")
@@ -120,6 +122,8 @@ def parse_eval_args():
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
+    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-regression_version', type=int, default=None, help="Version number. None is original loudness and note density Regression model")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
@@ -153,7 +157,10 @@ def print_eval_args(args):
     print("num_heads:", args.num_heads)
     print("d_model:", args.d_model)
     print("")
-    print("dim_feedforward:", args.dim_feedforward)
+    print("dim_feedforward:", args.dim_feedforward)    
+    print("music_gen_version:", args.music_gen_version)
+    print("regression_version:", args.regression_version)
+
     print(SEPERATOR)
     print("")
 
@@ -198,7 +205,9 @@ def parse_generate_args():
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-
+    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-regression_version', type=int, default=None, help="Version number. None is original loudness and note density Regression model")
+    
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
     if IS_VIDEO:
@@ -243,7 +252,9 @@ def print_generate_args(args):
     print("num_heads:", args.num_heads)
     print("d_model:", args.d_model)
     print("")
-    print("dim_feedforward:", args.dim_feedforward)
+    print("dim_feedforward:", args.dim_feedforward)    
+    print("music_gen_version:", args.music_gen_version)
+    print("regression_version:", args.regression_version)
     print("")
     print("test_id:", args.test_id)
 
@@ -268,6 +279,9 @@ def write_model_params(args, output_file):
     o_stream.write("d_model: " + str(args.d_model) + "\n")
     o_stream.write("dim_feedforward: " + str(args.dim_feedforward) + "\n")
     o_stream.write("dropout: " + str(args.dropout) + "\n")
+    o_stream.write("n_epochs: " + str(args.n_epochs) + "\n")
+    o_stream.write("music_gen_version: " + str(args.music_gen_version) + "\n")
+    o_stream.write("regression_version: " + str(args.regression_version) + "\n")
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")

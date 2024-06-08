@@ -38,7 +38,7 @@ class MoELayer(Module):
         self.d_model = d_model
         self.d_ff = d_ff
         self.dropout = Dropout(dropout)
-        self.experts = nn.ModuleList([expert for _ in range(n_experts)])
+        self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts, bias=False)
 
     def forward(self, x):

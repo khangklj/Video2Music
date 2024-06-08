@@ -7,6 +7,8 @@ from utilities.constants import *
 from utilities.device import get_device
 from .positional_encoding import PositionalEncoding
 from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
+from .custom_transformer import *
+from .moe import *
 from datetime import datetime
 import json
 
@@ -75,20 +77,32 @@ class VideoMusicTransformer(nn.Module):
             self.Linear_chord     = nn.Linear(self.d_model+1, self.d_model)
         
             # Positional encoding
-            self.positional_encoding = PositionalEncoding(self.d_model, self.dropout, self.max_seq_chord)
-            self.positional_encoding_video = PositionalEncoding(self.d_model, self.dropout, self.max_seq_video)
+            self.positional_encoding = nn.Embedding(self.max_seq_chord, self.d_model)
+            self.positional_encoding_video = nn.Embedding(self.max_seq_chord, self.d_model)
+
+            self.dropoutLayer = nn.Dropout(self.dropout)
 
             # Add condition (minor or major)
             self.condition_linear = nn.Linear(1, self.d_model)
             
             # Transformer
+            encoder_norm = LayerNorm(self.d_model)
+            n_experts = 8
+            n_experts_per_token = 2
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+            encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, n_experts, n_experts_per_token, self.dropout)
+            encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.d_ff, self.dropout)
+            encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
+
             decoder_norm = LayerNorm(self.d_model)
-            decoder_layer = TransformerDecoderLayerRPR(self.d_model, self.nhead, self.d_ff, self.dropout, er_len=self.max_seq_chord)
-            decoder = TransformerDecoderRPR(decoder_layer, self.nlayers, decoder_norm)
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+            decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, n_experts, n_experts_per_token, self.dropout)
+            decoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.d_ff, self.dropout)
+            decoder = TransformerEncoder(decoder_layer, self.nlayers, decoder_norm)
             self.transformer = nn.Transformer(
                 d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
                 num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
-                dim_feedforward=self.d_ff, custom_encoder=None, custom_decoder=decoder
+                dim_feedforward=self.d_ff, custom_encoder=encoder, custom_decoder=decoder
             )   
         
             self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)

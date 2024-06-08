@@ -143,8 +143,8 @@ class VideoMusicTransformer(nn.Module):
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
 
         # Generate position indices
-        xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1])
-        vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1])
+        xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1]).to(get_device())
+        vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1]).to(get_device())
 
         xf += self.positional_embedding(xf_position_indices)
         vf += self.positional_embedding_video(vf_position_indices)

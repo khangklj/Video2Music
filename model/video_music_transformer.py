@@ -10,7 +10,6 @@ from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
 from datetime import datetime
 import json
 
-
 class VideoMusicTransformer(nn.Module):
     def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 

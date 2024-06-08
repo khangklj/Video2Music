@@ -13,7 +13,8 @@ import json
 
 class VideoMusicTransformer(nn.Module):
     def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
-                 dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, max_sequence_chord=300, total_vf_dim = 0, rpr=False):
+                 dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
+                 max_sequence_chord=300, total_vf_dim = 0, rpr=False, version=None):
         super(VideoMusicTransformer, self).__init__()
         self.nlayers    = n_layers
         self.nhead      = num_heads
@@ -25,44 +26,76 @@ class VideoMusicTransformer(nn.Module):
         self.max_seq_chord    = max_sequence_chord
         self.rpr        = rpr
 
-        # Input embedding for video and music features
-        self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
-        self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
-        self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
+        if version == None:
+            # Input embedding for video and music features
+            self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
+            self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
+            self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
+            
+            self.total_vf_dim = total_vf_dim
+            self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
+            self.Linear_chord     = nn.Linear(self.d_model+1, self.d_model)
         
-        self.total_vf_dim = total_vf_dim
-        self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
-        self.Linear_chord     = nn.Linear(self.d_model+1, self.d_model)
-        
-        # Positional encoding
-        self.positional_encoding = PositionalEncoding(self.d_model, self.dropout, self.max_seq_chord)
-        self.positional_encoding_video = PositionalEncoding(self.d_model, self.dropout, self.max_seq_video)
+            # Positional encoding
+            self.positional_encoding = PositionalEncoding(self.d_model, self.dropout, self.max_seq_chord)
+            self.positional_encoding_video = PositionalEncoding(self.d_model, self.dropout, self.max_seq_video)
 
-        # Add condition (minor or major)
-        self.condition_linear = nn.Linear(1, self.d_model)
+            # Add condition (minor or major)
+            self.condition_linear = nn.Linear(1, self.d_model)
+            
+            # Base transformer
+            if(not self.rpr):
+                self.transformer = nn.Transformer(
+                    d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
+                    num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
+                    dim_feedforward=self.d_ff
+                )
+            # RPR Transformer
+            else:
+                decoder_norm = LayerNorm(self.d_model)
+                decoder_layer = TransformerDecoderLayerRPR(self.d_model, self.nhead, self.d_ff, self.dropout, er_len=self.max_seq_chord)
+                decoder = TransformerDecoderRPR(decoder_layer, self.nlayers, decoder_norm)
+                self.transformer = nn.Transformer(
+                    d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
+                    num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
+                    dim_feedforward=self.d_ff, custom_decoder=decoder
+                )        
         
-        # Base transformer
-        if(not self.rpr):
-            self.transformer = nn.Transformer(
-                d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
-                num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
-                dim_feedforward=self.d_ff
-            )
-        # RPR Transformer
-        else:
+            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
+            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            self.softmax    = nn.Softmax(dim=-1)
+        elif version == 1: # AMT + MoE + Positional Embedding
+            # Input embedding for video and music features
+            self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
+            self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
+            self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
+            
+            self.total_vf_dim = total_vf_dim
+            self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
+            self.Linear_chord     = nn.Linear(self.d_model+1, self.d_model)
+        
+            # Positional encoding
+            self.positional_encoding = PositionalEncoding(self.d_model, self.dropout, self.max_seq_chord)
+            self.positional_encoding_video = PositionalEncoding(self.d_model, self.dropout, self.max_seq_video)
+
+            # Add condition (minor or major)
+            self.condition_linear = nn.Linear(1, self.d_model)
+            
+            # Transformer
             decoder_norm = LayerNorm(self.d_model)
             decoder_layer = TransformerDecoderLayerRPR(self.d_model, self.nhead, self.d_ff, self.dropout, er_len=self.max_seq_chord)
             decoder = TransformerDecoderRPR(decoder_layer, self.nlayers, decoder_norm)
             self.transformer = nn.Transformer(
                 d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
                 num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
-                dim_feedforward=self.d_ff, custom_decoder=decoder
-            )        
+                dim_feedforward=self.d_ff, custom_encoder=None, custom_decoder=decoder
+            )   
         
-        self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
-        self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
-        self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
-        self.softmax    = nn.Softmax(dim=-1)
+            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
+            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            self.softmax    = nn.Softmax(dim=-1)
     
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):
         if(mask is True):

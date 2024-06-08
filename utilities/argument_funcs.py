@@ -267,6 +267,7 @@ def write_model_params(args, output_file):
 
     o_stream.write("rpr: " + str(args.rpr) + "\n")
     o_stream.write("lr: " + str(args.lr) + "\n")
+    o_stream.write("n_epochs: " + str(args.epochs) + "\n")
     o_stream.write("ce_smoothing: " + str(args.ce_smoothing) + "\n")
     o_stream.write("batch_size: " + str(args.batch_size) + "\n")
 
@@ -279,7 +280,6 @@ def write_model_params(args, output_file):
     o_stream.write("d_model: " + str(args.d_model) + "\n")
     o_stream.write("dim_feedforward: " + str(args.dim_feedforward) + "\n")
     o_stream.write("dropout: " + str(args.dropout) + "\n")
-    o_stream.write("n_epochs: " + str(args.n_epochs) + "\n")
     o_stream.write("music_gen_version: " + str(args.music_gen_version) + "\n")
     o_stream.write("regression_version: " + str(args.regression_version) + "\n")
 

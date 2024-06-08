@@ -76,9 +76,9 @@ class VideoMusicTransformer(nn.Module):
             self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
             self.Linear_chord     = nn.Linear(self.d_model+1, self.d_model)
         
-            # Positional encoding
-            self.positional_encoding = nn.Embedding(self.max_seq_chord, self.d_model)
-            self.positional_encoding_video = nn.Embedding(self.max_seq_chord, self.d_model)
+            # Positional embedding
+            self.positional_embedding = nn.Embedding(self.max_seq_chord, self.d_model)
+            self.positional_embedding_video = nn.Embedding(self.max_seq_chord, self.d_model)
 
             self.dropoutLayer = nn.Dropout(self.dropout)
 
@@ -141,8 +141,13 @@ class VideoMusicTransformer(nn.Module):
         ### POSITIONAL ENCODING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
-        xf = self.positional_encoding(xf)
-        vf = self.positional_encoding_video(vf)
+
+        # Generate position indices
+        xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1])
+        vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1])
+
+        xf += self.positional_embedding(xf_position_indices)
+        vf += self.positional_embedding_video(vf_position_indices)
 
         ### TRANSFORMER ###
         x_out = self.transformer(src=vf, tgt=xf, tgt_mask=mask)

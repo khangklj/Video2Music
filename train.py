@@ -112,15 +112,19 @@ def main( vm = "" , isPrintArgs = True ):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
-    if args.is_video:
-        model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                    d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
-                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
+    if args.music_gen_version == None:
+        if args.is_video:
+            model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
+        else:
+            model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, rpr=args.rpr).to(get_device())
     else:
-        model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                    d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
-                    max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, rpr=args.rpr).to(get_device())
-        
+        if args.music_gen_version == 1:
+            model = None
+
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
         if(args.continue_epoch is None):

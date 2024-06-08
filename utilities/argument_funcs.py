@@ -38,6 +38,8 @@ def parse_train_args():
     parser.add_argument("-dropout", type=float, default=0.1, help="Dropout rate")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
+    parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-regression_version', type=int, default=None, help="Version number. None is original loudness and note density Regression model")
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")

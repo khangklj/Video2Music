@@ -116,14 +116,20 @@ def main( vm = "" , isPrintArgs = True ):
         if args.is_video:
             model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
-                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
         else:
             model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
-                        max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, rpr=args.rpr).to(get_device())
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, 
+                        rpr=args.rpr).to(get_device())
     else:
         if args.music_gen_version == 1:
-            model = None
+            model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=False, 
+                        version=1).to(get_device())
 
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):

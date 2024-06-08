@@ -25,7 +25,7 @@ def parse_train_args():
     parser.add_argument("-lr", type=float, default=5e-4, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=None, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
     parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=50, help="Number of epochs to use")
+    parser.add_argument("-epochs", type=int, default=80, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
@@ -34,11 +34,11 @@ def parse_train_args():
     parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
-    parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
+    parser.add_argument("-dim_feedforward", type=int, default=2048, help="Dimension of the feedforward layer")
     parser.add_argument("-dropout", type=float, default=0.1, help="Dropout rate")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
     parser.add_argument('-regression_version', type=int, default=None, help="Version number. None is original loudness and note density Regression model")
 
     if IS_VIDEO:

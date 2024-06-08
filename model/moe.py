@@ -53,9 +53,9 @@ class MoELayer(Module):
         return out
 
 class TransformerEncoderLayerMoE(Module):
-    def __init__(self, d_model, nhead, moelayer, dim_feedforward=2048, dropout=0.1, er_len=None):
+    def __init__(self, d_model, nhead, moelayer, dim_feedforward=2048, dropout=0.1):
         super(TransformerEncoderLayerMoE, self).__init__()
-        self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout, er_len=er_len)
+        self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
         self.moe = moelayer
 

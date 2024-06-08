@@ -91,14 +91,14 @@ class VideoMusicTransformer(nn.Module):
             n_experts_per_token = 2
             expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
             encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, n_experts, n_experts_per_token, self.dropout)
-            encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.d_ff, self.dropout)
+            encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)
             encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
 
             decoder_norm = LayerNorm(self.d_model)
             expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
             decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, n_experts, n_experts_per_token, self.dropout)
-            decoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.d_ff, self.dropout)
-            decoder = TransformerEncoder(decoder_layer, self.nlayers, decoder_norm)
+            decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.dropout)
+            decoder = TransformerDecoder(decoder_layer, self.nlayers, decoder_norm)
             self.transformer = nn.Transformer(
                 d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
                 num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,

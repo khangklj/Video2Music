@@ -22,7 +22,7 @@ def parse_train_args():
     parser.add_argument("--no_tensorboard", type=bool, default=True, help="Turns off tensorboard result reporting")
     parser.add_argument("-continue_weights", type=str, default=None, help="Model weights to continue training based on")
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
-    parser.add_argument("-lr", type=float, default=5e-4, help="Constant learn rate. Leave as None for a custom scheduler.")
+    parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=None, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
     parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
     parser.add_argument("-epochs", type=int, default=80, help="Number of epochs to use")

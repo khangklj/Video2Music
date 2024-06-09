@@ -20,11 +20,12 @@ class GLUExpert(Module):
         self.linear1 = Linear(d_model, d_ff)
         self.linear2 = Linear(d_ff, d_model)
         self.gate = Linear(d_model, d_ff)
-        self.dropout = Dropout(dropout)
+        self.dropout1 = Dropout(dropout)
+        self.dropout2 = Dropout(dropout)
 
     def forward(self, x):
-        x_ff = self.dropout(self.linear1(x))
-        x_gated = self.dropout(self.gate(x))
+        x_ff = self.dropout1(self.linear1(x))
+        x_gated = self.dropout2(self.gate(x))
         x_ff = x_ff * F.silu(x_gated)
         x_ff = self.linear2(x_ff)
         return x_ff

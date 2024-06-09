@@ -23,8 +23,8 @@ class GLUExpert(Module):
         self.dropout = Dropout(dropout)
 
     def forward(self, x):
-        x_ff = self.linear1(x)
-        x_gated = self.gate(x)
+        x_ff = self.dropout(self.linear1(x))
+        x_gated = self.dropout(self.gate(x))
         x_ff = x_ff * F.silu(x_gated)
         x_ff = self.linear2(x_ff)
         return x_ff

@@ -34,6 +34,7 @@ regModel = "bigru"
 # bilstm
 # gru
 # bigru
+# version 1
 
 # main
 def main( vm = "" , isPrintArgs = True ):

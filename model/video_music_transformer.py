@@ -26,6 +26,7 @@ class VideoMusicTransformer(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
         self.rpr        = rpr
+        self.version = version
 
         if version == None:
             # Input embedding for video and music features
@@ -62,9 +63,12 @@ class VideoMusicTransformer(nn.Module):
                     dim_feedforward=self.d_ff, custom_decoder=decoder
                 )        
         
-            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
-            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
-            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            if IS_SEPERATED:
+                self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+                self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            else:
+                self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
+                
             self.softmax    = nn.Softmax(dim=-1)
         elif version == 1: # AMT + MoE + Positional Embedding
             # Input embedding for video and music features
@@ -87,16 +91,16 @@ class VideoMusicTransformer(nn.Module):
             
             # Transformer
             encoder_norm = LayerNorm(self.d_model)
-            n_experts = 6
-            n_experts_per_token = 1
+            self.n_experts = 6
+            self.n_experts_per_token = 1
             expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
-            encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, n_experts, n_experts_per_token, self.dropout)
+            encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
             encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)
             encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
 
             decoder_norm = LayerNorm(self.d_model)
             expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
-            decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, n_experts, n_experts_per_token, self.dropout)
+            decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
             decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.dropout)
             decoder = TransformerDecoder(decoder_layer, self.nlayers, decoder_norm)
             self.transformer = nn.Transformer(
@@ -105,10 +109,16 @@ class VideoMusicTransformer(nn.Module):
                 dim_feedforward=self.d_ff, custom_encoder=encoder, custom_decoder=decoder
             )   
         
-            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
-            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
-            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            if IS_SEPERATED:
+                self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+                self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            else:
+                self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
+                
             self.softmax    = nn.Softmax(dim=-1)
+
+            del encoder_norm, expert, encoder_moelayer, encoder_layer, decoder_norm, decoder_moelayer, decoder_layer
+            torch.cuda.empty_cache()
     
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):
         if(mask is True):
@@ -138,16 +148,26 @@ class VideoMusicTransformer(nn.Module):
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         vf = self.Linear_vis(vf_concat)
         
-        ### POSITIONAL ENCODING ###
-        xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
-        vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
+        if self.version == None:
+            ### POSITIONAL ENCODING ###
+            xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
+            vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
+            xf = self.positional_encoding(xf)
+            vf = self.positional_encoding_video(vf)
+        elif self.version == 1:
+            ### POSITIONAL ENCODING ###
+            xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
+            vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
 
-        # Generate position indices
-        xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1]).to(get_device())
-        vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1]).to(get_device())
+            # Generate position indices
+            xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1]).to(get_device())
+            vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1]).to(get_device())
 
-        xf += self.positional_embedding(xf_position_indices)
-        vf += self.positional_embedding_video(vf_position_indices)
+            xf += self.positional_embedding(xf_position_indices)
+            vf += self.positional_embedding_video(vf_position_indices)
+
+            del xf_position_indices, vf_position_indices
+            torch.cuda.empty_cache()
 
         ### TRANSFORMER ###
         x_out = self.transformer(src=vf, tgt=xf, tgt_mask=mask)

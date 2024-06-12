@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 
@@ -167,7 +167,7 @@ def main( vm = "" , isPrintArgs = True ):
     train_loss_emotion_func = eval_loss_emotion_func
 
     ##### Optimizer #####
-    opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:

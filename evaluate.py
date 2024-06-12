@@ -3,14 +3,13 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from dataset.vevo_dataset import create_vevo_datasets
 
-
 from model.music_transformer import MusicTransformer
 from model.video_music_transformer import VideoMusicTransformer
 
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
 from utilities.argument_funcs import parse_eval_args, print_eval_args
-# from utilities.run_model_vevo import eval_model
+from utilities.run_model_vevo import eval_model
 from dataset.vevo_dataset import compute_vevo_accuracy, compute_vevo_correspondence, compute_hits_k, compute_hits_k_root_attr, compute_vevo_accuracy_root_attr, compute_vevo_correspondence_root_attr
 import logging
 import os
@@ -71,7 +70,7 @@ def main( vm = "", isPrintArgs = True):
         random_seq = True, 
         is_video = args.is_video)
 
-    test_loader = DataLoader(test_dataset, batch_size=1, num_workers=args.n_workers)
+    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
     total_vf_dim = 0
     if args.is_video:
@@ -133,7 +132,7 @@ def main( vm = "", isPrintArgs = True):
     logging.info(f"Avg test h3: {eval_h3:.4f}")
     logging.info(f"Avg test h5: {eval_h5:.4f}")
 
-def eval_model(model, dataloader, 
+'''def eval_model(model, dataloader, 
                eval_loss_func, eval_loss_emotion_func,
                isVideo = True, isGenConfusionMatrix=False):
     model.eval()
@@ -492,7 +491,7 @@ def eval_model(model, dataloader,
              "avg_acc_cor" : avg_acc_cor, 
              "avg_h1" : avg_h1, 
              "avg_h3" : avg_h3,
-             "avg_h5" : avg_h5 }
+             "avg_h5" : avg_h5 }'''
 
 if __name__ == "__main__":
     if len(VIS_MODELS_ARR) != 0 :

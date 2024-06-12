@@ -128,7 +128,7 @@ def main( vm = "" , isPrintArgs = True ):
             model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=False, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr, 
                         version=1).to(get_device())
 
     start_epoch = BASELINE_EPOCH

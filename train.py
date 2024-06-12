@@ -23,9 +23,9 @@ from utilities.run_model_vevo import train_epoch, eval_model
 
 CSV_HEADER = ["Epoch", "Learn rate", 
               "Avg Train loss (total)", "Avg Train loss (chord)", "Avg Train loss (emotion)", 
-              "Avg Eval loss (total)", "Avg Eval loss (chord)", "Avg Eval loss (emotion)",
               "Avg Train h1", "Avg Train h3", "Avg Train h5",
-              "Avg Test h1", "Avg Test h3", "Avg Test h5"]
+              "Avg Eval loss (total)", "Avg Eval loss (chord)", "Avg Eval loss (emotion)",
+              "Avg Eval h1", "Avg Eval h3", "Avg Eval h5"]
 
 BASELINE_EPOCH = -1
 version = VERSION

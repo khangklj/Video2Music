@@ -15,7 +15,7 @@ def parse_train_args():
 
     parser.add_argument("-output_dir", type=str, default="./saved_models", help="Folder to save model weights. Saves one every epoch")
     
-    parser.add_argument("-weight_modulus", type=int, default=1, help="How often to save epoch weights (ex: value of 10 means save every 10 epochs)")
+    parser.add_argument("-weight_modulus", type=int, default=2, help="How often to save epoch weights (ex: value of 10 means save every 10 epochs)")
     parser.add_argument("-print_modulus", type=int, default=1, help="How often to print train results for a batch (batch loss, learn rate, etc.)")
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
@@ -108,7 +108,7 @@ def parse_eval_args():
     parser.add_argument("-input_dir_music", type=str, default="./dataset/vevo_chord/" + MUSIC_TYPE, help="Folder of video CNN feature files")
     parser.add_argument("-input_dir_video", type=str, default="./dataset/vevo_vis", help="Folder of video CNN feature files")
     
-    parser.add_argument("-model_weights", type=str, default= "./saved_models/AMT/epoch_0030.pickle", help="Pickled model weights file saved with torch.save and model.state_dict()")
+    parser.add_argument("-model_weights", type=str, default=modelpath, help="Pickled model weights file saved with torch.save and model.state_dict()")
     
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")

@@ -23,4 +23,3 @@ scipy==1.7.3
 gradio==4.7.1
 pytube==15.0.0
 pyfluidsynth
-efficient_kan @ git+https://github.com/Blealtan/efficient-kan.git

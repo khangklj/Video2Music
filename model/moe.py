@@ -14,11 +14,6 @@ from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
 from typing import Optional
 
-import sys
-
-if '/kaggle/working/efficient-kan/src' not in sys.path:
-    sys.path.append('/kaggle/working/efficient-kan/src')
-
 from efficient_kan import KANLinear
 
 class KAN_GLUExpert(Module):

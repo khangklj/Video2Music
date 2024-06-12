@@ -14,11 +14,7 @@ from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
 from typing import Optional
 
-import os
 import sys
-
-if not os.path.exists('/kaggle/working/efficient-kan'):
-    !git clone https://github.com/Blealtan/efficient-kan
 
 if '/kaggle/working/efficient-kan/src' not in sys.path:
     sys.path.append('/kaggle/working/efficient-kan/src')

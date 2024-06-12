@@ -14,6 +14,27 @@ from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
 from typing import Optional
 
+import os
+import sys
+
+if not os.path.exists('/kaggle/working/efficient-kan'):
+    !git clone https://github.com/Blealtan/efficient-kan
+
+if '/kaggle/working/efficient-kan/src' not in sys.path:
+    sys.path.append('/kaggle/working/efficient-kan/src')
+
+from efficient_kan import KANLinear
+
+class KAN_GLUExpert(Module):
+    def __init__(self, d_model, d_ff=2048, dropout=0.1):
+        super(KANExpert, self).__init__()
+        self.w1 = KANLinear(d_model, d_ff)
+        self.w2 = KANLinear(d_model, d_ff)
+        self.w3 = KANLinear(d_ff, d_model)
+
+    def forward(self, x):
+        return self.w3(self.w1(x) * self.w2(x))
+
 class GLUExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
         super(GLUExpert, self).__init__()

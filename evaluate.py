@@ -103,7 +103,7 @@ def main( vm = "", isPrintArgs = True):
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, 
-                        rpr=args.rpr, version=args.music_gen_version).to(get_device())
+                        rpr=args.rpr, version=1).to(get_device())
         
     model.load_state_dict(torch.load(args.model_weights))
 

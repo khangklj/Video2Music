@@ -84,7 +84,7 @@ def main( vm = "", isPrintArgs = True):
             total_vf_dim += 6
         else:
             total_vf_dim += 5
-    
+    print(args.music_gen_version == None)
     if args.music_gen_version == None:
         if args.is_video:
             model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
@@ -92,7 +92,7 @@ def main( vm = "", isPrintArgs = True):
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, 
                         rpr=args.rpr).to(get_device())
-            print("HERE")
+            print("ORIGIN")
         else:
             model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
@@ -104,7 +104,8 @@ def main( vm = "", isPrintArgs = True):
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr, 
                         version=1).to(get_device())
-        
+        print("MoE")
+            
     model.load_state_dict(torch.load(args.model_weights))
 
     ##### Not smoothing evaluation loss #####

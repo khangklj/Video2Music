@@ -69,7 +69,7 @@ class VideoRegression(nn.Module):
             out, _ = self.gru(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)
-        elif self.regModel == "customRNN":
+        elif self.regModel == "custom_RNN":
             # First RNN layer
             rnn1_out, _ = self.rnn1(x)
             rnn1_out = F.relu(rnn1_out)

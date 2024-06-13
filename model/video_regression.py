@@ -73,17 +73,27 @@ class VideoRegression(nn.Module):
             # First RNN layer
             rnn1_out, _ = self.rnn1(vf_concat)
             rnn1_out = F.relu(rnn1_out)
+            print("rnn1_out shape: ", end='')
+            print(rnn1_out.shape)
             
             # First MLP layer
             mlp1_out = self.fc1(rnn1_out)
             mlp1_out = F.relu(mlp1_out)
+
+            print("mlp1_out shape: ", end='')
+            print(mlp1_out.shape)
             
             # Second RNN layer
             rnn2_out, _ = self.rnn2(mlp1_out)
             rnn2_out = F.relu(rnn2_out)
+
+            print("rnn2_out shape: ", end='')
+            print(rnn2_out.shape)
             
             # Second MLP layer
             out = self.fc2(rnn2_out)
+
+            print("out shape: ", end='')
             print(out.shape)
         return out
         

@@ -71,7 +71,7 @@ class VideoRegression(nn.Module):
             out = self.fc(out)
         elif self.regModel == "custom_RNN":
             # First RNN layer
-            rnn1_out, _ = self.rnn1(x)
+            rnn1_out, _ = self.rnn1(vf_concat)
             rnn1_out = F.relu(rnn1_out)
             
             # First MLP layer

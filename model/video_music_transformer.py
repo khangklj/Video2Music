@@ -109,12 +109,9 @@ class VideoMusicTransformer(nn.Module):
                 dim_feedforward=self.d_ff, custom_encoder=encoder, custom_decoder=decoder
             )   
         
-            if IS_SEPERATED:
-                self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
-                self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
-            else:
-                self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
-                
+            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
             self.softmax    = nn.Softmax(dim=-1)
 
             del encoder_norm, expert, encoder_moelayer, encoder_layer, decoder_norm, decoder_moelayer, decoder_layer

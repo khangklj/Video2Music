@@ -92,6 +92,7 @@ def main( vm = "", isPrintArgs = True):
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, 
                         rpr=args.rpr).to(get_device())
+            print("HERE")
         else:
             model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,

@@ -70,30 +70,26 @@ class VideoRegression(nn.Module):
             out = out.permute(1,0,2)
             out = self.fc(out)
         elif self.regModel == "custom_RNN":
+            vf_concat = vf_concat.permute(1,0,2)
+            print(f"vf_concat shape {vf_concat.shape}")
             # First RNN layer
             rnn1_out, _ = self.rnn1(vf_concat)
-            rnn1_out = F.relu(rnn1_out)
-            print("rnn1_out shape: ", end='')
-            print(rnn1_out.shape)
+            rnn1_out = F.relu(rnn1_out)            
+            print(f"RNN1 output shape: {rnn1_out.shape}")
             
             # First MLP layer
             mlp1_out = self.fc1(rnn1_out)
             mlp1_out = F.relu(mlp1_out)
-
-            print("mlp1_out shape: ", end='')
-            print(mlp1_out.shape)
+            print(f"MLP1 output shape: {mlp1_out.shape}")
             
             # Second RNN layer
             rnn2_out, _ = self.rnn2(mlp1_out)
             rnn2_out = F.relu(rnn2_out)
-
-            print("rnn2_out shape: ", end='')
-            print(rnn2_out.shape)
+            print(f"RNN2 output shape: {rnn2_out.shape}")
             
             # Second MLP layer
             out = self.fc2(rnn2_out)
-
-            print("out shape: ", end='')
-            print(out.shape)
+            print(f"Final output shape: {out.shape}")
+            
         return out
         

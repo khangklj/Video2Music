@@ -29,7 +29,7 @@ class VideoRegression(nn.Module):
         self.fc = nn.Linear(self.d_model, 2)
 
         # First RNN layer (bidirectional)
-        self.rnn1 = nn.RNN(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True batch_first=True)
+        self.rnn1 = nn.RNN(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True, batch_first=True)
         
         # First MLP layer
         self.fc1 = nn.Linear(self.d_model * 2, self.mlp_hidden_size)  

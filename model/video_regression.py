@@ -18,6 +18,7 @@ class VideoRegression(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
+        self.mlp_hidden_size = 800
 
         self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
@@ -27,7 +28,18 @@ class VideoRegression(nn.Module):
         self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
         self.fc = nn.Linear(self.d_model, 2)
 
+         First RNN layer (bidirectional)
+        self.rnn1 = nn.RNN(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True batch_first=True)
         
+        # First MLP layer
+        self.fc1 = nn.Linear(self.d_model * 2, self.mlp_hidden_size)  
+        
+        # Second RNN layer (bidirectional)
+        self.rnn2 = nn.RNN(self.mlp_hidden_size, self.d_model, self.nlayers, bidirectional=True, batch_first=True)
+        
+        # Second MLP layer
+        self.fc2 = nn.Linear(self.d_model * 2, 2)  # * 2 for bidirectional
+    
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
         vf_concat = feature_semantic_list[0].float()
@@ -57,5 +69,21 @@ class VideoRegression(nn.Module):
             out, _ = self.gru(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)
+        elif self.regModel == "customRNN":
+            # First RNN layer
+            rnn1_out, _ = self.rnn1(x)
+            rnn1_out = F.relu(rnn1_out)
+            
+            # First MLP layer
+            mlp1_out = self.fc1(rnn1_out)
+            mlp1_out = F.relu(mlp1_out)
+            
+            # Second RNN layer
+            rnn2_out, _ = self.rnn2(mlp1_out)
+            rnn2_out = F.relu(rnn2_out)
+            
+            # Second MLP layer
+            out = self.fc2(rnn2_out)
+            print(out.shape)
         return out
         

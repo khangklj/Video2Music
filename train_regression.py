@@ -29,12 +29,13 @@ VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
 
-regModel = "bigru"
+regModel = "custom_RNN"
 # lstm
 # bilstm
 # gru
 # bigru
 # version 1
+# custom_RNN
 
 # main
 def main( vm = "" , isPrintArgs = True ):

@@ -84,6 +84,7 @@ def main( vm = "", isPrintArgs = True):
             total_vf_dim += 6
         else:
             total_vf_dim += 5
+    print("args.music_gen_version: " + args.music_gen_version)
     print(args.music_gen_version == None)
     if args.music_gen_version == None:
         if args.is_video:

@@ -23,11 +23,12 @@ VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
 
-regModel = "bigru"
+regModel = "custom_RNN"
 # lstm
 # bilstm
 # gru
 # bigru
+# custom_RNN
 
 
 log_format = '%(message)s'

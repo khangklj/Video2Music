@@ -63,13 +63,11 @@ class VideoMusicTransformer(nn.Module):
                     dim_feedforward=self.d_ff, custom_decoder=decoder
                 )        
         
-            if IS_SEPERATED:
-                self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
-                self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
-            else:
-                self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
-                
+            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
             self.softmax    = nn.Softmax(dim=-1)
+            
         elif version == 1: # AMT + MoE + Positional Embedding
             # Input embedding for video and music features
             self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)

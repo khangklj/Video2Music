@@ -18,7 +18,7 @@ class VideoRegression(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
-        self.mlp_hidden_size = 800
+        self.mlp_hidden_size = d_model * 4
 
         self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)

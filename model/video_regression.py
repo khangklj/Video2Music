@@ -18,7 +18,7 @@ class VideoRegression(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
-        self.mlp_hidden_size = d_model * 2
+        self.mlp_hidden_size = d_model * 4
 
         self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
@@ -28,17 +28,17 @@ class VideoRegression(nn.Module):
         self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
         self.fc = nn.Linear(self.d_model, 2)
 
-        # First RNN layer (non-bidirectional)
-        self.gru1 = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, batch_first=True)
+        # First RNN layer (bidirectional)
+        self.bigru1 = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True, batch_first=True)
         
         # First MLP layer
-        self.fc1 = nn.Linear(self.d_model, self.mlp_hidden_size)  
+        self.fc1 = nn.Linear(self.d_model * 2, self.mlp_hidden_size)  
         
         # Second RNN layer (non-bidirectional)
-        self.gru2 = nn.GRU(self.mlp_hidden_size, self.d_model, self.nlayers, batch_first=True)
+        self.bigru2 = nn.GRU(self.mlp_hidden_size, self.d_model, self.nlayers, bidirectional=True, batch_first=True)
         
         # Second MLP layer
-        self.fc2 = nn.Linear(self.d_model, 2)
+        self.fc2 = nn.Linear(self.d_model * 2, 2)
     
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -73,7 +73,7 @@ class VideoRegression(nn.Module):
             vf_concat = vf_concat.permute(1,0,2)
             # print(f"vf_concat shape {vf_concat.shape}")
             # First RNN layer
-            gru1_out, _ = self.gru1(vf_concat)
+            gru1_out, _ = self.bigru1(vf_concat)
             gru1_out = F.relu(gru1_out)            
             # print(f"RNN1 output shape: {gru1_out.shape}")
             
@@ -83,7 +83,7 @@ class VideoRegression(nn.Module):
             # print(f"MLP1 output shape: {mlp1_out.shape}")
             
             # Second RNN layer
-            gru2_out, _ = self.gru2(mlp1_out)
+            gru2_out, _ = self.bigru2(mlp1_out)
             gru2_out = F.relu(gru2_out)
             # print(f"RNN2 output shape: {gru2_out.shape}")
             

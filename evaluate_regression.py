@@ -23,12 +23,12 @@ VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
 
-regModel = "bigru"
+regModel = "version_1"
 # lstm
 # bilstm
 # gru
 # bigru
-
+# version_1 (BiGRU + MLP)
 
 log_format = '%(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format)

@@ -62,7 +62,12 @@ flatsharpDic = {
     'Bb':'A#'
 }
 
-regModel = "bigru"
+regModel = "version_1"
+# lstm
+# bilstm
+# gru
+# bigru
+# version_1 (BiGRU + MLP)
 
 max_conseq_N = 0
 max_conseq_chord = 2

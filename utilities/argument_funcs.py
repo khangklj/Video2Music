@@ -132,7 +132,16 @@ def parse_eval_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=int, default=1, help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='version_1', help="Version number. None is original loudness and note density Regression model")
+    
+    # regModel version name:
+    # lstm
+    # bilstm
+    # gru
+    # bigru
+    # version_1 (BiGRU + MLP)
+    # version_2 (BiGRU + MLP + skip connection)
+    # version_3 (BiGRU + SwiGLU MoE + skip connection)
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
@@ -215,7 +224,16 @@ def parse_generate_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=int, default=1, help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='version_1', help="Version number. None is original loudness and note density Regression model")
+
+    # regModel version name:
+    # lstm
+    # bilstm
+    # gru
+    # bigru
+    # version_1 (BiGRU + MLP)
+    # version_2 (BiGRU + MLP + skip connection)
+    # version_3 (BiGRU + SwiGLU MoE + skip connection)
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 

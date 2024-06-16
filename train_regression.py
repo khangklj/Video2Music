@@ -86,7 +86,7 @@ def main( vm = "" , isPrintArgs = True ):
         tensorboad_dir = os.path.join(args.output_dir, version, "tensorboard_regression")
         tensorboard_summary = SummaryWriter(log_dir=tensorboad_dir)
         
-    train_dataset, val_dataset, _ = create_vevo_datasets(
+    train_dataset, _, val_dataset = create_vevo_datasets(
         dataset_root = "./dataset/", 
         max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn.modules.normalization import LayerNorm
-from torchtune.modules import RMSNorm
+# from torchtune.modules import RMSNorm
 import random
 import numpy as np
 from utilities.constants import *
@@ -43,8 +43,8 @@ class advancedRNNBlock(nn.Module):
 
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
-        self.norm1 = LayerNorm(self.d_output * 2)
-        self.norm2 = LayerNorm(self.d_output)
+        # self.norm1 = LayerNorm(self.d_output * 2)
+        # self.norm2 = LayerNorm(self.d_output)
 
     def forward(self, x):
         x_rnn, _ = self.rnn_layer(x)

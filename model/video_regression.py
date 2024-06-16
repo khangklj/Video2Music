@@ -43,6 +43,7 @@ class advancedRNNBlock(nn.Module):
 
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
+        self.last_layer = nn.Linear(self.d_model * (2 if bidirectional else 1), self.d_model)
 
     def forward(self, x):
         x_rnn, _ = self.rnn_layer(x)
@@ -52,6 +53,8 @@ class advancedRNNBlock(nn.Module):
         x_ff = self.ff_layer(x)
         x_double = torch.cat((x, x), dim=-1)
         x = self.dropout2(x_ff + x)
+
+        x = self.last_layer(x)
 
         return x
 

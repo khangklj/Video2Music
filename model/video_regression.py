@@ -100,7 +100,7 @@ class VideoRegression(nn.Module):
             )
         elif self.regModel == "version_2":
             self.model = nn.Sequential(
-                *[advancedRNNBlock('gru', 'mlp', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+                *[advancedRNNBlock('gru', 'mlp', self.total_vf_dim, self.d_model, dropout, bidirectional=True) for _ in range(n_layers)]
             )
         elif self.regModel == "version_3":
             self.model = nn.Sequential(

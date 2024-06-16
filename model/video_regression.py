@@ -1,24 +1,61 @@
 import torch
 import torch.nn as nn
 from torch.nn.modules.normalization import LayerNorm
+from torchtune.modules import RMSNorm
 import random
 import numpy as np
 from utilities.constants import *
 from utilities.device import get_device
 from datetime import datetime
+from .moe import *
 
 import torch.nn.functional as F
+    
+class advancedRNNBlock(nn.Module):
+    def __init__(self, rnn_type='gru', ff_type='mlp', d_input=256, d_output=1024, dropout=0.1, bidirectional=True):
+        super(advancedRNNBlock, self).__init__()
 
-class myRNNBlock(nn.Module):
-    def __init__(self, rnn_type='gru', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
-        super(myRNNBlock, self).__init__()
+        self.d_input = d_input
+        self.d_output = d_output
+        self.dropout = dropout
+        self.bidirectional = bidirectional
 
-        self.rnn_layer = rnn_layer
-        # self.layernorm1 = nn.LayerNorm()
-        self.ff_layer = ff_layer
-        # self.layernorm2 = nn.LayerNorm()
+        if rnn_type == None:
+            self.rnn_layer = nn.RNN(self.d_input, self.d_output, num_layers=1, bidirectional=bidirectional, batch_first=True)
+        elif rnn_type == 'gru':
+            self.rnn_layer = nn.GRU(self.d_input, self.d_output, num_layers=1, bidirectional=bidirectional, batch_first=True)
+        elif rnn_type == 'lstm':
+            self.rnn_layer = nn.LSTM(self.d_input, self.d_output, num_layers=1, bidirectional=bidirectional, batch_first=True)
+    
+        if ff_type == 'mlp':
+            self.ff_layer = nn.Sequential(
+                nn.Linear(self.d_output * (2 if bidirectional else 1), 4 * self.d_output),
+                nn.SiLU(),
+                nn.Linear(4 * self.d_output, self.d_output)
+            )
+        elif ff_type == 'moe':
+            expert = nn.Sequential(
+                GLUExpert(self.d_output * (2 if bidirectional else 1), 4 * self.d_output),
+                nn.Linear(self.d_output * (2 if bidirectional else 1), self.d_output)
+            )
+            
+            self.ff_layer = MoELayer(expert, self.d_output * (2 if bidirectional else 1), n_experts=6, n_experts_per_token=1, dropout=dropout)
+
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+        self.norm1 = RMSNorm(self.d_output * 2)
+        self.norm2 = RMSNorm(self.d_output)
 
     def forward(self, x):
+        x_rnn, _ = self.rnn_layer(x)
+        x_rnn = self.dropout1(x_rnn)
+        x = self.norm1(x + x_rnn)
+
+        x_ff = self.ff_layer(x)
+        x_ff = self.dropout2(x_ff)
+        x = self.norm2(x + x_ff)
+
+        return x
 
 class VideoRegression(nn.Module):
     def __init__(self, n_layers=2, d_model=256, d_hidden=1024, dropout=0.1, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
@@ -31,34 +68,47 @@ class VideoRegression(nn.Module):
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
 
-        self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
-        self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+        if self.regModel == "bilstm":
+            self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+        elif self.regModel == "bigru":
+            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+        elif self.regModel == "lstm":
+            self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+        elif self.regModel == "gru":
+            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
+        elif self.regModel == "version_1":
+            # First RNN layer (bidirectional)
+            self.bigru1 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
+            
+            # First MLP layer
+            self.mlp1 = nn.Sequential(
+                nn.Linear(self.d_model * 2, self.d_hidden),
+                nn.SiLU(),
+                nn.Linear(self.d_hidden, self.total_vf_dim),
+                nn.Dropout(self.dropout)
+            )  
+            
+            # Second RNN layer (non-bidirectional)
+            self.bigru2 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
+            
+            # Second MLP layer
+            self.mlp2 = nn.Sequential(
+                nn.Linear(self.d_model * 2, self.d_hidden),
+                nn.SiLU(),
+                nn.Linear(self.d_hidden, self.total_vf_dim),
+                nn.Dropout(self.dropout)
+            )
+        elif self.regModel == "version_2":
+            self.model = nn.Sequential(
+                *[advancedRNNBlock('gru', 'mlp', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+            )
+        elif self.regModel == "version_3":
+            self.model = nn.Sequential(
+                *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+            )
+            
         self.bifc = nn.Linear(self.d_model * 2, 2)
-
-        self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
-        self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
         self.fc = nn.Linear(self.d_model, 2)
-
-        # First RNN layer (bidirectional)
-        self.bigru1 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
-        
-        # First MLP layer
-        self.mlp1 = nn.Sequential(
-            nn.Linear(self.d_model * 2, self.d_hidden),
-            nn.SiLU(),
-            nn.Linear(self.d_hidden, self.total_vf_dim),
-            nn.Dropout(self.dropout)
-        )  
-        
-        # Second RNN layer (non-bidirectional)
-        self.bigru2 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
-        
-        # Second MLP layer
-        self.mlp2 = nn.Sequential(
-            nn.Linear(self.d_model * 2, self.d_hidden),
-            nn.SiLU(),
-            nn.Linear(self.d_hidden, 2),
-        )  
         
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -91,24 +141,14 @@ class VideoRegression(nn.Module):
             out = self.fc(out)
         elif self.regModel == "version_1":
             vf_concat = vf_concat.permute(1,0,2)
-            # print(f"vf_concat shape {vf_concat.shape}")
-            # First RNN layer
             gru1_out, _ = self.bigru1(vf_concat)
-            gru1_out = F.relu(gru1_out)            
-            # print(f"RNN1 output shape: {gru1_out.shape}")
-            
-            # First MLP layer
             mlp1_out = self.mlp1(gru1_out)
-            mlp1_out = F.relu(mlp1_out)
-            # print(f"MLP1 output shape: {mlp1_out.shape}")
-            
-            # Second RNN layer
             gru2_out, _ = self.bigru2(mlp1_out)
-            gru2_out = F.relu(gru2_out)
-            # print(f"RNN2 output shape: {gru2_out.shape}")
-            
-            # Second MLP layer
             out = self.mlp2(gru2_out)
-            # print(f"Final output shape: {out.shape}")
+            out = self.bifc(out)
+        elif self.regModel == "version_2" or self.regModel == "version_3":
+            vf_concat = vf_concat.permute(1,0,2)
+            out = self.model(vf_concat)
+            out = self.bifc(out)
         return out
         

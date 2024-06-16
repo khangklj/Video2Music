@@ -62,13 +62,6 @@ flatsharpDic = {
     'Bb':'A#'
 }
 
-regModel = "version_1"
-# lstm
-# bilstm
-# gru
-# bigru
-# version_1 (BiGRU + MLP)
-
 max_conseq_N = 0
 max_conseq_chord = 2
 
@@ -225,7 +218,7 @@ def main():
         model.load_state_dict(torch.load(args.model_weights))
 
     if args.regression_version == None and args.is_video:
-        modelReg = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= regModel).to(get_device())
+        modelReg = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
         modelReg.load_state_dict(torch.load(args.modelReg_weights))
     elif args.regression_version == 1:
         pass

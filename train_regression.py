@@ -29,13 +29,6 @@ VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
 
-regModel = "version_1"
-# lstm
-# bilstm
-# gru
-# bigru
-# version_1 (BiGRU + MLP)
-
 # main
 def main( vm = "" , isPrintArgs = True ):
     args = parse_train_args()[0]
@@ -68,7 +61,7 @@ def main( vm = "" , isPrintArgs = True ):
     params_file = os.path.join(args.output_dir, version, "model_params_regression.txt")
     write_model_params(args, params_file)
 
-    weights_folder = os.path.join(args.output_dir, version, "weights_regression_" + regModel)
+    weights_folder = os.path.join(args.output_dir, version, "weights_regression_" + args.regModel)
     os.makedirs(weights_folder, exist_ok=True)
 
     results_folder = os.path.join(args.output_dir, version)
@@ -111,7 +104,7 @@ def main( vm = "" , isPrintArgs = True ):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
-    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= regModel).to(get_device())
+    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
     
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):

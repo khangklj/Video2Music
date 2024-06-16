@@ -23,13 +23,6 @@ VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
 
-regModel = "version_1"
-# lstm
-# bilstm
-# gru
-# bigru
-# version_1 (BiGRU + MLP)
-
 log_format = '%(message)s'
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format=log_format)
 fh = logging.FileHandler('log/log_eval2.txt')
@@ -83,7 +76,7 @@ def main( vm = "", isPrintArgs = True):
     else:
         total_vf_dim += 5
     
-    model = VideoRegression(max_sequence_video=args.max_sequence_video, d_model=256, total_vf_dim=total_vf_dim ,regModel= regModel).to(get_device())
+    model = VideoRegression(max_sequence_video=args.max_sequence_video, d_model=256, total_vf_dim=total_vf_dim ,regModel= args.regModel).to(get_device())
     model.load_state_dict(torch.load(args.model_weights))
     
     loss = nn.MSELoss()

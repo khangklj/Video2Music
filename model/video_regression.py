@@ -43,8 +43,8 @@ class advancedRNNBlock(nn.Module):
 
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
-        self.norm1 = RMSNorm(self.d_output * 2)
-        self.norm2 = RMSNorm(self.d_output)
+        self.norm1 = LayerNorm(self.d_output * 2)
+        self.norm2 = LayerNorm(self.d_output)
 
     def forward(self, x):
         x_rnn, _ = self.rnn_layer(x)

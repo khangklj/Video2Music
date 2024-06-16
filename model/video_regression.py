@@ -46,6 +46,7 @@ class advancedRNNBlock(nn.Module):
 
     def forward(self, x):
         x_rnn, _ = self.rnn_layer(x)
+        print(x_rnn.shape, x.shape)
         x = self.dropout1(x_rnn + x)
 
         x_ff = self.ff_layer(x)

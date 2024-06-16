@@ -12,31 +12,31 @@ from .moe import *
 import torch.nn.functional as F
     
 class advancedRNNBlock(nn.Module):
-    def __init__(self, rnn_type='gru', ff_type='mlp', d_input=256, d_output=1024, dropout=0.1, bidirectional=True):
+    def __init__(self, rnn_type='gru', ff_type='mlp', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
         super(advancedRNNBlock, self).__init__()
 
-        self.d_input = d_input
-        self.d_output = d_output
+        self.d_model = d_model
+        self.d_hidden = d_hidden
         self.dropout = dropout
         self.bidirectional = bidirectional
 
         if rnn_type == None:
-            self.rnn_layer = nn.RNN(self.d_input, self.d_output, num_layers=1, bidirectional=bidirectional, batch_first=True)
+            self.rnn_layer = nn.RNN(self.d_model, self.d_model, num_layers=1, bidirectional=bidirectional, batch_first=True)
         elif rnn_type == 'gru':
-            self.rnn_layer = nn.GRU(self.d_input, self.d_output, num_layers=1, bidirectional=bidirectional, batch_first=True)
+            self.rnn_layer = nn.GRU(self.d_model, self.d_model, num_layers=1, bidirectional=bidirectional, batch_first=True)
         elif rnn_type == 'lstm':
-            self.rnn_layer = nn.LSTM(self.d_input, self.d_output, num_layers=1, bidirectional=bidirectional, batch_first=True)
+            self.rnn_layer = nn.LSTM(self.d_model, self.d_model, num_layers=1, bidirectional=bidirectional, batch_first=True)
     
         if ff_type == 'mlp':
             self.ff_layer = nn.Sequential(
-                nn.Linear(self.d_output * (2 if bidirectional else 1), 4 * self.d_output),
+                nn.Linear(self.d_model * (2 if bidirectional else 1), self.d_hidden),
                 nn.SiLU(),
-                nn.Linear(4 * self.d_output, self.d_output)
+                nn.Linear(self.d_hidden, self.d_model)
             )
         elif ff_type == 'moe':
             expert = nn.Sequential(
-                GLUExpert(self.d_output * (2 if bidirectional else 1), 4 * self.d_output),
-                nn.Linear(self.d_output * (2 if bidirectional else 1), self.d_output)
+                GLUExpert(self.d_model * (2 if bidirectional else 1), self.d_hidden),
+                nn.Linear(self.d_model * (2 if bidirectional else 1), self.d_model)
             )
             
             self.ff_layer = MoELayer(expert, self.d_output * (2 if bidirectional else 1), n_experts=6, n_experts_per_token=1, dropout=dropout)

@@ -39,17 +39,18 @@ class advancedRNNBlock(nn.Module):
                 nn.Linear(self.d_model * (2 if bidirectional else 1), self.d_model)
             )
             
-            self.ff_layer = MoELayer(expert, self.d_output * (2 if bidirectional else 1), n_experts=6, n_experts_per_token=1, dropout=dropout)
+            self.ff_layer = MoELayer(expert, self.d_model * (2 if bidirectional else 1), d_ff=self.d_hidden, n_experts=6, n_experts_per_token=1, dropout=dropout)
 
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
 
     def forward(self, x):
         x_rnn, _ = self.rnn_layer(x)
-        print(x_rnn.shape, x.shape)
-        x = self.dropout1(x_rnn + x)
+        x_double = torch.cat((x, x), dim=-1)
+        x = self.dropout1(x_rnn + x_double)
 
         x_ff = self.ff_layer(x)
+        x_double = torch.cat((x, x), dim=-1)
         x = self.dropout2(x_ff + x)
 
         return x

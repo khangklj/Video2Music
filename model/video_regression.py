@@ -52,7 +52,7 @@ class advancedRNNBlock(nn.Module):
 
         x_ff = self.ff_layer(x)
         x_double = torch.cat((x, x), dim=-1)
-        x = self.dropout2(x_ff + x)
+        x = self.dropout2(x_ff + x_double)
 
         x = self.last_layer(x)
 

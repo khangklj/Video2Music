@@ -150,6 +150,6 @@ class VideoRegression(nn.Module):
         elif self.regModel == "version_2" or self.regModel == "version_3":
             vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
-            out = self.bifc(out)
+            # out = self.bifc(out)
         return out
         

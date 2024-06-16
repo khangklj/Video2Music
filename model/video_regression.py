@@ -9,6 +9,17 @@ from datetime import datetime
 
 import torch.nn.functional as F
 
+class myRNNBlock(nn.Module):
+    def __init__(self, rnn_type='gru', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
+        super(myRNNBlock, self).__init__()
+
+        self.rnn_layer = rnn_layer
+        # self.layernorm1 = nn.LayerNorm()
+        self.ff_layer = ff_layer
+        # self.layernorm2 = nn.LayerNorm()
+
+    def forward(self, x):
+
 class VideoRegression(nn.Module):
     def __init__(self, n_layers=2, d_model=256, d_hidden=1024, dropout=0.1, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
         super(VideoRegression, self).__init__()

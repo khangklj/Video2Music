@@ -95,7 +95,7 @@ class VideoRegression(nn.Module):
             self.mlp2 = nn.Sequential(
                 nn.Linear(self.d_model * 2, self.d_hidden),
                 nn.SiLU(),
-                nn.Linear(self.d_hidden, self.total_vf_dim),
+                nn.Linear(self.d_hidden, self.d_model * 2),
                 nn.Dropout(self.dropout)
             )
         elif self.regModel == "version_2":

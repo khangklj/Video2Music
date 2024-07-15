@@ -71,7 +71,7 @@ class LSTMCell(nn.Module):
         return (hy, cy)
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bias, output_size):
+    def __init__(self, input_size, hidden_size, num_layers, bias):
         """
         Initialize the LSTM model.
         
@@ -79,15 +79,13 @@ class LSTM(nn.Module):
             input_size (int): Size of input features
             hidden_size (int): Size of hidden state
             num_layers (int): Number of LSTM layers
-            bias (bool): Whether to use bias in LSTM cells
-            output_size (int): Size of output
+            bias (bool): Whether to use bias in LSTM cells            
         """
         super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.bias = bias
-        self.output_size = output_size
 
         # Create a list to hold LSTM cells
         self.lstm_cell_list = nn.ModuleList()
@@ -98,9 +96,6 @@ class LSTM(nn.Module):
         # Subsequent LSTM cells take hidden_size as input
         for l in range(1, self.num_layers):
             self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size, self.bias))
-
-        # Final fully connected layer
-        self.fc = nn.Linear(self.hidden_size, self.output_size)
 
     def forward(self, input, hx=None):
         """
@@ -151,9 +146,6 @@ class LSTM(nn.Module):
             outs.append(hidden_l[0])
 
         # Take only the last time step
-        out = outs[-1].squeeze()
-        
-        # Pass through final fully connected layer
-        out = self.fc(out)
+        out = outs[-1].squeeze()               
 
         return out

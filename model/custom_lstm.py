@@ -1,64 +1,63 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bidirectional=True):
+    def __init__(self, input_size, hidden_size, num_layers, batch_first=False):
         super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.bidirectional = bidirectional
-        self.num_directions = 2 if bidirectional else 1
+        self.batch_first = batch_first
 
-        self.weight_ih = nn.Parameter(torch.randn(self.num_directions * 4 * self.hidden_size, self.input_size))
-        self.weight_hh = nn.Parameter(torch.randn(self.num_directions * 4 * self.hidden_size, self.hidden_size))
-        self.bias_ih = nn.Parameter(torch.randn(self.num_directions * 4 * self.hidden_size))
-        self.bias_hh = nn.Parameter(torch.randn(self.num_directions * 4 * self.hidden_size))
+        self.weight_ih = nn.Parameter(torch.Tensor(4 * hidden_size, input_size))
+        self.weight_hh = nn.Parameter(torch.Tensor(4 * hidden_size, hidden_size))
+        self.bias_ih = nn.Parameter(torch.Tensor(4 * hidden_size))
+        self.bias_hh = nn.Parameter(torch.Tensor(4 * hidden_size))
 
-    def forward(self, input, h0=None, c0=None):
-        batch_size, seq_len, _ = input.size()
+        self.reset_parameters()
 
-        if h0 is None:
-            h0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, device=input.device)
-        if c0 is None:
-            c0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, device=input.device)
+    def reset_parameters(self):
+        for param in self.parameters():
+            if param.data.ndimension() >= 2:
+                nn.init.orthogonal_(param.data)
+            else:
+                nn.init.zeros_(param.data)
 
-        h = h0
-        c = c0
-        output = []
+    def forward(self, input_tensor, hx=None):
+        if self.batch_first:
+            input_tensor = input_tensor.transpose(0, 1)
 
-        for t in range(seq_len):
-            h_list = []
-            c_list = []
-            for layer in range(self.num_layers):
-                layer_input = input[:, t, :] if layer == 0 else h_list[-1]
-                layer_h = h[layer * self.num_directions:(layer + 1) * self.num_directions]
-                layer_c = c[layer * self.num_directions:(layer + 1) * self.num_directions]
+        seq_len, batch_size, _ = input_tensor.size()
 
-                gates = F.linear(layer_input, self.weight_ih[layer * 4 * self.hidden_size:(layer + 1) * 4 * self.hidden_size], self.bias_ih[layer * 4 * self.hidden_size:(layer + 1) * 4 * self.hidden_size])
-                gates += F.linear(layer_h, self.weight_hh[layer * 4 * self.hidden_size:(layer + 1) * 4 * self.hidden_size], self.bias_hh[layer * 4 * self.hidden_size:(layer + 1) * 4 * self.hidden_size])
+        if hx is None:
+            h_0 = input_tensor.new_zeros(self.num_layers, batch_size, self.hidden_size, requires_grad=False)
+            c_0 = input_tensor.new_zeros(self.num_layers, batch_size, self.hidden_size, requires_grad=False)
+        else:
+            h_0, c_0 = hx
 
-                ingate, forgetgate, cellgate, outgate = torch.split(gates, self.hidden_size, dim=1)
-                ingate = torch.sigmoid(ingate)
-                forgetgate = torch.sigmoid(forgetgate)
-                cellgate = torch.tanh(cellgate)
-                outgate = torch.sigmoid(outgate)
+        h_n = input_tensor.new_zeros(self.num_layers, batch_size, self.hidden_size)
+        c_n = input_tensor.new_zeros(self.num_layers, batch_size, self.hidden_size)
 
-                layer_c = (forgetgate * layer_c) + (ingate * cellgate)
-                layer_h = outgate * torch.tanh(layer_c)
+        for layer in range(self.num_layers):
+            x = input_tensor
+            h, c = h_0[layer], c_0[layer]
 
-                h_list.append(layer_h)
-                c_list.append(layer_c)
+            for t in range(seq_len):
+                gates = torch.mm(x, self.weight_ih.t()) + torch.mm(h, self.weight_hh.t()) + self.bias_ih + self.bias_hh
+                f, i, c_tilde, o = torch.split(gates, self.hidden_size, dim=1)
+                f, i, c_tilde, o = self.sigmoid(f), self.sigmoid(i), self.tanh(c_tilde), self.sigmoid(o)
 
-            h = torch.cat(h_list, dim=0)
-            c = torch.cat(c_list, dim=0)
-            output.append(layer_h)
+                c = f * c + i * c_tilde
+                h = o * self.tanh(c)
 
-        output = torch.stack(output, dim=1)
+                x = h
+                h_n[layer, t] = h
+                c_n[layer, t] = c
 
-        if self.bidirectional:
-            output = output.view(batch_size, seq_len, 2, self.hidden_size)
-            output = output.permute(2, 0, 1, 3).contiguous().view(batch_size, seq_len, 2 * self.hidden_size)
+        return (h_n, c_n)
 
-        return output, (h, c)
+    def sigmoid(self, x):
+        return 1 / (1 + torch.exp(-x))
+
+    def tanh(self, x):
+        return torch.tanh(x)

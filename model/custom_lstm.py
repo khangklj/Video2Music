@@ -69,19 +69,21 @@ class LSTMCell(nn.Module):
         return (hy, cy)
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers):
+    def __init__(self, input_size, hidden_size, num_layers, batch_size):
         """
         Initialize the LSTM model.
         
         Args:
             input_size (int): Size of input features
             hidden_size (int): Size of hidden state
-            num_layers (int): Number of LSTM layers              
+            num_layers (int): Number of LSTM layers
+            batch_size (int): Batch size
         """
         super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.num_layers = num_layers        
+        self.num_layers = num_layers
+        self.batch_size = batch_size
 
         # Create a list to hold LSTM cells
         self.lstm_cell_list = nn.ModuleList()
@@ -107,9 +109,9 @@ class LSTM(nn.Module):
         # Initialize hidden state and cell state if not provided
         if hx is None:
             if torch.cuda.is_available():
-                h0 = torch.zeros(self.num_layers, input.size(0), self.hidden_size).cuda()
+                h0 = torch.zeros(self.num_layers, self.batch_size, self.hidden_size).cuda()
             else:
-                h0 = torch.zeros(self.num_layers, input.size(0), self.hidden_size)
+                h0 = torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
         else:
             h0 = hx
 

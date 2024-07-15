@@ -10,6 +10,7 @@ class LSTM(nn.Module):
         self.batch_first = batch_first
         self.bidirectional = bidirectional
         self.num_directions = 2 if bidirectional else 1
+        self.linear_layer = nn.Linear(1024, 4 * hidden_size)
 
         self.weight_ih = nn.Parameter(torch.Tensor(self.num_directions * 4 * hidden_size, input_size))
         self.weight_hh = nn.Parameter(torch.Tensor(self.num_directions * 4 * hidden_size, hidden_size))
@@ -59,6 +60,10 @@ class LSTM(nn.Module):
                             torch.matmul(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             self.bias_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)] + \
                             self.bias_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)]
+
+                    # Apply a linear layer to transform the gates tensor
+                    gates = self.linear_layer(gates)
+                    
                     f, i, c_tilde, o = torch.split(gates, self.hidden_size, dim=1)
                     f, i, c_tilde, o = self.sigmoid(f), self.sigmoid(i), self.tanh(c_tilde), self.sigmoid(o)
 

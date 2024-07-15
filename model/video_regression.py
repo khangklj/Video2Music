@@ -112,8 +112,8 @@ class VideoRegression(nn.Module):
                 *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
             )
         elif self.regModel == "custom_lstm":
-            # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
-            self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+            # self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)

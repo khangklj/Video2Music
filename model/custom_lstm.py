@@ -43,6 +43,8 @@ class LSTMCell(nn.Module):
         """
         # Unpack hidden and cell states
         hx, cx = hx
+
+        print(hx)
         
         # Compute gates
         gates = self.xh(input) + self.hh(hx)

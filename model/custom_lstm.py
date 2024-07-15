@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 class LSTMCell(nn.Module):
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, input_size, hidden_size, bidirectional=False):
         """
         Initialize the LSTM cell.
         
@@ -18,7 +18,8 @@ class LSTMCell(nn.Module):
         # Linear layer for input-to-hidden transformation
         self.xh = nn.Linear(input_size, hidden_size * 4)
         # Linear layer for hidden-to-hidden transformation
-        self.hh = nn.Linear(hidden_size, hidden_size * 4)
+        # self.hh = nn.Linear(hidden_size, hidden_size * 4)
+        self.hh = nn.Linear(hidden_size * (2 if bidirectional else 1), hidden_size * 4)
         
         self.reset_parameters()
 

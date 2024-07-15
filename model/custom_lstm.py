@@ -1,87 +1,88 @@
-import torch
-import torch.nn as nn
+import numpy as np
 
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, batch_first=False, bidirectional=False):
-        super(LSTM, self).__init__()
+class LSTMCell:
+    def __init__(self, input_size, hidden_size):
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+
+        # Initialize weights and biases
+        self.W_f = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
+        self.b_f = np.zeros((self.hidden_size, 1))
+        self.W_i = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
+        self.b_i = np.zeros((self.hidden_size, 1))
+        self.W_c = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
+        self.b_c = np.zeros((self.hidden_size, 1))
+        self.W_o = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
+        self.b_o = np.zeros((self.hidden_size, 1))
+
+    def forward(self, x, h_prev, c_prev):
+        # Concatenate input and previous hidden state
+        concat = np.concatenate((x, h_prev), axis=1)
+
+        # Calculate gates
+        f = self.sigmoid(np.dot(self.W_f, concat.T) + self.b_f)
+        i = self.sigmoid(np.dot(self.W_i, concat.T) + self.b_i)
+        c_tilde = np.tanh(np.dot(self.W_c, concat.T) + self.b_c)
+        o = self.sigmoid(np.dot(self.W_o, concat.T) + self.b_o)
+
+        # Update cell state and hidden state
+        c_next = f * c_prev + i * c_tilde
+        h_next = o * np.tanh(c_next)
+
+        return h_next.T, c_next.T
+
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+class BiLSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers=1, batch_first=False, dropout=0, bidirectional=True):
+        super(BiLSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.batch_first = batch_first
+        self.dropout = dropout
         self.bidirectional = bidirectional
-        self.num_directions = 2 if bidirectional else 1
-        self.linear_layer = nn.Linear(1024, 4 * hidden_size)
 
-        self.weight_ih = nn.Parameter(torch.Tensor(self.num_directions * 4 * hidden_size, input_size))
-        self.weight_hh = nn.Parameter(torch.Tensor(self.num_directions * 4 * hidden_size, hidden_size))
-        self.bias_ih = nn.Parameter(torch.Tensor(self.num_directions * 4 * hidden_size))
-        self.bias_hh = nn.Parameter(torch.Tensor(self.num_directions * 4 * hidden_size))
+        self.forward_lstm_layers = nn.ModuleList([LSTMCell(self.input_size, self.hidden_size) for _ in range(self.num_layers)])
+        self.backward_lstm_layers = nn.ModuleList([LSTMCell(self.input_size, self.hidden_size) for _ in range(self.num_layers)])
 
-        self.reset_parameters()
+    def forward(self, x, h0=None, c0=None):
+        batch_size, seq_length, _ = x.shape
+        if h0 is None or c0 is None:
+            h0 = np.zeros((self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size))
+            c0 = np.zeros((self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size))
 
-    def reset_parameters(self):
-        for param in self.parameters():
-            if param.data.ndimension() >= 2:
-                nn.init.orthogonal_(param.data)
-            else:
-                nn.init.zeros_(param.data)
+        h_forward = h0[:self.num_layers]
+        c_forward = c0[:self.num_layers]
+        h_backward = h0[self.num_layers:] if self.bidirectional else None
+        c_backward = c0[self.num_layers:] if self.bidirectional else None
 
-    def forward(self, input_tensor, hx=None):
-        if self.batch_first:
-            input_tensor = input_tensor.transpose(0, 1)
+        output_forward = []
+        output_backward = []
 
-        seq_len, batch_size, _ = input_tensor.size()
+        for t in range(seq_length):
+            # Forward pass
+            for layer_idx in range(self.num_layers):
+                h_forward[layer_idx], c_forward[layer_idx] = self.forward_lstm_layers[layer_idx].forward(x[:, t, :].T, h_forward[layer_idx], c_forward[layer_idx])
 
-        if hx is None:
-            h_0 = input_tensor.new_zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, requires_grad=False)
-            c_0 = input_tensor.new_zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size, requires_grad=False)
+            output_forward.append(h_forward[-1])
+
+            # Backward pass
+            if self.bidirectional:
+                for layer_idx in range(self.num_layers):
+                    h_backward[layer_idx], c_backward[layer_idx] = self.backward_lstm_layers[layer_idx].forward(x[:, seq_length - 1 - t, :].T, h_backward[layer_idx], c_backward[layer_idx])
+
+                output_backward.append(h_backward[-1])
+
+        output_forward = np.stack(output_forward, axis=1)
+        if self.bidirectional:
+            output_backward = np.stack(output_backward[::-1], axis=1)
+            output = np.concatenate((output_forward, output_backward), axis=2)
         else:
-            h_0, c_0 = hx
-
-        h_n = input_tensor.new_zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
-        c_n = input_tensor.new_zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
-
-        
-
-        for layer in range(self.num_layers):
-            for direction in range(self.num_directions):
-                layer_input = input_tensor
-                h, c = h_0[layer * self.num_directions + direction], c_0[layer * self.num_directions + direction]
-
-                for t in range(seq_len):
-                    # Print the shapes of the tensors
-                    print("layer_input shape:", layer_input.shape)
-                    print("self.weight_ih shape:", self.weight_ih.shape)
-                    print("self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t() shape:", 
-                          self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t().shape)
-                    
-                    # Perform matrix multiplication with broadcasting
-                    gates = torch.matmul(layer_input, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
-                            torch.matmul(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
-                            self.bias_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)] + \
-                            self.bias_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)]
-
-                    # Apply a linear layer to transform the gates tensor
-                    gates = self.linear_layer(gates)
-                    
-                    f, i, c_tilde, o = torch.split(gates, self.hidden_size, dim=1)
-                    f, i, c_tilde, o = self.sigmoid(f), self.sigmoid(i), self.tanh(c_tilde), self.sigmoid(o)
-
-                    c = f * c + i * c_tilde
-                    h = o * self.tanh(c)
-
-                    layer_input = h
-                    h_n[layer * self.num_directions + direction, t] = h
-                    c_n[layer * self.num_directions + direction, t] = c
+            output = output_forward
 
         if self.batch_first:
-            h_n = h_n.transpose(0, 1)
-            c_n = c_n.transpose(0, 1)
+            output = output.transpose(1, 0, 2)
 
-        return (h_n, c_n)
-
-    def sigmoid(self, x):
-        return 1 / (1 + torch.exp(-x))
-
-    def tanh(self, x):
-        return torch.tanh(x)
+        return output, (h0, c0)

@@ -53,8 +53,11 @@ class LSTM(nn.Module):
                     print("self.weight_ih shape:", self.weight_ih.shape)
                     print("self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t() shape:", 
                           self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t().shape)
-                
-                    gates = torch.mm(layer_input, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
+                    
+                    # Reshape the layer_input tensor to have a 2D shape
+                    layer_input_2d = layer_input.view(layer_input.size(0) * layer_input.size(1), layer_input.size(2))
+                    
+                    gates = torch.mm(layer_input_2d, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             torch.mm(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             self.bias_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)] + \
                             self.bias_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)]

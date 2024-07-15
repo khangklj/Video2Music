@@ -138,7 +138,7 @@ class VideoRegression(nn.Module):
             out, _ = self.bigru(vf_concat)
             out = out.permute(1,0,2)
             out = self.bifc(out)
-        elif self.regModel == "lstm" or self.regModel == "custom_lstm":
+        elif self.regModel == "lstm":
             out, _ = self.lstm(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)
@@ -156,6 +156,10 @@ class VideoRegression(nn.Module):
         elif self.regModel == "version_2" or self.regModel == "version_3":
             vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
-            # out = self.bifc(out)        
+            # out = self.bifc(out)
+        elif self.regModel == "custom_lstm":
+            out, _ = self.model(vf_concat)
+            out = out.permute(1,0,2)
+            out = self.fc(out)
         return out
         

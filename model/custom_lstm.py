@@ -40,12 +40,20 @@ class LSTM(nn.Module):
         h_n = input_tensor.new_zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
         c_n = input_tensor.new_zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
 
+        
+
         for layer in range(self.num_layers):
             for direction in range(self.num_directions):
                 layer_input = input_tensor
                 h, c = h_0[layer * self.num_directions + direction], c_0[layer * self.num_directions + direction]
 
                 for t in range(seq_len):
+                    # Print the shapes of the tensors
+                    print("layer_input shape:", layer_input.shape)
+                    print("self.weight_ih shape:", self.weight_ih.shape)
+                    print("self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t() shape:", 
+                          self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t().shape)
+                
                     gates = torch.mm(layer_input, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             torch.mm(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             self.bias_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)] + \

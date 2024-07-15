@@ -54,12 +54,9 @@ class LSTM(nn.Module):
                     print("self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t() shape:", 
                           self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t().shape)
                     
-                    # Reshape the layer_input tensor to have a 2D shape
-                    batch_size, seq_length, input_size = layer_input.size()
-                    layer_input_2d = layer_input.reshape(batch_size * seq_length, input_size)
-                    
-                    gates = torch.mm(layer_input_2d, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
-                            torch.mm(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
+                    # Perform matrix multiplication with broadcasting
+                    gates = torch.matmul(layer_input, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
+                            torch.matmul(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             self.bias_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)] + \
                             self.bias_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)]
                     f, i, c_tilde, o = torch.split(gates, self.hidden_size, dim=1)

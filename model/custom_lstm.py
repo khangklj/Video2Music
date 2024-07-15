@@ -1,91 +1,63 @@
-import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
+import torch.nn.functional as F
 
 class LSTMCell(nn.Module):
-    def __init__(self, input_size, hidden_size):
+
+    def __init__(self, input_dim, hidden_dim):
         super(LSTMCell, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
+        self.input_dim, self.hidden_dim = input_dim, hidden_dim
+        self.forget_input, self.forget_hidden, self.forget_bias = self.create_gate_parameters()
+        self.input_input, self.input_hidden, self.input_bias = self.create_gate_parameters()
+        self.output_input, self.output_hidden, self.output_bias = self.create_gate_parameters()
+        self.cell_input, self.cell_hidden, self.cell_bias = self.create_gate_parameters()
 
-        # Initialize weights and biases
-        self.W_f = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
-        self.b_f = np.zeros((self.hidden_size, 1))
-        self.W_i = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
-        self.b_i = np.zeros((self.hidden_size, 1))
-        self.W_c = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
-        self.b_c = np.zeros((self.hidden_size, 1))
-        self.W_o = np.random.randn(self.hidden_size, self.input_size + self.hidden_size) / np.sqrt(self.input_size + self.hidden_size)
-        self.b_o = np.zeros((self.hidden_size, 1))
+    def create_gate_parameters(self):
+        input_weights = nn.Parameter(torch.zeros(self.input_dim, self.hidden_dim))
+        hidden_weights = nn.Parameter(torch.zeros(self.hidden_dim, self.hidden_dim))
+        nn.init.xavier_uniform_(input_weights)
+        nn.init.xavier_uniform_(hidden_weights)
+        bias = nn.Parameter(torch.zeros(self.hidden_dim))
+        return input_weights, hidden_weights, bias
 
-    def forward(self, x, h_prev, c_prev):
-        # Concatenate input and previous hidden state
-        concat = np.concatenate((x, h_prev), axis=1)
+    def forward(self, x, h, c):
+        # x has shape [batch_size, seq_len, input_size]
+        output_hiddens, output_cells = [], []
+        for i in range(x.shape[1]):
+            forget_gate = F.sigmoid((x[:, i] @ self.forget_input) + (h @ self.forget_hidden) + self.forget_bias)
+            input_gate = F.sigmoid((x[:, i] @ self.input_input) + (h @ self.input_hidden) + self.input_bias)
+            output_gate = F.sigmoid((x[:, i] @ self.output_input) + (h @ self.output_hidden) + self.output_bias)
+            input_activations = F.tanh((x[:, i] @ self.cell_input) + (h @ self.cell_hidden) + self.cell_bias)
+            c = (forget_gate * c) + (input_gate * input_activations)
+            h = F.tanh(c) * output_gate
+            output_hiddens.append(h.unsqueeze(1))
+            output_cells.append(c.unsqueeze(1))
+        return torch.concat(output_hiddens, dim=1), torch.concat(output_cells, dim=1)
 
-        # Calculate gates
-        f = self.sigmoid(np.dot(self.W_f, concat.T) + self.b_f)
-        i = self.sigmoid(np.dot(self.W_i, concat.T) + self.b_i)
-        c_tilde = np.tanh(np.dot(self.W_c, concat.T) + self.b_c)
-        o = self.sigmoid(np.dot(self.W_o, concat.T) + self.b_o)
 
-        # Update cell state and hidden state
-        c_next = f * c_prev + i * c_tilde
-        h_next = o * np.tanh(c_next)
-
-        return h_next.T, c_next.T
-
-    def sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
 
 class BiLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers=1, batch_first=False, dropout=0, bidirectional=True):
-        super(BiLSTM, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.batch_first = batch_first
-        self.dropout = dropout
-        self.bidirectional = bidirectional
 
-        self.forward_lstm_layers = nn.ModuleList([LSTMCell(self.input_size, self.hidden_size) for _ in range(self.num_layers)])
-        self.backward_lstm_layers = nn.ModuleList([LSTMCell(self.input_size, self.hidden_size) for _ in range(self.num_layers)])
+    def __init__(self, input_dim, hidden_dim, num_layers, dropout):
+        super(MultiLayerLSTM, self).__init__()
+        self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
+        self.layers = nn.ModuleList()
+        self.layers.append(LSTMCell(input_dim, hidden_dim))
+        for _ in range(num_layers - 1):
+            self.layers.append(LSTMCell(hidden_dim, hidden_dim))
+        self.dropout = nn.Dropout(dropout)
+        self.linear = nn.Linear(hidden_dim, input_dim)
+        nn.init.xavier_uniform_(self.linear.weight.data)
+        self.linear.bias.data.fill_(0.0)
 
-    def forward(self, x, h0=None, c0=None):
-        batch_size, seq_length, _ = x.shape
-        if h0 is None or c0 is None:
-            h0 = np.zeros((self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size))
-            c0 = np.zeros((self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size))
-
-        h_forward = h0[:self.num_layers]
-        c_forward = c0[:self.num_layers]
-        h_backward = h0[self.num_layers:] if self.bidirectional else None
-        c_backward = c0[self.num_layers:] if self.bidirectional else None
-
-        output_forward = []
-        output_backward = []
-
-        for t in range(seq_length):
-            # Forward pass
-            for layer_idx in range(self.num_layers):
-                h_forward[layer_idx], c_forward[layer_idx] = self.forward_lstm_layers[layer_idx].forward(x[:, t, :].T, h_forward[layer_idx], c_forward[layer_idx])
-
-            output_forward.append(h_forward[-1])
-
-            # Backward pass
-            if self.bidirectional:
-                for layer_idx in range(self.num_layers):
-                    h_backward[layer_idx], c_backward[layer_idx] = self.backward_lstm_layers[layer_idx].forward(x[:, seq_length - 1 - t, :].T, h_backward[layer_idx], c_backward[layer_idx])
-
-                output_backward.append(h_backward[-1])
-
-        output_forward = np.stack(output_forward, axis=1)
-        if self.bidirectional:
-            output_backward = np.stack(output_backward[::-1], axis=1)
-            output = np.concatenate((output_forward, output_backward), axis=2)
-        else:
-            output = output_forward
-
-        if self.batch_first:
-            output = output.transpose(1, 0, 2)
-
-        return output, (h0, c0)
+    def forward(self, x, h):
+        # x has shape [batch_size, seq_len, embed_dim]
+        # h is a tuple containing h and c, each have shape [layer_num, batch_size, hidden_dim]
+        hidden, cell = h
+        output_hidden, output_cell = self.layers[0](x, hidden[0], cell[0])
+        new_hidden, new_cell = [output_hidden[:, -1].unsqueeze(0)], [output_cell[:, -1].unsqueeze(0)]
+        for i in range(1, self.num_layers):
+            output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
+            new_hidden.append(output_hidden[:, -1].unsqueeze(0))
+            new_cell.append(output_cell[:, -1].unsqueeze(0))
+        return self.linear(self.dropout(output_hidden)), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))

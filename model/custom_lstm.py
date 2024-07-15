@@ -3,24 +3,22 @@ import torch.nn as nn
 import numpy as np
 
 class LSTMCell(nn.Module):
-    def __init__(self, input_size, hidden_size, bias=True):
+    def __init__(self, input_size, hidden_size):
         """
         Initialize the LSTM cell.
         
         Args:
             input_size (int): Size of input features
             hidden_size (int): Size of hidden state
-            bias (bool): Whether to use bias in linear layers
         """
         super(LSTMCell, self).__init__()
         self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
+        self.hidden_size = hidden_size        
         
         # Linear layer for input-to-hidden transformation
-        self.xh = nn.Linear(input_size, hidden_size * 4, bias=bias)
+        self.xh = nn.Linear(input_size, hidden_size * 4)
         # Linear layer for hidden-to-hidden transformation
-        self.hh = nn.Linear(hidden_size, hidden_size * 4, bias=bias)
+        self.hh = nn.Linear(hidden_size, hidden_size * 4)
         
         self.reset_parameters()
 
@@ -71,31 +69,29 @@ class LSTMCell(nn.Module):
         return (hy, cy)
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bias):
+    def __init__(self, input_size, hidden_size, num_layers):
         """
         Initialize the LSTM model.
         
         Args:
             input_size (int): Size of input features
             hidden_size (int): Size of hidden state
-            num_layers (int): Number of LSTM layers
-            bias (bool): Whether to use bias in LSTM cells            
+            num_layers (int): Number of LSTM layers              
         """
         super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.bias = bias
+        self.num_layers = num_layers        
 
         # Create a list to hold LSTM cells
         self.lstm_cell_list = nn.ModuleList()
         
         # First LSTM cell takes input_size as input
-        self.lstm_cell_list.append(LSTMCell(self.input_size, self.hidden_size, self.bias))
+        self.lstm_cell_list.append(LSTMCell(self.input_size, self.hidden_size))
         
         # Subsequent LSTM cells take hidden_size as input
         for l in range(1, self.num_layers):
-            self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size, self.bias))
+            self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size))
 
     def forward(self, input, hx=None):
         """

@@ -55,7 +55,8 @@ class LSTM(nn.Module):
                           self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t().shape)
                     
                     # Reshape the layer_input tensor to have a 2D shape
-                    layer_input_2d = layer_input.view(layer_input.size(0) * layer_input.size(1), layer_input.size(2))
+                    batch_size, seq_length, input_size = layer_input.size()
+                    layer_input_2d = layer_input.reshape(batch_size * seq_length, input_size)
                     
                     gates = torch.mm(layer_input_2d, self.weight_ih[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \
                             torch.mm(h, self.weight_hh[(direction * 4 * self.hidden_size):((direction + 1) * 4 * self.hidden_size)].t()) + \

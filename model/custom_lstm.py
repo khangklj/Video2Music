@@ -82,8 +82,6 @@ class LSTM(nn.Module):
         self.batch_size = batch_size
         self.bidirectional = bidirectional
 
-        print(f"Input size: {self.input_size}; Hidden size: {self.hidden_size}; Batch size: {self.batch_size}")
-
         # Create a list to hold LSTM cells
         self.lstm_cell_list = nn.ModuleList()
         
@@ -111,6 +109,7 @@ class LSTM(nn.Module):
             output: Output tensor of shape (sequence length, batch_size, output_size)
             (h_n, c_n): Final hidden state and cell state
         """
+        print(input.shape)
         seq_len, batch_size, _ = input.size()
 
         # Initialize hidden state and cell state if not provided

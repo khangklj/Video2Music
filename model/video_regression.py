@@ -129,7 +129,6 @@ class VideoRegression(nn.Module):
 
         vf_concat = vf_concat.permute(1,0,2)
         vf_concat = F.dropout(vf_concat, p=self.dropout, training=self.training)
-        print(vf_concat.shape)
 
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)

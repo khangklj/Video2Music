@@ -28,7 +28,7 @@ class LSTMCell(nn.Module):
         for w in self.parameters():
             w.data.uniform_(-std, std)
 
-    def forward(self, input, hx=None):
+    def forward(self, input, hx):
         """
         Forward pass of the LSTM cell.
         
@@ -40,11 +40,6 @@ class LSTMCell(nn.Module):
             hy: New hidden state tensor of shape (batch_size, hidden_size)
             cy: New cell state tensor of shape (batch_size, hidden_size)
         """
-        # Initialize hidden and cell states if not provided
-        if hx is None:
-            hx = input.new_zeros(input.size(0), self.hidden_size)
-            hx = (hx, hx)
-        
         # Unpack hidden and cell states
         hx, cx = hx
         
@@ -66,10 +61,10 @@ class LSTMCell(nn.Module):
         # Compute new hidden state
         hy = o_t * torch.tanh(cy)
         
-        return (hy, cy)
+        return hy, cy
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, batch_size):
+    def __init__(self, input_size, hidden_size, num_layers, batch_size=1, bidirectional=False):
         """
         Initialize the LSTM model.
         
@@ -77,13 +72,15 @@ class LSTM(nn.Module):
             input_size (int): Size of input features
             hidden_size (int): Size of hidden state
             num_layers (int): Number of LSTM layers
-            batch_size (int): Batch size
+            batch_size (int): Batch size (default: 1)
+            bidirectional (bool): Bidirectional LSTM (default: False)
         """
         super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.batch_size = batch_size
+        self.bidirectional = bidirectional
 
         # Create a list to hold LSTM cells
         self.lstm_cell_list = nn.ModuleList()
@@ -95,41 +92,47 @@ class LSTM(nn.Module):
         for l in range(1, self.num_layers):
             self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size))
 
+        # Create additional LSTM cells for bidirectional LSTM
+        if self.bidirectional:
+            for l in range(self.num_layers):
+                self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size))
+
     def forward(self, input, hx=None):
         """
         Forward pass of the LSTM.
         
         Args:
-            input: Input tensor of shape (batch_size, sequence length, input_size)
+            input: Input tensor of shape (sequence length, batch_size, input_size)
             hx: Initial hidden state and cell state (optional)
         
         Returns:
-            out: Output tensor of shape (batch_size, output_size)
+            output: Output tensor of shape (sequence length, batch_size, output_size)
+            (h_n, c_n): Final hidden state and cell state
         """
+        seq_len, batch_size, _ = input.size()
+
         # Initialize hidden state and cell state if not provided
         if hx is None:
             if torch.cuda.is_available():
-                h0 = torch.zeros(self.num_layers, self.batch_size, self.hidden_size).cuda()
+                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size).cuda()
+                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size).cuda()
             else:
-                h0 = torch.zeros(self.num_layers, self.batch_size, self.hidden_size)
+                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size)
+                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_size)
         else:
-            h0 = hx
+            h0, c0 = hx
 
-        outs = []
-        hidden = list()
-        
-        # Initialize hidden and cell states for each layer
-        for layer in range(self.num_layers):
-            hidden.append((h0[layer, :, :], h0[layer, :, :]))
+        output = []
+        hidden = [(h0[i], c0[i]) for i in range(self.num_layers * (2 if self.bidirectional else 1))]
 
         # Process each time step
-        for t in range(input.size(1)):
+        for t in range(seq_len):
             # Process each layer
             for layer in range(self.num_layers):
                 if layer == 0:
                     # First layer takes input from the sequence
                     hidden_l = self.lstm_cell_list[layer](
-                        input[:, t, :],
+                        input[t, :, :],
                         (hidden[layer][0], hidden[layer][1])
                     )
                 else:
@@ -139,11 +142,37 @@ class LSTM(nn.Module):
                         (hidden[layer][0], hidden[layer][1])
                     )
                 hidden[layer] = hidden_l
-            
+
             # Store the output of the last layer
-            outs.append(hidden_l[0])
+            output.append(hidden[-1][0])
 
-        # Take only the last time step
-        out = outs[-1].squeeze()               
+            # Process the backward direction if bidirectional
+            if self.bidirectional:
+                for layer in range(self.num_layers, len(hidden)):
+                    if layer == self.num_layers:
+                        # First backward layer takes input from the sequence
+                        hidden_l = self.lstm_cell_list[layer](
+                            input[seq_len - t - 1, :, :],
+                            (hidden[layer][0], hidden[layer][1])
+                        )
+                    else:
+                        # Subsequent backward layers take input from the previous layer
+                        hidden_l = self.lstm_cell_list[layer](
+                            hidden[layer - 1][0],
+                            (hidden[layer][0], hidden[layer][1])
+                        )
+                    hidden[layer] = hidden_l
+                    output.append(hidden[layer][0])
 
-        return out
+        # Reshape the output to match the expected format
+        output = torch.stack(output, dim=0)
+        if self.bidirectional:
+            output = output.view(seq_len, batch_size, self.hidden_size * 2)
+        else:
+            output = output.view(seq_len, batch_size, self.hidden_size)
+
+        # Compute the final hidden and cell states
+        h_n = torch.stack([hidden[i][0] for i in range(self.num_layers * (2 if self.bidirectional else 1))])
+        c_n = torch.stack([hidden[i][1] for i in range(self.num_layers * (2 if self.bidirectional else 1))])
+
+        return output, (h_n, c_n)

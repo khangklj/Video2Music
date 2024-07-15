@@ -8,7 +8,7 @@ from utilities.constants import *
 from utilities.device import get_device
 from datetime import datetime
 from .moe import *
-from .custom_lstm import BiLSTM
+from .custom_lstm import LSTM
 
 import torch.nn.functional as F
     
@@ -112,7 +112,7 @@ class VideoRegression(nn.Module):
                 *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
             )
         elif self.regModel == "custom_lstm":
-            self.model = BiLSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)

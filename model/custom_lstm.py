@@ -4,7 +4,7 @@ import numpy as np
 
 class LSTM(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, bias=True, bidirectional=False):
-        super(BiLSTM, self).__init__()
+        super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers

@@ -124,7 +124,10 @@ class LSTM(nn.Module):
                         (hidden[layer][0], hidden[layer][1])
                     )
                 hidden[layer] = hidden_l
-            outs.append(hidden_l[0].unsqueeze(1))
+            # Store the output of the last layer
+            outs.append(hidden_l[0])
 
-        out = torch.cat(outs, dim=1)
+        # Take only the last time step
+        out = outs[-1].squeeze() 
+        out = torch.cat(outs[-1].squeeze(), dim=1)
         return out

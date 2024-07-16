@@ -36,6 +36,11 @@ class LSTMCell(nn.Module):
         # Unpack hidden and cell states
         hx, cx = hx
 
+        # Print the shapes of the input and the weight matrices
+        print(f"Input shape: {input.shape}")
+        print(f"xh weight shape: {self.xh.weight.shape}")
+        print(f"hh weight shape: {self.hh.weight.shape}")
+
         # Compute gates
         if self.batch_first:
             gates = self.xh(input) + self.hh(hx)

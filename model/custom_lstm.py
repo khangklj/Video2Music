@@ -38,7 +38,7 @@ class LSTMCell(nn.Module):
 
         # Print the shapes of the input and the weight matrices
         print(f"Input shape: {input.shape}")
-        print(f"xh weight shape: {self.hx.weight.shape}")
+        print(f"xh weight shape: {hx.shape}")
 
         # Compute gates
         if self.batch_first:

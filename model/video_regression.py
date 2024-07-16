@@ -169,6 +169,6 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
             print(out.shape)
             out = out.permute(1,0,2)
-            out = self.bifc(out)
+            out = self.fc(out)
         return out
         

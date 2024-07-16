@@ -1,74 +1,63 @@
 import torch
-import torch.nn as nn
-import numpy as np
-
+from torch import nn
+import torch.nn.functional as F
 
 class LSTMCell(nn.Module):
-    def __init__(self, input_size, hidden_size, bias=True):
+
+    def __init__(self, input_dim, hidden_dim):
         super(LSTMCell, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.bias = bias
+        self.input_dim, self.hidden_dim = input_dim, hidden_dim
+        self.forget_input, self.forget_hidden, self.forget_bias = self.create_gate_parameters()
+        self.input_input, self.input_hidden, self.input_bias = self.create_gate_parameters()
+        self.output_input, self.output_hidden, self.output_bias = self.create_gate_parameters()
+        self.cell_input, self.cell_hidden, self.cell_bias = self.create_gate_parameters()
 
-        self.i2h = nn.Linear(input_size, 4 * hidden_size, bias=bias)
-        self.h2h = nn.Linear(hidden_size, 4 * hidden_size, bias=bias)
+    def create_gate_parameters(self):
+        input_weights = nn.Parameter(torch.zeros(self.input_dim, self.hidden_dim))
+        hidden_weights = nn.Parameter(torch.zeros(self.hidden_dim, self.hidden_dim))
+        nn.init.xavier_uniform_(input_weights)
+        nn.init.xavier_uniform_(hidden_weights)
+        bias = nn.Parameter(torch.zeros(self.hidden_dim))
+        return input_weights, hidden_weights, bias
 
-        self.reset_parameters()
+    def forward(self, x, h, c):
+        # x has shape [batch_size, seq_len, input_size]
+        output_hiddens, output_cells = [], []
+        for i in range(x.shape[1]):
+            forget_gate = F.sigmoid((x[:, i] @ self.forget_input) + (h @ self.forget_hidden) + self.forget_bias)
+            input_gate = F.sigmoid((x[:, i] @ self.input_input) + (h @ self.input_hidden) + self.input_bias)
+            output_gate = F.sigmoid((x[:, i] @ self.output_input) + (h @ self.output_hidden) + self.output_bias)
+            input_activations = F.tanh((x[:, i] @ self.cell_input) + (h @ self.cell_hidden) + self.cell_bias)
+            c = (forget_gate * c) + (input_gate * input_activations)
+            h = F.tanh(c) * output_gate
+            output_hiddens.append(h.unsqueeze(1))
+            output_cells.append(c.unsqueeze(1))
+        return torch.concat(output_hiddens, dim=1), torch.concat(output_cells, dim=1)
 
-    def reset_parameters(self):
-        std = 1.0 / np.sqrt(self.hidden_size)
-        for w in self.parameters():
-            w.data.uniform_(-std, std)
 
-    def forward(self, input, hidden):
-        hx, cx = hidden
-        gates = self.i2h(input) + self.h2h(hx)
-
-        input_gate, forget_gate, cell_gate, output_gate = gates.chunk(4, 1)
-
-        i_t = torch.sigmoid(input_gate)
-        f_t = torch.sigmoid(forget_gate)
-        g_t = torch.tanh(cell_gate)
-        o_t = torch.sigmoid(output_gate)
-
-        c_t = f_t * cx + i_t * g_t
-        h_t = o_t * torch.tanh(c_t)
-
-        return (h_t, c_t)
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bias=True):
+
+    def __init__(self, input_dim, hidden_dim, num_layers, dropout):
         super(LSTM, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.bias = bias
+        self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
+        self.layers = nn.ModuleList()
+        self.layers.append(LSTMCell(input_dim, hidden_dim))
+        for _ in range(num_layers - 1):
+            self.layers.append(LSTMCell(hidden_dim, hidden_dim))
+        self.dropout = nn.Dropout(dropout)
+        self.linear = nn.Linear(hidden_dim, input_dim)
+        nn.init.xavier_uniform_(self.linear.weight.data)
+        self.linear.bias.data.fill_(0.0)
 
-        self.lstm_cells = nn.ModuleList([
-            LSTMCell(self.input_size if i == 0 else self.hidden_size, self.hidden_size, self.bias)
-            for i in range(self.num_layers)
-        ])
-
-    def init_hidden(self, batch_size, device):
-        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size, device=device)
-        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size, device=device)
-        return (h0, c0)
-
-    def forward(self, input, hx=None):
-        batch_size, seq_length, _ = input.shape
-        if hx is None:
-            hx = self.init_hidden(batch_size, input.device)
-
-        outputs = []
-        for t in range(seq_length):
-            hidden = hx
-            for layer in range(self.num_layers):
-                hidden = self.lstm_cells[layer](input[:, t, :], hidden)
-            outputs.append(hidden[0].unsqueeze(1))
-            hx = (
-                torch.stack([h[0] for h in hidden], dim=0),
-                torch.stack([h[1] for h in hidden], dim=0)
-            )
-
-        output = torch.cat(outputs, dim=1)
-        return output
+    def forward(self, x, h):
+        # x has shape [batch_size, seq_len, embed_dim]
+        # h is a tuple containing h and c, each have shape [layer_num, batch_size, hidden_dim]
+        hidden, cell = h
+        output_hidden, output_cell = self.layers[0](x, hidden[0], cell[0])
+        new_hidden, new_cell = [output_hidden[:, -1].unsqueeze(0)], [output_cell[:, -1].unsqueeze(0)]
+        for i in range(1, self.num_layers):
+            output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
+            new_hidden.append(output_hidden[:, -1].unsqueeze(0))
+            new_cell.append(output_cell[:, -1].unsqueeze(0))
+        return self.linear(self.dropout(output_hidden)), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))

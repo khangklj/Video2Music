@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bias=True, bidirectional=False):
-        super(LSTM, self).__init__()
+class BiLSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, bias=True, bidirectional=True):
+        super(BiLSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -61,11 +61,12 @@ class LSTM(nn.Module):
                     # Subsequent layers take input from the previous layer
                     x_f = layer_outputs_f[-1]
                     x_b = layer_outputs_b[-1]
-		
-		# Compute gates for forward and backward LSTMs
-		gates_f = (torch.matmul(x_f, self.weight_ih_f.t()) + torch.matmul(h_0_f[layer], self.weight_hh_f.t()))
-		gates_b = (torch.matmul(x_b, self.weight_ih_b.t()) + torch.matmul(h_0_b[layer], self.weight_hh_b.t()))
-		    
+
+                # Compute gates for forward and backward LSTMs
+                gates_f = (torch.matmul(x_f, self.weight_ih_f.t()) +
+                           torch.matmul(h_0_f[layer], self.weight_hh_f.t()))
+                gates_b = (torch.matmul(x_b, self.weight_ih_b.t()) +
+                           torch.matmul(h_0_b[layer], self.weight_hh_b.t()))
                 if self.bias:
                     gates_f += self.bias_ih_f + self.bias_hh_f
                     gates_b += self.bias_ih_b + self.bias_hh_b

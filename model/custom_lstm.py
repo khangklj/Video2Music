@@ -51,7 +51,7 @@ class LSTMCell(nn.Module):
         hx, cx = hx
         
         # Compute gates
-        gates = self.xh(input.t()) + self.hh(hx)
+        gates = self.xh(input) + self.hh(hx)
         
         # Split gates into input, forget, cell, and output gates
         input_gate, forget_gate, cell_gate, output_gate = gates.chunk(4, 1)

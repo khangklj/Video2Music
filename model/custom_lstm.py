@@ -71,42 +71,32 @@ class LSTMCell(nn.Module):
         return (hy, cy)
 
 class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bias=True):
-        """
-        Initialize the LSTM model.
-        
-        Args:
-            input_size (int): Size of input features
-            hidden_size (int): Size of hidden state
-            num_layers (int): Number of LSTM layers
-            bias (bool): Whether to use bias in LSTM cells            
-        """
+    def __init__(self, input_size, hidden_size, num_layers, bias=True, bidirectional=False, batch_first=False):
         super(LSTM, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.bias = bias
+        self.bidirectional = bidirectional
+        self.batch_first = batch_first
 
-        # Create a list to hold LSTM cells
-        self.lstm_cell_list = nn.ModuleList()
-        
-        # First LSTM cell takes input_size as input
-        self.lstm_cell_list.append(LSTMCell(self.input_size, self.hidden_size, self.bias))
-        
-        # Subsequent LSTM cells take hidden_size as input
-        for l in range(1, self.num_layers):
-            self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size, self.bias))
-        
+        # Create forward and backward LSTM cells
+        self.forward_lstm_cell_list = nn.ModuleList([LSTMCell(input_size if i == 0 else hidden_size, hidden_size, bias) for i in range(num_layers)])
+        if bidirectional:
+            self.backward_lstm_cell_list = nn.ModuleList([LSTMCell(input_size if i == 0 else hidden_size, hidden_size, bias) for i in range(num_layers)])
+
     def forward(self, input, hx=None):
         """
         Forward pass of the LSTM.
         
         Args:
-            input: Input tensor of shape (batch_size, sequence length, input_size)
+            input: Input tensor of shape (sequence length, batch_size, input_size) if batch_first=False
+                   or (batch_size, sequence length, input_size) if batch_first=True
             hx: Initial hidden state and cell state (optional)
         
         Returns:
-            out: Output tensor of shape (batch_size, sequence length, output_size)
+            out: Output tensor of shape (sequence length, batch_size, output_size) if batch_first=False
+                 or (batch_size, sequence length, output_size) if batch_first=True
             (h_n, c_n): Final hidden state and cell state
                 h_n: tensor of shape (num_layers * (2 if bidirectional else 1), batch_size, hidden_size)
                 c_n: tensor of shape (num_layers * (2 if bidirectional else 1), batch_size, hidden_size)
@@ -114,11 +104,11 @@ class LSTM(nn.Module):
         # Initialize hidden state and cell state if not provided
         if hx is None:
             if torch.cuda.is_available():
-                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size).cuda()
-                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size).cuda()
+                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(1 if self.batch_first else 0), self.hidden_size).cuda()
+                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(1 if self.batch_first else 0), self.hidden_size).cuda()
             else:
-                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size)
-                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size)
+                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(1 if self.batch_first else 0), self.hidden_size)
+                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(1 if self.batch_first else 0), self.hidden_size)
         else:
             h0, c0 = hx
 
@@ -137,13 +127,14 @@ class LSTM(nn.Module):
                 backward_cell.append(c0[layer + self.num_layers, :, :])
 
         # Process each time step
-        for t in range(input.size(1)):
+        sequence_length = input.size(0 if self.batch_first else 1)
+        for t in range(sequence_length):
             # Process each forward layer
             for layer in range(self.num_layers):
                 if layer == 0:
                     # First layer takes input from the sequence
                     forward_hidden_l, forward_cell_l = self.forward_lstm_cell_list[layer](
-                        input[:, t, :],
+                        input[t, :, :] if self.batch_first else input[t, :, :],
                         (forward_hidden[layer], forward_cell[layer])
                     )
                 else:
@@ -161,7 +152,7 @@ class LSTM(nn.Module):
                     if layer == 0:
                         # First layer takes input from the sequence
                         backward_hidden_l, backward_cell_l = self.backward_lstm_cell_list[layer](
-                            input[:, input.size(1) - 1 - t, :],
+                            input[sequence_length - 1 - t, :, :] if self.batch_first else input[sequence_length - 1 - t, :, :],
                             (backward_hidden[layer], backward_cell[layer])
                         )
                     else:
@@ -180,7 +171,7 @@ class LSTM(nn.Module):
                 outs.append(forward_hidden[-1])
 
         # Stack the outputs and return
-        out = torch.stack(outs, dim=1)
+        out = torch.stack(outs, dim=0 if self.batch_first else 1)
 
         # Collect the final hidden and cell states
         h_n = torch.stack(forward_hidden + backward_hidden, dim=0)

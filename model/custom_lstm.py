@@ -44,14 +44,14 @@ class LSTMCell(nn.Module):
         """
         # Initialize hidden and cell states if not provided
         if hx is None:
-            hx = input.new_zeros(input.size(0), self.hidden_size)
+            hx = input.new_zeros(input.size(1), self.hidden_size)
             hx = (hx, hx)
         
         # Unpack hidden and cell states
         hx, cx = hx
         
         # Compute gates
-        gates = self.xh(input) + self.hh(hx)
+        gates = self.xh(input.t()) + self.hh(hx)
         
         # Split gates into input, forget, cell, and output gates
         input_gate, forget_gate, cell_gate, output_gate = gates.chunk(4, 1)

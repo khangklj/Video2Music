@@ -2,31 +2,26 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bias=True, bidirectional=True):
-        super(LSTM, self).__init__()
+class LSTMCell(nn.Module):
+    def __init__(self, input_size, hidden_size, bias=True):
+        """
+        Initialize the LSTM cell.
+        
+        Args:
+            input_size (int): Size of input features
+            hidden_size (int): Size of hidden state
+            bias (bool): Whether to use bias in linear layers
+        """
+        super(LSTMCell, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
-        self.num_layers = num_layers
         self.bias = bias
-        self.bidirectional = bidirectional
-
-        # Weight matrices for input-to-hidden and hidden-to-hidden transformations
-        self.weight_ih_f = nn.Parameter(torch.Tensor(4 * hidden_size, input_size))
-        self.weight_hh_f = nn.Parameter(torch.Tensor(4 * hidden_size, hidden_size))
-        self.weight_ih_b = nn.Parameter(torch.Tensor(4 * hidden_size, input_size))
-        self.weight_hh_b = nn.Parameter(torch.Tensor(4 * hidden_size, hidden_size))
-        if bias:
-            self.bias_ih_f = nn.Parameter(torch.Tensor(4 * hidden_size))
-            self.bias_hh_f = nn.Parameter(torch.Tensor(4 * hidden_size))
-            self.bias_ih_b = nn.Parameter(torch.Tensor(4 * hidden_size))
-            self.bias_hh_b = nn.Parameter(torch.Tensor(4 * hidden_size))
-        else:
-            self.register_parameter('bias_ih_f', None)
-            self.register_parameter('bias_hh_f', None)
-            self.register_parameter('bias_ih_b', None)
-            self.register_parameter('bias_hh_b', None)
-
+        
+        # Linear layer for input-to-hidden transformation
+        self.xh = nn.Linear(input_size, hidden_size * 4, bias=bias)
+        # Linear layer for hidden-to-hidden transformation
+        self.hh = nn.Linear(hidden_size, hidden_size * 4, bias=bias)
+        
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -36,89 +31,159 @@ class LSTM(nn.Module):
             w.data.uniform_(-std, std)
 
     def forward(self, input, hx=None):
-        seq_len, batch_size, _ = input.size()
-
+        """
+        Forward pass of the LSTM cell.
+        
+        Args:
+            input: Input tensor of shape (batch_size, input_size)
+            hx: Tuple of (hidden state, cell state), each of shape (batch_size, hidden_size)
+        
+        Returns:
+            hy: New hidden state tensor of shape (batch_size, hidden_size)
+            cy: New cell state tensor of shape (batch_size, hidden_size)
+        """
         # Initialize hidden and cell states if not provided
         if hx is None:
-            hx = input.new_zeros(2 * self.num_layers, batch_size, self.hidden_size)
+            hx = input.new_zeros(input.size(0), self.hidden_size)
             hx = (hx, hx)
-
+        
         # Unpack hidden and cell states
-        h_0_f, c_0_f = hx[0].split(self.num_layers, dim=0)
-        h_0_b, c_0_b = hx[1].split(self.num_layers, dim=0)
+        hx, cx = hx
+        
+        # Compute gates
+        gates = self.xh(input) + self.hh(hx)
+        
+        # Split gates into input, forget, cell, and output gates
+        input_gate, forget_gate, cell_gate, output_gate = gates.chunk(4, 1)
+        
+        # Apply activation functions to gates
+        i_t = torch.sigmoid(input_gate)
+        f_t = torch.sigmoid(forget_gate)
+        g_t = torch.tanh(cell_gate)
+        o_t = torch.sigmoid(output_gate)
+        
+        # Update cell state
+        cy = cx * f_t + i_t * g_t
+        
+        # Compute new hidden state
+        hy = o_t * torch.tanh(cy)
+        
+        return (hy, cy)
 
-        outputs_f = []
-        outputs_b = []
-        for t in range(seq_len):
-            layer_outputs_f = []
-            layer_outputs_b = []
+class LSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, bias=True):
+        """
+        Initialize the LSTM model.
+        
+        Args:
+            input_size (int): Size of input features
+            hidden_size (int): Size of hidden state
+            num_layers (int): Number of LSTM layers
+            bias (bool): Whether to use bias in LSTM cells            
+        """
+        super(LSTM, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bias = bias
+
+        # Create a list to hold LSTM cells
+        self.lstm_cell_list = nn.ModuleList()
+        
+        # First LSTM cell takes input_size as input
+        self.lstm_cell_list.append(LSTMCell(self.input_size, self.hidden_size, self.bias))
+        
+        # Subsequent LSTM cells take hidden_size as input
+        for l in range(1, self.num_layers):
+            self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size, self.bias))
+        
+    def forward(self, input, hx=None):
+        """
+        Forward pass of the LSTM.
+        
+        Args:
+            input: Input tensor of shape (batch_size, sequence length, input_size)
+            hx: Initial hidden state and cell state (optional)
+        
+        Returns:
+            out: Output tensor of shape (batch_size, sequence length, output_size)
+            (h_n, c_n): Final hidden state and cell state
+                h_n: tensor of shape (num_layers * (2 if bidirectional else 1), batch_size, hidden_size)
+                c_n: tensor of shape (num_layers * (2 if bidirectional else 1), batch_size, hidden_size)
+        """
+        # Initialize hidden state and cell state if not provided
+        if hx is None:
+            if torch.cuda.is_available():
+                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size).cuda()
+                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size).cuda()
+            else:
+                h0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size)
+                c0 = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), input.size(0), self.hidden_size)
+        else:
+            h0, c0 = hx
+
+        outs = []
+        forward_hidden = list()
+        forward_cell = list()
+        backward_hidden = list()
+        backward_cell = list()
+
+        # Initialize hidden and cell states for each layer
+        for layer in range(self.num_layers):
+            forward_hidden.append(h0[layer, :, :])
+            forward_cell.append(c0[layer, :, :])
+            if self.bidirectional:
+                backward_hidden.append(h0[layer + self.num_layers, :, :])
+                backward_cell.append(c0[layer + self.num_layers, :, :])
+
+        # Process each time step
+        for t in range(input.size(1)):
+            # Process each forward layer
             for layer in range(self.num_layers):
                 if layer == 0:
                     # First layer takes input from the sequence
-                    x_f = input[t, :, :]
-                    x_b = input[seq_len - 1 - t, :, :]
+                    forward_hidden_l, forward_cell_l = self.forward_lstm_cell_list[layer](
+                        input[:, t, :],
+                        (forward_hidden[layer], forward_cell[layer])
+                    )
                 else:
                     # Subsequent layers take input from the previous layer
-                    x_f = layer_outputs_f[-1]
-                    x_b = layer_outputs_b[-1]
+                    forward_hidden_l, forward_cell_l = self.forward_lstm_cell_list[layer](
+                        forward_hidden[layer - 1],
+                        (forward_hidden[layer], forward_cell[layer])
+                    )
+                forward_hidden[layer] = forward_hidden_l
+                forward_cell[layer] = forward_cell_l
 
-                # Compute gates for forward and backward LSTMs
-                # gates_f = (torch.matmul(x_f, self.weight_ih_f.t()) +
-                #            torch.matmul(h_0_f[layer], self.weight_hh_f.t()))
-                # gates_b = (torch.matmul(x_b, self.weight_ih_b.t()) +
-                #            torch.matmul(h_0_b[layer], self.weight_hh_b.t()))
+            # Process each backward layer if bidirectional
+            if self.bidirectional:
+                for layer in range(self.num_layers):
+                    if layer == 0:
+                        # First layer takes input from the sequence
+                        backward_hidden_l, backward_cell_l = self.backward_lstm_cell_list[layer](
+                            input[:, input.size(1) - 1 - t, :],
+                            (backward_hidden[layer], backward_cell[layer])
+                        )
+                    else:
+                        # Subsequent layers take input from the previous layer
+                        backward_hidden_l, backward_cell_l = self.backward_lstm_cell_list[layer](
+                            backward_hidden[layer - 1],
+                            (backward_hidden[layer], backward_cell[layer])
+                        )
+                    backward_hidden[layer] = backward_hidden_l
+                    backward_cell[layer] = backward_cell_l
 
-                gates_f = torch.matmul(x_f, self.weight_ih_f.T) + \
-                          torch.matmul(h_0_f[layer], self.weight_hh_f.T)                
-                gates_b = torch.matmul(x_b, self.weight_ih_b.T) + \
-                          torch.matmul(h_0_b[layer], self.weight_hh_b.T)
-                if self.bias:
-                    gates_f += self.bias_ih_f + self.bias_hh_f
-                    gates_b += self.bias_ih_b + self.bias_hh_b
+            # Concatenate forward and backward outputs
+            if self.bidirectional:
+                outs.append(torch.cat((forward_hidden[-1], backward_hidden[-1]), dim=1))
+            else:
+                outs.append(forward_hidden[-1])
 
-                # Split gates into input, forget, cell, and output gates
-                i_t_f, f_t_f, g_t_f, o_t_f = gates_f.chunk(4, 1)
-                i_t_b, f_t_b, g_t_b, o_t_b = gates_b.chunk(4, 1)
+        # Stack the outputs and return
+        out = torch.stack(outs, dim=1)
 
-                # Apply activation functions to gates
-                i_t_f = torch.sigmoid(i_t_f)
-                f_t_f = torch.sigmoid(f_t_f)
-                g_t_f = torch.tanh(g_t_f)
-                o_t_f = torch.sigmoid(o_t_f)
-                i_t_b = torch.sigmoid(i_t_b)
-                f_t_b = torch.sigmoid(f_t_b)
-                g_t_b = torch.tanh(g_t_b)
-                o_t_b = torch.sigmoid(o_t_b)
+        # Collect the final hidden and cell states
+        h_n = torch.stack(forward_hidden + backward_hidden, dim=0)
+        c_n = torch.stack(forward_cell + backward_cell, dim=0)
 
-                # Update cell states
-                c_t_f = f_t_f * c_0_f[layer] + i_t_f * g_t_f
-                c_t_b = f_t_b * c_0_b[layer] + i_t_b * g_t_b
-
-                # Compute new hidden states
-                h_t_f = o_t_f * torch.tanh(c_t_f)
-                h_t_b = o_t_b * torch.tanh(c_t_b)
-
-                # Update hidden and cell states
-                h_0_f[layer] = h_t_f
-                c_0_f[layer] = c_t_f
-                h_0_b[layer] = h_t_b
-                c_0_b[layer] = c_t_b
-
-                layer_outputs_f.append(h_t_f)
-                layer_outputs_b.append(h_t_b)
-
-            # Append the last layer's output to the list of outputs
-            outputs_f.append(layer_outputs_f[-1])
-            outputs_b.append(layer_outputs_b[-1])
-
-        # Stack the outputs to match the desired shape
-        output_f = torch.stack(outputs_f, dim=0)
-        output_b = torch.stack(outputs_b[::-1], dim=0)
-
-        if self.bidirectional:
-            output = torch.cat((output_f, output_b), dim=-1)
-        else:
-            output = output_f
-
-        return output, (torch.cat((h_0_f, h_0_b), dim=0),
-                        torch.cat((c_0_f, c_0_b), dim=0))
+        return out, (h_n, c_n)

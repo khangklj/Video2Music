@@ -18,9 +18,9 @@ class LSTMCell(nn.Module):
         self.bias = bias
         
         # Linear layer for input-to-hidden transformation
-        self.xh = nn.Linear(input_size, hidden_size * 4, bias=bias)
+        self.xh = nn.Linear(input_size, 4 * hidden_size, bias=bias)
         # Linear layer for hidden-to-hidden transformation
-        self.hh = nn.Linear(hidden_size, hidden_size * 4, bias=bias)
+        self.hh = nn.Linear(hidden_size, 4 * hidden_size, bias=bias)
         
         self.reset_parameters()
 

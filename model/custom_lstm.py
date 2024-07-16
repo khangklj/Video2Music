@@ -63,8 +63,11 @@ class LSTM(nn.Module):
                     x_b = layer_outputs_b[-1]
 
                 # Compute gates for forward and backward LSTMs
-		gates_f = torch.matmul(x_f, self.weight_ih_f.T) + torch.matmul(h_0_f[layer], self.weight_hh_f.T)		
-		gates_b = torch.matmul(x_b, self.weight_ih_b.T) + torch.matmul(h_0_b[layer], self.weight_hh_b.T)
+		gates_f = torch.matmul(x_f, self.weight_ih_f.T) + \
+		          torch.matmul(h_0_f[layer], self.weight_hh_f.T)
+		
+		gates_b = torch.matmul(x_b, self.weight_ih_b.T) + \
+		          torch.matmul(h_0_b[layer], self.weight_hh_b.T)
 		    
                 if self.bias:
                     gates_f += self.bias_ih_f + self.bias_hh_f

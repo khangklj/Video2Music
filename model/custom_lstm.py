@@ -98,17 +98,6 @@ class LSTM(nn.Module):
             self.lstm_cell_list.append(LSTMCell(self.hidden_size, self.hidden_size, self.bias))
         
     def forward(self, input, hx=None):
-        """
-        Forward pass of the LSTM.
-        
-        Args:
-            input: Input tensor of shape (batch_size, sequence length, input_size)
-            hx: Initial hidden state and cell state (optional)
-        
-        Returns:
-            out: Output tensor of shape (batch_size, output_size)
-        """
-        # Initialize hidden state and cell state if not provided
         if hx is None:
             if torch.cuda.is_available():
                 h0 = torch.zeros(self.num_layers, input.size(0), self.hidden_size).cuda()
@@ -119,33 +108,23 @@ class LSTM(nn.Module):
 
         outs = []
         hidden = list()
-        
-        # Initialize hidden and cell states for each layer
         for layer in range(self.num_layers):
             hidden.append((h0[layer, :, :], h0[layer, :, :]))
 
-        # Process each time step
         for t in range(input.size(1)):
-            # Process each layer
             for layer in range(self.num_layers):
                 if layer == 0:
-                    # First layer takes input from the sequence
                     hidden_l = self.lstm_cell_list[layer](
                         input[:, t, :],
                         (hidden[layer][0], hidden[layer][1])
                     )
                 else:
-                    # Subsequent layers take input from the previous layer
                     hidden_l = self.lstm_cell_list[layer](
                         hidden[layer - 1][0],
                         (hidden[layer][0], hidden[layer][1])
                     )
                 hidden[layer] = hidden_l
-            
-            # Store the output of the last layer
-            outs.append(hidden_l[0])
+            outs.append(hidden_l[0].unsqueeze(1))
 
-        # Take only the last time step
-        out = outs[-1].squeeze()       
-        
+        out = torch.cat(outs, dim=1)
         return out

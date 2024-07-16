@@ -15,52 +15,41 @@ class LSTMCell(nn.Module):
     def forward(self, input, hx=None):
         """
         Forward pass of the LSTM cell.
-
+    
         Args:
-            input: Input tensor of shape (seq_len, batch_size, input_size) if batch_first is False,
-                   or (batch_size, seq_len, input_size) if batch_first is True.
+            input: Input tensor of shape (batch_size, input_size)
             hx: Tuple of (hidden state, cell state), each of shape (batch_size, hidden_size)
-
+    
         Returns:
             hy: New hidden state tensor of shape (batch_size, hidden_size)
             cy: New cell state tensor of shape (batch_size, hidden_size)
         """
         # Initialize hidden and cell states if not provided
         if hx is None:
-            if self.batch_first:
-                hx = input.new_zeros(input.size(0), self.hidden_size)
-            else:
-                hx = input.new_zeros(input.size(1), self.hidden_size)
+            hx = input.new_zeros(input.size(0), self.hidden_size)
             hx = (hx, hx)
-
+    
         # Unpack hidden and cell states
         hx, cx = hx
-
-        # Print the shapes of the input and the weight matrices
-        print(f"Input shape: {input.shape}")
-        print(f"xh weight shape: {hx.shape}")
-
+    
         # Compute gates
-        if self.batch_first:
-            gates = self.xh(input) + self.hh(hx)
-        else:
-            gates = self.xh(input.transpose(0, 1)) + self.hh(hx)
-
+        gates = self.xh(input) + self.hh(hx)
+    
         # Split gates into input, forget, cell, and output gates
         input_gate, forget_gate, cell_gate, output_gate = gates.chunk(4, 1)
-
+    
         # Apply activation functions to gates
         i_t = torch.sigmoid(input_gate)
         f_t = torch.sigmoid(forget_gate)
         g_t = torch.tanh(cell_gate)
         o_t = torch.sigmoid(output_gate)
-
+    
         # Update cell state
         cy = cx * f_t + i_t * g_t
-
+    
         # Compute new hidden state
         hy = o_t * torch.tanh(cy)
-
+    
         return (hy, cy)
 
 class LSTM(nn.Module):

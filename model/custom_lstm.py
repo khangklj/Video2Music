@@ -64,4 +64,4 @@ class LSTM(nn.Module):
             output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
             new_hidden.append(output_hidden[:, -1].unsqueeze(0))
             new_cell.append(output_cell[:, -1].unsqueeze(0))
-        return self.linear(self.dropout(output_hidden)), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))
+        return self.dropout(output_hidden), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))

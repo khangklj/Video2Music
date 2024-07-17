@@ -67,4 +67,4 @@ class LSTM(nn.Module):
         output_hidden = self.dropout(output_hidden)
         if self.bidirectional:
             output_hidden = torch.cat((output_hidden[:, ::2], output_hidden[:, 1::2]), dim=-1)
-        return self.dropout(self.linear(output_hidden)), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))
+        return self.dropout(output_hidden), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))

@@ -21,15 +21,19 @@ class LSTMCell(nn.Module):
         return input_weights, hidden_weights, bias
 
     def forward(self, x, h, c):
-        # x has shape [batch_size, input_size]
-        # h and c each has shape [batch_size, hidden_dim]
-        forget_gate = F.sigmoid((x @ self.forget_input) + (h @ self.forget_hidden) + self.forget_bias)
-        input_gate = F.sigmoid((x @ self.input_input) + (h @ self.input_hidden) + self.input_bias)
-        output_gate = F.sigmoid((x @ self.output_input) + (h @ self.output_hidden) + self.output_bias)
-        input_activations = F.tanh((x @ self.cell_input) + (h @ self.cell_hidden) + self.cell_bias)
-        c = (forget_gate * c) + (input_gate * input_activations)
-        h = F.tanh(c) * output_gate
-        return h, c
+        # x has shape [batch_size, seq_len, input_size]
+        # h and c each has shape [layer_num, batch_size, hidden_dim]
+        output_hiddens, output_cells = [], []
+        for i in range(x.shape[1]):
+            forget_gate = F.sigmoid((x[:, i] @ self.forget_input) + (h @ self.forget_hidden) + self.forget_bias)
+            input_gate = F.sigmoid((x[:, i] @ self.input_input) + (h @ self.input_hidden) + self.input_bias)
+            output_gate = F.sigmoid((x[:, i] @ self.output_input) + (h @ self.output_hidden) + self.output_bias)
+            input_activations = F.tanh((x[:, i] @ self.cell_input) + (h @ self.cell_hidden) + self.cell_bias)
+            c = (forget_gate * c) + (input_gate * input_activations)
+            h = F.tanh(c) * output_gate
+            output_hiddens.append(h.unsqueeze(1))
+            output_cells.append(c.unsqueeze(1))
+        return torch.concat(output_hiddens, dim=1), torch.concat(output_cells, dim=1)
 
 class LSTM(nn.Module):
     def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.5):

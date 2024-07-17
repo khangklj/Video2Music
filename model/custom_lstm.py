@@ -55,7 +55,7 @@ class LSTM(nn.Module):
         if h is None:
             if torch.cuda.is_available():
                 h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda(), torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda())
-            else
+            else:
                 h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim), torch.zeros(self.num_layers, x.size(0), self.hidden_dim))
         hidden, cell = h
         output_hidden, output_cell = self.layers[0](x, hidden[0], cell[0])

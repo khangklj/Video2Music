@@ -114,7 +114,7 @@ class VideoRegression(nn.Module):
         elif self.regModel == "custom_lstm":
             self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
         elif self.regModel == "custom_bilstm":
-            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=False)
+            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
             # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)

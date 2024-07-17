@@ -3,7 +3,6 @@ from torch import nn
 import torch.nn.functional as F
 
 class LSTMCell(nn.Module):
-
     def __init__(self, input_dim, hidden_dim):
         super(LSTMCell, self).__init__()
         self.input_dim, self.hidden_dim = input_dim, hidden_dim
@@ -36,27 +35,28 @@ class LSTMCell(nn.Module):
         return torch.concat(output_hiddens, dim=1), torch.concat(output_cells, dim=1)
 
 class LSTM(nn.Module):
-
-    def __init__(self, input_dim, hidden_dim, num_layers, dropout=0.0):
+    def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.5):
         super(LSTM, self).__init__()
-        self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
+        self.input_dim, self.hidden_dim, self.num_layers, self.bidirectional = input_dim, hidden_dim, num_layers, bidirectional
         self.layers = nn.ModuleList()
         self.layers.append(LSTMCell(input_dim, hidden_dim))
         for _ in range(num_layers - 1):
             self.layers.append(LSTMCell(hidden_dim, hidden_dim))
         self.dropout = nn.Dropout(dropout)
-        self.linear = nn.Linear(hidden_dim, input_dim)
+        self.linear = nn.Linear(hidden_dim * (2 if self.bidirectional else 1), input_dim)
         nn.init.xavier_uniform_(self.linear.weight.data)
         self.linear.bias.data.fill_(0.0)
 
     def forward(self, x, h=None):
         # x has shape [batch_size, seq_len, embed_dim]
-        # h is a tuple containing h and c, each have shape [layer_num, batch_size, hidden_dim]
+        # h is a tuple containing h and c, each have shape [layer_num * (2 if bidirectional else 1), batch_size, hidden_dim]
         if h is None:
             if torch.cuda.is_available():
-                h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda(), torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda())
+                h = (torch.zeros(self.num_layers * (2 if self.bidirectional else 1), x.size(0), self.hidden_dim).cuda(),
+                     torch.zeros(self.num_layers * (2 if self.bidirectional else 1), x.size(0), self.hidden_dim).cuda())
             else:
-                h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim), torch.zeros(self.num_layers, x.size(0), self.hidden_dim))
+                h = (torch.zeros(self.num_layers * (2 if self.bidirectional else 1), x.size(0), self.hidden_dim),
+                     torch.zeros(self.num_layers * (2 if self.bidirectional else 1), x.size(0), self.hidden_dim))
         hidden, cell = h
         output_hidden, output_cell = self.layers[0](x, hidden[0], cell[0])
         new_hidden, new_cell = [output_hidden[:, -1].unsqueeze(0)], [output_cell[:, -1].unsqueeze(0)]
@@ -64,4 +64,7 @@ class LSTM(nn.Module):
             output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
             new_hidden.append(output_hidden[:, -1].unsqueeze(0))
             new_cell.append(output_cell[:, -1].unsqueeze(0))
-        return self.dropout(output_hidden), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))
+        output_hidden = self.dropout(output_hidden)
+        if self.bidirectional:
+            output_hidden = torch.cat((output_hidden[:, ::2], output_hidden[:, 1::2]), dim=-1)
+        return self.dropout(self.linear(output_hidden)), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))

@@ -58,7 +58,7 @@ class LSTM(nn.Module):
             output = torch.cat((output_forward, output_backward), dim=2)
             print(f"Concatenated output size: {output.size()}")
             
-            h = (torch.cat((h_forward, h_backward), dim=2), torch.cat((c_forward, c_backward), dim=2))
+            h, c = (torch.cat((h_forward, h_backward), dim=2), torch.cat((c_forward, c_backward), dim=2))
         else:
             output, (h, c) = self.forward_pass(x)
         return self.dropout(output), (h, c)

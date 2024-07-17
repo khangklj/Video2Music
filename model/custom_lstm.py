@@ -37,7 +37,7 @@ class LSTMCell(nn.Module):
 
 class LSTM(nn.Module):
 
-    def __init__(self, input_dim, hidden_dim, num_layers, dropout):
+    def __init__(self, input_dim, hidden_dim, num_layers, dropout=0.5):
         super(LSTM, self).__init__()
         self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
         self.layers = nn.ModuleList()

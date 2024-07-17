@@ -166,12 +166,9 @@ class VideoRegression(nn.Module):
             out = out.permute(1,0,2)
             out = self.fc(out)
         elif self.regModel == "custom_bilstm":
-            # vf_concat = vf_concat.permute(1,0,2)
-            # out, _ = self.model(vf_concat)           
-            # out = self.bifc(out)
-            out, _ = self.bilstm(vf_concat)
-            out = out.permute(1,0,2)
-            out = self.bifc(out)
+            vf_concat = vf_concat.permute(1,0,2)
+            out, _ = self.model(vf_concat)
             print(out.shape)
+            out = self.bifc(out)            
         return out
         

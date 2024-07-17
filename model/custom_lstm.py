@@ -21,7 +21,7 @@ class LSTMCell(nn.Module):
 
     def forward(self, x, h, c):
         # x has shape [batch_size, seq_len, input_size]
-        # h and c each has shape [layer_num, batch_size, hidden_dim]
+        # h and c each has shape [layer_num * (2 if bidirectional else 1), batch_size, hidden_dim]
         output_hiddens, output_cells = [], []
         for i in range(x.shape[1]):
             forget_gate = F.sigmoid((x[:, i] @ self.forget_input) + (h @ self.forget_hidden) + self.forget_bias)
@@ -39,9 +39,8 @@ class LSTM(nn.Module):
         super(LSTM, self).__init__()
         self.input_dim, self.hidden_dim, self.num_layers, self.bidirectional = input_dim, hidden_dim, num_layers, bidirectional
         self.layers = nn.ModuleList()
-        self.layers.append(LSTMCell(input_dim, hidden_dim))
-        for _ in range(num_layers - 1):
-            self.layers.append(LSTMCell(hidden_dim, hidden_dim))
+        for _ in range(num_layers):
+            self.layers.append(LSTMCell(input_dim if len(self.layers) == 0 else hidden_dim * (2 if self.bidirectional else 1), hidden_dim))
         self.dropout = nn.Dropout(dropout)
         self.linear = nn.Linear(hidden_dim * (2 if self.bidirectional else 1), input_dim)
         nn.init.xavier_uniform_(self.linear.weight.data)
@@ -64,7 +63,4 @@ class LSTM(nn.Module):
             output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
             new_hidden.append(output_hidden[:, -1].unsqueeze(0))
             new_cell.append(output_cell[:, -1].unsqueeze(0))
-        output_hidden = self.dropout(output_hidden)
-        if self.bidirectional:
-            output_hidden = torch.cat((output_hidden[:, ::2], output_hidden[:, 1::2]), dim=-1)
-        return self.dropout(output_hidden), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))
+        return self.dropout(output_hidden), (torch.cat(new_hidden, dim=0), torch.cat(new_cell, dim=0))

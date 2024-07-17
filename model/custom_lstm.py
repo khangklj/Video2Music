@@ -32,36 +32,50 @@ class LSTMCell(nn.Module):
         return h, c
 
 class LSTM(nn.Module):
-
-    def __init__(self, input_dim, hidden_dim, num_layers, dropout=0.5, bidirectional=False):
+    def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.5):
         super(LSTM, self).__init__()
-        self.input_dim, self.hidden_dim, self.num_layers, self.bidirectional = input_dim, hidden_dim, num_layers, bidirectional
+        self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
+        self.bidirectional = bidirectional
         self.layers = nn.ModuleList()
         self.layers.append(LSTMCell(input_dim, hidden_dim))
         for _ in range(num_layers - 1):
             self.layers.append(LSTMCell(hidden_dim, hidden_dim))
-        self.dropout = nn.Dropout(dropout)       
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
-        # x has shape [batch_size, seq_len, embed_dim]
-        batch_size, seq_len, _ = x.shape
-        if torch.cuda.is_available():
-            h = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_dim).cuda()
-            c = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_dim).cuda()
+        if self.bidirectional:
+            output_forward, (h_forward, c_forward) = self.forward_pass(x)
+            output_backward, (h_backward, c_backward) = self.backward_pass(x)
+            output = torch.cat((output_forward, output_backward), dim=2)
+            h = (torch.cat((h_forward, h_backward), dim=2), torch.cat((c_forward, c_backward), dim=2))
         else:
-            h = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_dim)
-            c = torch.zeros(self.num_layers * (2 if self.bidirectional else 1), batch_size, self.hidden_dim)
+            output, (h, c) = self.forward_pass(x)
+        return self.dropout(output), (h, c)
 
-        output_hiddens, output_cells = [], []
-        for i in range(self.num_layers):
-            layer_outputs = []
-            for j in range(seq_len):
-                h_i, c_i = self.layers[i](x[:, j, :], h[i], c[i])
-                layer_outputs.append(h_i.unsqueeze(1))
-            output_hidden = torch.concat(layer_outputs, dim=1)
-            output_hiddens.append(output_hidden)
-            output_cells.append(c)
-        output_hidden = torch.concat(output_hiddens, dim=2)
-        output_cell = torch.concat(output_cells, dim=2)
-        output_hidden = self.dropout(output_hidden)        
-        return output_hidden, (output_hidden, output_cell)
+    def forward_pass(self, x):
+        if torch.cuda.is_available():
+            h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda(), torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda())
+        else:
+            h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim), torch.zeros(self.num_layers, x.size(0), self.hidden_dim))
+        hidden, cell = h
+        output_hidden, output_cell = self.layers[0](x, hidden[0], cell[0])
+        new_hidden, new_cell = [output_hidden[:, -1].unsqueeze(0)], [output_cell[:, -1].unsqueeze(0)]
+        for i in range(1, self.num_layers):
+            output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
+            new_hidden.append(output_hidden[:, -1].unsqueeze(0))
+            new_cell.append(output_cell[:, -1].unsqueeze(0))
+        return self.dropout(output_hidden), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))
+
+    def backward_pass(self, x):
+        if torch.cuda.is_available():
+            h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda(), torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda())
+        else:
+            h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim), torch.zeros(self.num_layers, x.size(0), self.hidden_dim))
+        hidden, cell = h
+        output_hidden, output_cell = self.layers[0](x[:, -1:, :].flip(dims=[1]), hidden[0], cell[0])
+        new_hidden, new_cell = [output_hidden[:, 0].unsqueeze(0)], [output_cell[:, 0].unsqueeze(0)]
+        for i in range(1, self.num_layers):
+            output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])
+            new_hidden.append(output_hidden[:, 0].unsqueeze(0))
+            new_cell.append(output_cell[:, 0].unsqueeze(0))
+        return self.dropout(output_hidden), (torch.concat(new_hidden, dim=0), torch.concat(new_cell, dim=0))

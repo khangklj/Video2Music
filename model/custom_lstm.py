@@ -13,7 +13,7 @@ class LSTMCell(nn.Module):
         self.cell_input, self.cell_hidden, self.cell_bias = self.create_gate_parameters()
 
     def create_gate_parameters(self):
-        input_weights = nn.Parameter(torch.zeros(self.hidden_dim, self.input_dim))
+        input_weights = nn.Parameter(torch.zeros(self.input_dim, self.hidden_dim))
         hidden_weights = nn.Parameter(torch.zeros(self.hidden_dim, self.hidden_dim))
         nn.init.xavier_uniform_(input_weights)
         nn.init.xavier_uniform_(hidden_weights)

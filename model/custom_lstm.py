@@ -36,7 +36,7 @@ class LSTMCell(nn.Module):
         return torch.concat(output_hiddens, dim=1), torch.concat(output_cells, dim=1)
 
 class LSTM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.5):
+    def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.0):
         super(LSTM, self).__init__()
         self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
         self.bidirectional = bidirectional

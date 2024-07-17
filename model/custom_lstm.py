@@ -83,7 +83,7 @@ class LSTM(nn.Module):
         else:
             h = (torch.zeros(self.num_layers, x.size(0), self.hidden_dim), torch.zeros(self.num_layers, x.size(0), self.hidden_dim))
         hidden, cell = h
-        output_hidden, output_cell = self.layers[0](x[:, -1:, :].flip(dims=[1]), hidden[0], cell[0])
+        output_hidden, output_cell = self.layers[0](x.flip(dims=[1]), hidden[0], cell[0])
         new_hidden, new_cell = [output_hidden[:, 0].unsqueeze(0)], [output_cell[:, 0].unsqueeze(0)]
         for i in range(1, self.num_layers):
             output_hidden, output_cell = self.layers[i](self.dropout(output_hidden), hidden[i], cell[i])

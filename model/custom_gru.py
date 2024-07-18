@@ -59,4 +59,4 @@ class GRU(nn.Module):
         for i in range(1, self.num_layers):
             output_hidden = self.layers[i](self.dropout(output_hidden), h[i])
             new_hidden.append(output_hidden[:, -1].unsqueeze(0))
-        return self.linear(self.dropout(output_hidden)), torch.concat(new_hidden, dim=0)
+        return self.dropout(output_hidden), torch.concat(new_hidden, dim=0)

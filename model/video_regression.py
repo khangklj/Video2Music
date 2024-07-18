@@ -9,6 +9,7 @@ from utilities.device import get_device
 from datetime import datetime
 from .moe import *
 from .custom_lstm import LSTM
+from .custom_gru import GRU
 import torch.nn.functional as F
 
 class advancedRNNBlock(nn.Module):
@@ -111,8 +112,8 @@ class VideoRegression(nn.Module):
             self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
         elif self.regModel == "custom_bilstm":
             self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
-            self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
-
+        elif self.regModel == "custom_gru":
+            self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
 
@@ -156,7 +157,7 @@ class VideoRegression(nn.Module):
             vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
             # out = self.bifc(out)
-        elif self.regModel == "custom_lstm":
+        elif self.regModel == "custom_lstm" or self.regModel == "custom_gru":
             out, _ = self.model(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)

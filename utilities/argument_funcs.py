@@ -49,6 +49,10 @@ def parse_train_args():
     # version_1 (BiGRU + MLP)
     # version_2 (BiGRU + MLP + skip connection)
     # version_3 (BiGRU + SwiGLU MoE + skip connection)
+    # custom_lstm
+    # custom_bilstm
+    # custom_gru 
+    # custom_bigru
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -142,6 +146,10 @@ def parse_eval_args():
     # version_1 (BiGRU + MLP)
     # version_2 (BiGRU + MLP + skip connection)
     # version_3 (BiGRU + SwiGLU MoE + skip connection)
+    # custom_lstm
+    # custom_bilstm
+    # custom_gru 
+    # custom_bigru
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 

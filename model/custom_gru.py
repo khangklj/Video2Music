@@ -49,8 +49,8 @@ class GRU(nn.Module):
         if self.bidirectional:
             output_forward, h_forward = self.forward_pass(x)
             output_backward, h_backward = self.backward_pass(x)
-            h = torch.cat(h_forward, h_backward, dim=2)
-            output = torch.cat(output_forward, output_backward, dim=2)
+            h = torch.cat((h_forward, h_backward), dim=2)
+            output = torch.cat((output_forward, output_backward), dim=2)
         else:
             output, h = self.forward_pass(x)
         return self.dropout(output), h

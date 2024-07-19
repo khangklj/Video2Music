@@ -3,7 +3,6 @@ from torch import nn
 import torch.nn.functional as F
 
 class GRUCell(nn.Module):
-
     def __init__(self, input_dim, hidden_dim) -> None:
         super(GRUCell, self).__init__()
         self.input_dim, self.hidden_dim = input_dim, hidden_dim
@@ -31,7 +30,6 @@ class GRUCell(nn.Module):
 
 
 class GRU(nn.Module):
-
     def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.0):
         super(GRU, self).__init__()
         self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers

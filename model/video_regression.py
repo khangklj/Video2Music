@@ -114,6 +114,8 @@ class VideoRegression(nn.Module):
             self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         elif self.regModel == "custom_gru":
             self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
+        elif self.regModel == "custom_bigru":
+            self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
 

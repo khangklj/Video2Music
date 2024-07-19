@@ -3,7 +3,6 @@ from torch import nn
 import torch.nn.functional as F
 
 class LSTMCell(nn.Module):
-
     def __init__(self, input_dim, hidden_dim):
         super(LSTMCell, self).__init__()
         self.input_dim, self.hidden_dim = input_dim, hidden_dim

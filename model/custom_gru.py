@@ -32,9 +32,10 @@ class GRUCell(nn.Module):
 
 class GRU(nn.Module):
 
-    def __init__(self, input_dim, hidden_dim, num_layers, dropout=0.0):
+    def __init__(self, input_dim, hidden_dim, num_layers, bidirectional=False, dropout=0.0):
         super(GRU, self).__init__()
         self.input_dim, self.hidden_dim, self.num_layers = input_dim, hidden_dim, num_layers
+        self.bidirectional = bidirectional
         self.layers = nn.ModuleList()
         self.layers.append(GRUCell(input_dim, hidden_dim))
         for _ in range(num_layers - 1):
@@ -45,7 +46,13 @@ class GRU(nn.Module):
         # self.linear.bias.data.fill_(0.0)
         
     def forward(self, x):
-        output, h = self.forward_pass(x)
+        if self.bidirectional:
+            output_forward, h_forward = self.forward_pass(x)
+            output_backward, h_backward = self.backward_pass(x)
+            h = torch.cat(h_forward, h_backward, dim=2)
+            output = torch.cat(output_forward, output_backward, dim=2)
+        else:
+            output, h = self.forward_pass(x)
         return self.dropout(output), h
 
     def forward_pass(self, x):
@@ -59,4 +66,17 @@ class GRU(nn.Module):
         for i in range(1, self.num_layers):
             output_hidden = self.layers[i](self.dropout(output_hidden), h[i])
             new_hidden.append(output_hidden[:, -1].unsqueeze(0))
+        return self.dropout(output_hidden), torch.concat(new_hidden, dim=0)
+        
+    def backward_pass(self, x):
+        # x has shape of [batch_size, seq_len, input_dim]
+        if torch.cuda.is_available():
+            h = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).cuda()
+        else:
+            h = torch.zeros(self.num_layers, x.size(0), self.hidden_dim)
+        output_hidden = self.layers[0](x.flip(dim=[1]), h[0])
+        new_hidden = [output_hidden[:, 0].unsqueeze(0)]
+        for i in range(1, self.num_layers):
+            output_hidden = self.layers[i](self.dropout(output_hidden), h[i])
+            new_hidden.append(output_hidden[:, 0].unsqueeze(0))
         return self.dropout(output_hidden), torch.concat(new_hidden, dim=0)

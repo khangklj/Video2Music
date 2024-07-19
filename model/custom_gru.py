@@ -22,9 +22,9 @@ class GRUCell(nn.Module):
     def forward(self, x, h):
         output_hiddens = []
         for i in range(x.shape[1]):
-            relevance_gate = F.sigmoid((h @ self.relevance_whh) + (x[:, i] @ self.relevance_wxh) + self.relevance_b)
-            update_gate = F.sigmoid((h @ self.update_whh) + (x[:, i] @ self.update_wxh) + self.update_b)
-            candidate_hidden = F.tanh(((relevance_gate * h) @ self.candidate_whh) + (x[:, i] @ self.candidate_wxh) + self.candidate_b)
+            relevance_gate = torch.sigmoid((h @ self.relevance_whh) + (x[:, i] @ self.relevance_wxh) + self.relevance_b)
+            update_gate = torch.sigmoid((h @ self.update_whh) + (x[:, i] @ self.update_wxh) + self.update_b)
+            candidate_hidden = torch.tanh(((relevance_gate * h) @ self.candidate_whh) + (x[:, i] @ self.candidate_wxh) + self.candidate_b)
             h = (update_gate * candidate_hidden) + ((1 - update_gate) * h)
             output_hiddens.append(h.unsqueeze(1))
         return torch.concat(output_hiddens, dim=1)
@@ -75,8 +75,8 @@ class GRU(nn.Module):
         else:
             h = torch.zeros(self.num_layers, x.size(0), self.hidden_dim)
         output_hidden = self.layers[0](x.flip(dims=[1]), h[0])
-        new_hidden = [output_hidden[:, 0].unsqueeze(0)]
+        new_hidden = [output_hidden[:, -1].unsqueeze(0)]
         for i in range(1, self.num_layers):
             output_hidden = self.layers[i](self.dropout(output_hidden), h[i])
-            new_hidden.append(output_hidden[:, 0].unsqueeze(0))
+            new_hidden.append(output_hidden[:, -1].unsqueeze(0))
         return self.dropout(output_hidden), torch.concat(new_hidden, dim=0)

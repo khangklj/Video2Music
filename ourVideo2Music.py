@@ -19,7 +19,6 @@ from utilities.chord_to_midi import *
 
 from model.video_music_transformer import VideoMusicTransformer
 from model.video_regression import VideoRegression
-from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
 
 import json
 from midi2audio import FluidSynth
@@ -35,6 +34,9 @@ from huggingface_hub import snapshot_download
 from gradio import Markdown
 
 from pytube import YouTube
+
+from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
+from utilities.device import get_device, use_cuda
 
 all_key_names = ['C major', 'G major', 'D major', 'A major',
                  'E major', 'B major', 'F major', 'Bb major',

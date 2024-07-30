@@ -392,13 +392,13 @@ class Video2music:
 
         if self.version == None:            
             self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, 
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                             max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
         else:
             if self.version == 1:
                 model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                            d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                             max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=False, 
                             version=1).to(get_device())

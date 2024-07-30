@@ -183,6 +183,8 @@ class myRNN(nn.Module):
         for i in range(x.shape[1]):
             for j in range(self.num_layers):
                 if j == 0:
+                    print(i)
+                    print(j)
                     h_forward = self.forward_layers[j](x[:, i, :])
                 else:
                     h_forward = self.forward_layers[j](h_forward)

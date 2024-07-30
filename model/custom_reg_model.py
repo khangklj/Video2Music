@@ -71,7 +71,10 @@ class LSTMCell(nn.Module):
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
         else:
             self.c = c
-
+        print("x shape = ", end="")
+        print(x.shape)
+        print("h shape = ", end="")
+        print(h.shape)
         x_h = torch.cat((x, self.h), dim=1)
         
         

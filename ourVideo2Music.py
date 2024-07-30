@@ -35,7 +35,7 @@ from gradio import Markdown
 
 from pytube import YouTube
 
-from utilities.argument_funcs import parse_train_args, print_train_args, write_model_params
+from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
 
 all_key_names = ['C major', 'G major', 'D major', 'A major',
                  'E major', 'B major', 'F major', 'Bb major',

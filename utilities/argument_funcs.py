@@ -137,6 +137,7 @@ def parse_eval_args():
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
     parser.add_argument('-regModel', type=str, default='bigru', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:
     # lstm
@@ -149,9 +150,7 @@ def parse_eval_args():
     # custom_lstm
     # custom_bilstm
     # custom_gru 
-    # custom_bigru
-
-    parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
+    # custom_bigru    
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")

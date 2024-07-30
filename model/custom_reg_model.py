@@ -198,7 +198,7 @@ class myRNN(nn.Module):
                         h_forward = self.forward_layers[j](h_forward)
                     
             # out_forward.append(h_forward)
-                out_forward.append(out_forward)
+                out_forward.append(out_forward.unsquezze(1))
                     
         # out = out_forward
         out = torch.cat(out_forward, dim=1)

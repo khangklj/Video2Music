@@ -62,6 +62,7 @@ class LSTMCell(nn.Module):
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
         print("h is None" if h == None else "h is not None")
+        print("x is None" if x == None else "x is not None")
         if self.h == None:
             self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()           
         else:

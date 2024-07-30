@@ -377,7 +377,7 @@ class Video2music:
         self.max_seq_video = 300
         self.max_seq_chord = 300
 
-        args = parse_train_args()[0]
+        args = parse_generate_args()[0]
       
         # self.model = VideoMusicTransformer(n_layers=6, num_heads=8,
         #             d_model=512, dim_feedforward=1024,

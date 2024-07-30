@@ -160,7 +160,7 @@ def parse_eval_args():
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 def print_eval_args(args):
     print(SEPERATOR)
@@ -254,7 +254,7 @@ def parse_generate_args():
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     parser.add_argument("-test_id", type=str, default=None, help="Dimension of the feedforward layer")
 
-    return parser.parse_args()
+    return parser.parse_known_args()
 
 def print_generate_args(args):
     

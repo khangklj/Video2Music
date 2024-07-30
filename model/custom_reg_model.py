@@ -91,51 +91,52 @@ class LSTMCell(nn.Module):
         # return new hidden state
         return self.h
   class GRUCell(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
-        super(GRUCell, self).__init__()
-        self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
-        
-        self.reset_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
-        
-        self.update_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
-        
-        self.candidate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Tanh()
-        )
-        
-        self.h = None # Hidden state
-        
-    def forward(self, x):
-        # x: (batch_size, input_dim) - a batch of tokens
-        
-        # h: (batch_size, hidden_dim) - a batch of hidden states
-        if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim))
+        def __init__(self, input_dim, hidden_dim):
+            super(GRUCell, self).__init__()
+            self.input_dim = input_dim
+            self.hidden_dim = hidden_dim
             
-        x_h = torch.cat((x, self.h), dim=1)
+            self.reset_gate = nn.Sequential(
+                nn.Linear(input_dim + hidden_dim, hidden_dim),
+                nn.Sigmoid()
+            )
             
-        # reset gate
-        r = self.reset_gate(x_h)
-        
-        # update gate
-        z = self.update_gate(x_h)
-        
-        # candidate hidden state
-        can_h = self.candidate(torch.cat((x, self.h * r), dim=1))
-        
-        # update new hidden state
-        self.h = self.h * z + (1 - z) * can_h
-        
-        # return new hidden state
-        return self.h
+            self.update_gate = nn.Sequential(
+                nn.Linear(input_dim + hidden_dim, hidden_dim),
+                nn.Sigmoid()
+            )
+            
+            self.candidate = nn.Sequential(
+                nn.Linear(input_dim + hidden_dim, hidden_dim),
+                nn.Tanh()
+            )
+            
+            self.h = None # Hidden state
+            
+        def forward(self, x):
+            # x: (batch_size, input_dim) - a batch of tokens
+            
+            # h: (batch_size, hidden_dim) - a batch of hidden states
+            if self.h == None:
+                self.h = torch.zeros((x.shape[0], self.hidden_dim))
+                
+            x_h = torch.cat((x, self.h), dim=1)
+                
+            # reset gate
+            r = self.reset_gate(x_h)
+            
+            # update gate
+            z = self.update_gate(x_h)
+            
+            # candidate hidden state
+            can_h = self.candidate(torch.cat((x, self.h * r), dim=1))
+            
+            # update new hidden state
+            self.h = self.h * z + (1 - z) * can_h
+            
+            # return new hidden state
+            return self.h
+            
 def make_cell(input_dim, hidden_dim, cell_name='rnn'):
     if cell_name == 'rnn':
         return RNNCell(input_dim, hidden_dim)

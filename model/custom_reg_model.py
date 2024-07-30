@@ -32,9 +32,7 @@ class LSTMCell(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super(LSTMCell, self).__init__()
         self.input_dim = input_dim
-        self.hidden_dim = hidden_dim
-        print(input_dim)
-        print(hidden_dim)
+        self.hidden_dim = hidden_dim    
         
         self.forget_gate = nn.Sequential(
             nn.Linear(input_dim + hidden_dim, hidden_dim),
@@ -71,8 +69,7 @@ class LSTMCell(nn.Module):
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         x_h = torch.cat((x, self.h), dim=1)
-
-        print(x_h.shape)
+        
         # forget gate
         f = self.forget_gate(x_h)
         
@@ -179,6 +176,7 @@ class myRNN(nn.Module):
         
     def forward(self, x):
         # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences
+        print(x.shape)
         
         # out_XXXward: [(batch_size, output_dim), ...] - a batch of output for every tokens (many-to-many)
         # len(out_XXXward) = sequence_lenght

@@ -184,6 +184,7 @@ class myRNN(nn.Module):
         # len(out_XXXward) = sequence_lenght
         out_forward = []
         
+        output = None
         for i in range(x.shape[1]):            
             for j in range(self.num_layers):               
                 if j == 0:
@@ -198,10 +199,11 @@ class myRNN(nn.Module):
                         h_forward = self.forward_layers[j](h_forward)
                     
             # out_forward.append(h_forward)
-                out_forward.append(output.unsqueeze(1))
+            out_forward.append(output.unsqueeze(1))
                     
         # out = out_forward
         out = torch.cat(out_forward, dim=1)
+            
                     
         # Backward
         if self.bidirectional == True:

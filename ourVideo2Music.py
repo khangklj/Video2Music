@@ -361,8 +361,12 @@ class Video2music:
     ):
         # path = snapshot_download(repo_id=name, cache_dir=cache_dir)
 
+        #Adjust print args HERE!
+        self.isPrintArgs = True
         args = parse_generate_args()[0]
-        print_generate_args(args)
+        
+        if self.isPrintArgs:
+          print_generate_args(args)
 
         self.device = device
         
@@ -380,34 +384,28 @@ class Video2music:
         # 768 (sem) + 1 (mo) + 1 (scene) + 6 (emo)
         self.max_seq_video = 300
         self.max_seq_chord = 300
-
-        # Adjust video2music version HERE!
-        self.version = 1
-
-        # Adjust regMode HERE!
-        self.regModel = "bigru"
       
         # self.model = VideoMusicTransformer(n_layers=6, num_heads=8,
         #             d_model=512, dim_feedforward=1024,
         #             max_sequence_midi=2048, max_sequence_video=300, 
         #             max_sequence_chord=300, total_vf_dim=self.total_vf_dim, rpr=RPR).to(device)
 
-        if self.version == None:            
+        if args.music_gen_version == None:            
             self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                             d_model=args.d_model, dim_feedforward=args.dim_feedforward, 
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                             max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, rpr=args.rpr).to(get_device())
         else:
-            if self.version == 1:
+            if args.music_gen_version == 1:
                 self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                             d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                             max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, rpr=False, 
                             version=1).to(get_device())
               
-        self.model.load_state_dict(torch.load(self.model_weights, map_location=device))
-        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= self.regModel).to(device)
-        self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=device))
+        self.model.load_state_dict(torch.load(self.model_weights, map_location=get_device()))
+        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= args.regModel).to(get_device())
+        self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
 
         self.model.eval()
         self.modelReg.eval()

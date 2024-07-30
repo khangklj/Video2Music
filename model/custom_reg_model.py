@@ -61,24 +61,20 @@ class LSTMCell(nn.Module):
         # x: (batch_size, input_dim) - a batch of tokens
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
-        if self.h is None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
-            print("GO HERE")
+        print("h is None" if h == None else "h is not None")
+        if self.h == None:
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()           
         else:
             self.h = h
             
         # c: (batch_size, hidden_dim) - a batch of cell states
-        if self.c is None:
+        if self.c == None:
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
         else:
             self.c = c
-        print("x shape = ", end="")
-        print(x.shape if x is not None else "None")
-        print("h shape = ", end="")
-        print(h.shape if h is not None else "None")
+            
         x_h = torch.cat((x, self.h), dim=1)
-        
-        
+                
         # forget gate
         f = self.forget_gate(x_h)        
         

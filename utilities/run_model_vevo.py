@@ -165,7 +165,7 @@ def train_epoch(cur_epoch, model, dataloader,
 
 def eval_model(model, dataloader, 
                eval_loss_func, eval_loss_emotion_func,
-               isVideo = True, isGenConfusionMatrix=True):
+               isVideo = True, isGenConfusionMatrix=False):
     model.eval()
     avg_acc     = -1
     avg_cor     = -1

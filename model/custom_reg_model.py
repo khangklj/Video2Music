@@ -33,6 +33,8 @@ class LSTMCell(nn.Module):
         super(LSTMCell, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
+        print(input_dim)
+        print(hidden_dim)
         
         self.forget_gate = nn.Sequential(
             nn.Linear(input_dim + hidden_dim, hidden_dim),

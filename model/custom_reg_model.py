@@ -57,22 +57,18 @@ class LSTMCell(nn.Module):
         self.h = None # Hidden state
         self.c = None # Cell state
         
-    def forward(self, x, h, c):
+    def forward(self, x):
         # x: (batch_size, input_dim) - a batch of tokens
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
-        print("h is None" if h == None else "h is not None")
-        print("x is None" if x == None else "x is not None")
+        
         if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()           
-        else:
-            self.h = h
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()          
             
         # c: (batch_size, hidden_dim) - a batch of cell states
         if self.c == None:
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
-        else:
-            self.c = c
+        
             
         x_h = torch.cat((x, self.h), dim=1)
                 
@@ -192,12 +188,12 @@ class myRNN(nn.Module):
                 print(f"i = {i}, j = {j}")
                 if j == 0:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], None, None)
+                        output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :])
                     else:
                         h_forward = self.forward_layers[j](x[:, i, :])
                 else:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](output, h_forward, c_forward)
+                        output, (h_forward, c_forward) = self.forward_layers[j](output)
                     else:
                         h_forward = self.forward_layers[j](h_forward)
                     

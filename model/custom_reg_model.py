@@ -69,10 +69,10 @@ class LSTMCell(nn.Module):
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         x_h = torch.cat((x, self.h), dim=1)
+        print(x_h.shape)
         
         # forget gate
-        f = self.forget_gate(x_h)
-        print(f.shape)
+        f = self.forget_gate(x_h)        
         
         # input gate
         i = self.input_gate(x_h)

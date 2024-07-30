@@ -149,7 +149,7 @@ def make_cell(input_dim, hidden_dim, cell_name='rnn'):
 # Many-to-Many RNN
 class myRNN(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim=2, cell_name='rnn', num_layers=1, bidirectional=False):
-        super(RNN, self).__init__()
+        super(myRNN, self).__init__()
         
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim

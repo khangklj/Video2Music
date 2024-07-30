@@ -63,7 +63,8 @@ class LSTMCell(nn.Module):
         # h: (batch_size, hidden_dim) - a batch of hidden states
         
         if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()          
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()           
+        
             
         # c: (batch_size, hidden_dim) - a batch of cell states
         if self.c == None:
@@ -184,8 +185,7 @@ class myRNN(nn.Module):
         out_forward = []
         
         for i in range(x.shape[1]):            
-            for j in range(self.num_layers):
-                print(f"i = {i}, j = {j}")
+            for j in range(self.num_layers):               
                 if j == 0:
                     if self.cell_name == "lstm":
                         output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :])
@@ -197,10 +197,11 @@ class myRNN(nn.Module):
                     else:
                         h_forward = self.forward_layers[j](h_forward)
                     
-            out_forward.append(h_forward)
-            
+            # out_forward.append(h_forward)
+                out_forward.append(out_forward)
+                    
         # out = out_forward
-        out = output
+        out = torch.cat(out_forward, dim=1)
                     
         # Backward
         if self.bidirectional == True:

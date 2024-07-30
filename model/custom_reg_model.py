@@ -72,7 +72,7 @@ class LSTMCell(nn.Module):
         
         # forget gate
         f = self.forget_gate(x_h)
-        print(f)
+        print(f.shape)
         
         # input gate
         i = self.input_gate(x_h)
@@ -177,14 +177,14 @@ class myRNN(nn.Module):
         
     def forward(self, x):
         # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences
-        print(x.shape)
         
         # out_XXXward: [(batch_size, output_dim), ...] - a batch of output for every tokens (many-to-many)
         # len(out_XXXward) = sequence_lenght
         out_forward = []
         
-        for i in range(x.shape[1]):
+        for i in range(x.shape[1]):            
             for j in range(self.num_layers):
+                print(f"i = {i}, j = {j}")
                 if j == 0:
                     if self.cell_name == "lstm":
                         output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], None, None)

@@ -167,7 +167,8 @@ class VideoRegression(nn.Module):
             # out = self.fc(out)
 
             vf_concat = vf_concat.permute(1,0,2)
-            out = self.model(vf_concat)            
+            out = self.model(vf_concat)
+            print(out.shape)
         elif self.regModel == "custom_bilstm" or self.regModel == "custom_bigru":
             vf_concat = vf_concat.permute(1,0,2)
             out, _ = self.model(vf_concat)

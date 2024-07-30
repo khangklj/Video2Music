@@ -72,6 +72,7 @@ class LSTMCell(nn.Module):
         
         # forget gate
         f = self.forget_gate(x_h)
+        print(f)
         
         # input gate
         i = self.input_gate(x_h)

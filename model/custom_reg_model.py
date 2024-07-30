@@ -72,7 +72,7 @@ class LSTMCell(nn.Module):
         else:
             self.c = c
         print("x shape = ", end="")
-        print(x.shape if h is not None else "None")
+        print(x.shape if x is not None else "None")
         print("h shape = ", end="")
         print(h.shape if h is not None else "None")
         x_h = torch.cat((x, self.h), dim=1)

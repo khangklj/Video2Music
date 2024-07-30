@@ -70,7 +70,9 @@ class LSTMCell(nn.Module):
         if self.c == None:
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
         
-            
+        print(f"x shape = {x.shape}")
+        print(f"h.shape = {h.shape}")
+        
         x_h = torch.cat((x, self.h), dim=1)
                 
         # forget gate

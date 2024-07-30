@@ -19,6 +19,7 @@ from utilities.chord_to_midi import *
 
 from model.video_music_transformer import VideoMusicTransformer
 from model.video_regression import VideoRegression
+from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
 
 import json
 from midi2audio import FluidSynth
@@ -357,6 +358,9 @@ class Video2music:
         local_files_only=False,
     ):
         # path = snapshot_download(repo_id=name, cache_dir=cache_dir)
+
+        args = parse_generate_args()[0]
+        print_generate_args(args)
 
         self.device = device
         

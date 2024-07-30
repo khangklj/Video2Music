@@ -21,7 +21,7 @@ class RNNCell(nn.Module):
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
         if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim))
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         # update new hidden state
         self.h = self.cell(torch.cat((x, self.h), dim=1))
@@ -62,11 +62,11 @@ class LSTMCell(nn.Module):
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
         if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim))
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         # c: (batch_size, hidden_dim) - a batch of cell states
         if self.c == None:
-            self.c = torch.zeros((x.shape[0], self.hidden_dim))
+            self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         x_h = torch.cat((x, self.h), dim=1)
             
@@ -119,7 +119,7 @@ class GRUCell(nn.Module):
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
         if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim))
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         x_h = torch.cat((x, self.h), dim=1)
             
@@ -183,8 +183,6 @@ class myRNN(nn.Module):
         for i in range(x.shape[1]):
             for j in range(self.num_layers):
                 if j == 0:
-                    print(i)
-                    print(j)
                     h_forward = self.forward_layers[j](x[:, i, :])
                 else:
                     h_forward = self.forward_layers[j](h_forward)

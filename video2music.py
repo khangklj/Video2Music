@@ -35,7 +35,8 @@ from gradio import Markdown
 
 from pytube import YouTube
 
-from utilities.argument_funcs import parse_train_args, print_train_args, write_model_params
+from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
+from utilities.device import get_device, use_cuda
 
 all_key_names = ['C major', 'G major', 'D major', 'A major',
                  'E major', 'B major', 'F major', 'Bb major',
@@ -360,6 +361,13 @@ class Video2music:
     ):
         # path = snapshot_download(repo_id=name, cache_dir=cache_dir)
 
+        #Adjust print args HERE!
+        self.isPrintArgs = True
+        args = parse_generate_args()[0]
+        
+        if self.isPrintArgs:
+          print_generate_args(args)
+
         self.device = device
         
         # self.model.device = device
@@ -376,8 +384,6 @@ class Video2music:
         # 768 (sem) + 1 (mo) + 1 (scene) + 6 (emo)
         self.max_seq_video = 300
         self.max_seq_chord = 300
-
-        args = parse_generate_args()[0]
       
         # self.model = VideoMusicTransformer(n_layers=6, num_heads=8,
         #             d_model=512, dim_feedforward=1024,
@@ -386,20 +392,20 @@ class Video2music:
 
         if args.music_gen_version == None:            
             self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, 
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                            max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
+                            max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, rpr=args.rpr).to(get_device())
         else:
             if args.music_gen_version == 1:
-                model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
+                            d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                            max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=False, 
+                            max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, rpr=False, 
                             version=1).to(get_device())
               
-        self.model.load_state_dict(torch.load(self.model_weights, map_location=device))
-        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= "bigru").to(device)
-        self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=device))
+        self.model.load_state_dict(torch.load(self.model_weights, map_location=get_device()))
+        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= args.regModel).to(get_device())
+        self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
 
         self.model.eval()
         self.modelReg.eval()

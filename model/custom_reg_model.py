@@ -74,7 +74,7 @@ class LSTMCell(nn.Module):
         f = self.forget_gate(x_h)
         
         # input gate
-        i = self.update_gate(x_h)
+        i = self.input_gate(x_h)
         
         # candidate hidden state
         can_mem = self.candidate(x_h)

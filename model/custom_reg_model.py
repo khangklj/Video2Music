@@ -72,8 +72,6 @@ class LSTMCell(nn.Module):
         else:
             self.c = c
 
-        print("h shape = ", end='')
-        print(self.h.shape)
         x_h = torch.cat((x, self.h), dim=1)
         
         
@@ -198,7 +196,7 @@ class myRNN(nn.Module):
                         h_forward = self.forward_layers[j](x[:, i, :])
                 else:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h_forward, c_forward)
+                        output, (h_forward, c_forward) = self.forward_layers[j](output, h_forward, c_forward)
                     else:
                         h_forward = self.forward_layers[j](h_forward)
                     

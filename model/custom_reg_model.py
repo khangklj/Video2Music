@@ -61,13 +61,14 @@ class LSTMCell(nn.Module):
         # x: (batch_size, input_dim) - a batch of tokens
         
         # h: (batch_size, hidden_dim) - a batch of hidden states
-        if self.h == None:
+        if self.h is None:
             self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
+            print("GO HERE")
         else:
             self.h = h
             
         # c: (batch_size, hidden_dim) - a batch of cell states
-        if self.c == None:
+        if self.c is None:
             self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
         else:
             self.c = c

@@ -35,7 +35,7 @@ logging.getLogger().addHandler(fh)
 
 # main
 def main( vm = "", isPrintArgs = True):
-    args = parse_eval_args()
+    args = parse_eval_args()[0]
 
     if isPrintArgs:
         print_eval_args(args)

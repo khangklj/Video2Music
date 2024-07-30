@@ -110,8 +110,8 @@ class VideoRegression(nn.Module):
                 *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
             )
         elif self.regModel == "custom_lstm":
-            # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
-            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers)
+            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+            # self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers)
         elif self.regModel == "custom_bilstm":
             self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         elif self.regModel == "custom_gru":
@@ -162,13 +162,13 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
             # out = self.bifc(out)
         elif self.regModel == "custom_lstm" or self.regModel == "custom_gru":
-            # out, _ = self.model(vf_concat)
-            # out = out.permute(1,0,2)
-            # out = self.fc(out)
+            out, _ = self.model(vf_concat)
+            out = out.permute(1,0,2)
+            out = self.fc(out)
 
-            vf_concat = vf_concat.permute(1,0,2)
-            out = self.model(vf_concat)
-            print(out.shape)
+            # vf_concat = vf_concat.permute(1,0,2)
+            # out = self.model(vf_concat)
+            # print(out.shape)
         elif self.regModel == "custom_bilstm" or self.regModel == "custom_bigru":
             vf_concat = vf_concat.permute(1,0,2)
             out, _ = self.model(vf_concat)

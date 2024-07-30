@@ -35,8 +35,6 @@ from gradio import Markdown
 
 from pytube import YouTube
 
-from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
-
 all_key_names = ['C major', 'G major', 'D major', 'A major',
                  'E major', 'B major', 'F major', 'Bb major',
                  'Eb major', 'Ab major', 'Db major', 'Gb major',
@@ -377,20 +375,24 @@ class Video2music:
         self.max_seq_video = 300
         self.max_seq_chord = 300
 
-        args = parse_generate_args()[0]
+        # Adjust video2music version HERE!
+        self.version = 1
+
+        # Adjust regMode HERE!
+        self.regModel = "bigru"
       
         # self.model = VideoMusicTransformer(n_layers=6, num_heads=8,
         #             d_model=512, dim_feedforward=1024,
         #             max_sequence_midi=2048, max_sequence_video=300, 
         #             max_sequence_chord=300, total_vf_dim=self.total_vf_dim, rpr=RPR).to(device)
 
-        if args.music_gen_version == None:            
+        if self.version == None:            
             self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                             d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                             max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
         else:
-            if args.music_gen_version == 1:
+            if self.version == 1:
                 model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                             d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                             max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
@@ -398,7 +400,7 @@ class Video2music:
                             version=1).to(get_device())
               
         self.model.load_state_dict(torch.load(self.model_weights, map_location=device))
-        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= "bigru").to(device)
+        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= self.regModel).to(device)
         self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=device))
 
         self.model.eval()

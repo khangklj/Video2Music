@@ -46,6 +46,7 @@ class LSTM(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
+        print(x.shape)
         if self.bidirectional:
             output_forward, (h_forward, c_forward) = self.forward_pass(x)
             output_backward, (h_backward, c_backward) = self.backward_pass(x)           

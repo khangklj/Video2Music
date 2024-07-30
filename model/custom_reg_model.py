@@ -180,7 +180,7 @@ class myRNN(nn.Module):
         # len(out_XXXward) = sequence_lenght
         out_forward = []
         
-        for i in range(len(x.shape[1])):
+        for i in range(x.shape[1]):
             for j in range(len(self.num_layers)):
                 if j == 0:
                     h_forward = self.forward_layers[j](x[:, i, :])
@@ -195,7 +195,7 @@ class myRNN(nn.Module):
         if self.bidirectional == True:
             out_backward = []
             
-            for i in reversed(range(len(x.shape[1]))):
+            for i in reversed(range(x.shape[1])):
                 for j in range(len(self.num_layers)):
                     if j == 0:
                         h_backward = self.backward_layers[j](x[:, i, :])

@@ -186,7 +186,7 @@ class myRNN(nn.Module):
                     h_forward = self.forward_layers[j](x[:, i, :])
                 else:
                     h_forward = self.forward_layers[j](h_forward)
-                    
+            print(h_forward.shape)
             out_forward.append(h_forward)
             
         out = out_forward

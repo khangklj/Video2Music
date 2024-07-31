@@ -189,7 +189,7 @@ class myRNN(nn.Module):
         output = None
         for i in range(x.shape[1]):            
             for j in range(self.num_layers):
-                print("i = {i}, j = {j}")
+                print(f"i = {i}, j = {j}")
                 if j == 0:
                     if self.cell_name == "lstm":
                         output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :])

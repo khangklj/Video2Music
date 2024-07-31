@@ -63,7 +63,8 @@ class LSTMCell(nn.Module):
         # h: (batch_size, hidden_dim) - a batch of hidden states
         
         if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()           
+            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
+            print("self.h is none")
         
             
         # c: (batch_size, hidden_dim) - a batch of cell states

@@ -157,8 +157,7 @@ class myRNN(nn.Module):
         
     def forward(self, x):
         # x: (batch_size, sequence_length, input_dim) - a batch of sequences
-        # out: (batch_size, sequence_length, 2)
-        print(f"x shape = {x.shape}")
+        # out: (batch_size, sequence_length, 2)        
 
         # Init
         h0, c0 = (torch.zeros((x.shape[0], self.hidden_dim)).cuda(), torch.zeros((x.shape[0], self.hidden_dim)).cuda())

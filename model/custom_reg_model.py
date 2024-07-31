@@ -178,6 +178,7 @@ class myRNN(nn.Module):
                     if self.cell_name == "lstm":
                         output_forward, (h_forward, c_forward) = self.forward_layers[j](output_forward, h_forward, c_forward)
                     else:
+                        print("None" if h_forward is None else "Not None")
                         output_forward, h_forward = self.forward_layers[j](output_forward, h_forward)
                     
             # out_forward.append(h_forward)
@@ -195,8 +196,7 @@ class myRNN(nn.Module):
                     else:
                         if self.cell_name == "lstm":
                             output_backward, (h_backward, c_backward) = self.backward_layers[j](output_backward, h_backward, c_backward)
-                        else:
-                            print("None" if h_forward is None else "Not None")
+                        else:                            
                             output_backward, h_backward = self.backward_layers[j](output_backward, h_backward)
             
                 b_outputs.append(output_backward.unsqueeze(1))     

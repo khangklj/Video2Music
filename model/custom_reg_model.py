@@ -13,21 +13,16 @@ class RNNCell(nn.Module):
             nn.Linear(input_dim + hidden_dim, hidden_dim),
             nn.Tanh()
         )
-        
-        self.h = None # Hidden_state
 
-    def forward(self, x): 
-        # x: (batch_size, input_dim) - a batch of tokens
-        
+    def forward(self, x, h): 
+        # x: (batch_size, input_dim) - a batch of tokens        
         # h: (batch_size, hidden_dim) - a batch of hidden states
-        if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
             
         # update new hidden state
-        self.h = self.cell(torch.cat((x, self.h), dim=1))
+        new_h = self.cell(torch.cat((x, h), dim=1))
         
         # return new hidden state
-        return self.h
+        return new_h, new_h
 class LSTMCell(nn.Module):
     def __init__(self, input_dim, hidden_dim):
         super(LSTMCell, self).__init__()
@@ -103,16 +98,11 @@ class GRUCell(nn.Module):
             nn.Tanh()
         )
         
-        self.h = None # Hidden state
-        
-    def forward(self, x):
-        # x: (batch_size, input_dim) - a batch of tokens
-        
-        # h: (batch_size, hidden_dim) - a batch of hidden states
-        if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
+    def forward(self, x, h):
+        # x: (batch_size, input_dim) - a batch of tokens        
+        # h: (batch_size, hidden_dim) - a batch of hidden states        
             
-        x_h = torch.cat((x, self.h), dim=1)
+        x_h = torch.cat((x, h), dim=1)
             
         # reset gate
         r = self.reset_gate(x_h)
@@ -121,13 +111,13 @@ class GRUCell(nn.Module):
         z = self.update_gate(x_h)
         
         # candidate hidden state
-        can_h = self.candidate(torch.cat((x, self.h * r), dim=1))
+        can_h = self.candidate(torch.cat((x, h * r), dim=1))
         
         # update new hidden state
-        self.h = self.h * z + (1 - z) * can_h
+        new_h = h * z + (1 - z) * can_h
         
         # return new hidden state
-        return self.h
+        return new_h, new_h
             
 def make_cell(input_dim, hidden_dim, cell_name='rnn'):
     if cell_name == 'rnn':
@@ -166,7 +156,8 @@ class myRNN(nn.Module):
         self.regressor = nn.Linear(hidden_dim * (2 if bidirectional == True else 1), output_dim)
         
     def forward(self, x):
-        # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences
+        # x: (batch_size, sequence_length, input_dim) - a batch of sequences
+        # out: (batch_size, sequence_length, 2)
         print(f"x shape = {x.shape}")
 
         # Init
@@ -213,10 +204,8 @@ class myRNN(nn.Module):
         if self.bidirectional == True:            
             out = torch.cat((f_outputs, b_outputs), dim=1)
         else:            
-            out = torch.cat(f_outputs, dim=1)
+            out = torch.cat(f_outputs, dim=1)        
         
-        print(f"Before regressor {out.shape}")
-        out = self.regressor(out)
-        print(f"After regressor {out.shape}")
-        # output []
+        out = self.regressor(out)    
+        
         return out

@@ -166,54 +166,57 @@ class myRNN(nn.Module):
         self.regressor = nn.Linear(hidden_dim * (2 if bidirectional == True else 1), output_dim)
         
     def forward(self, x):
-        # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences        
-        
-        # out_XXXward: [(batch_size, output_dim), ...] - a batch of output for every tokens (many-to-many)
-        # len(out_XXXward) = sequence_lenght
+        # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences
+        print(f"x shape = {x.shape}")
 
+        # Init
         h0, c0 = (torch.zeros((x.shape[0], self.hidden_dim)).cuda(), torch.zeros((x.shape[0], self.hidden_dim)).cuda())
-
-        out_forward = []
+        output_forward = None
+        output_backward = None
+        f_outputs = []
+        b_outputs = []        
         
-        output = None
         for i in range(x.shape[1]):            
             for j in range(self.num_layers):
                 # print(f"i = {i}, j = {j}")
                 if j == 0:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
+                        output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
                     else:
                         h_forward = self.forward_layers[j](x[:, i, :], h0)
                 else:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](output, h_forward, c_forward)
+                        output_forward, (h_forward, c_forward) = self.forward_layers[j](output_forward, h_forward, c_forward)
                     else:
-                        h_forward = self.forward_layers[j](output, h_forward)
+                        h_forward = self.forward_layers[j](output_forward, h_forward)
                     
             # out_forward.append(h_forward)
-            out_forward.append(output.unsqueeze(1))
-                    
-        # out = out_forward
-        out = torch.cat(out_forward, dim=1)
+            f_outputs.append(output_forward.unsqueeze(1))                   
             
-                    
         # Backward
-        if self.bidirectional == True:
-            out_backward = []
-            
+        if self.bidirectional == True:           
             for i in reversed(range(x.shape[1])):
                 for j in range(self.num_layers):
                     if j == 0:
-                        h_backward = self.backward_layers[j](x[:, i, :])
+                        if self.cell_name == "lstm":
+                            output_backward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
+                        else:
+                            h_forward = self.forward_layers[j](x[:, i, :], h0)
                     else:
-                        h_backward = self.backward_layers[j](h_backward)
+                        if self.cell_name == "lstm":
+                            output_backward, (h_forward, c_forward) = self.forward_layers[j](output_backward, h_forward, c_forward)
+                        else:
+                            h_forward = self.forward_layers[j](output_backward, h_forward)
             
-                out_backward.append(h_backward)
-            
-            out = [torch.cat((out_forward[i], out_backward[i]), dim=1) for i in range(len(x.shape[1]))]
+                b_outputs.append(output_backward.unsqueeze(1))     
+
+        if self.bidirectional == True:            
+            out = torch.cat((f_outputs, b_outputs), dim=1)
+        else:            
+            out = torch.cat(f_outputs, dim=1)
         
-        # out = [self.regressor(item) for item in out]
+        print(f"Before regressor {out.shape}")
         out = self.regressor(out)
-        
-        # Return a list of output for every tokens (many-to-many)
+        print(f"After regressor {out.shape}")
+        # output []
         return out

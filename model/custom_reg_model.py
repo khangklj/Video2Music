@@ -167,10 +167,14 @@ class myRNN(nn.Module):
         output_forward = None
         output_backward = None
 
-        output_forward_list, output_backward_list = ([] for i in range(2))
-        h_forward_list, h_backward_list, temp_h_list = ([] for i in range(3))
+        output_forward_list, output_backward_list = ([], [])
+
+        h_forward_list, h_backward_list = ([], [])
+        
+        temp_h_list = [None for _ in range(self.num_layers)]
         if self.cell_name == "lstm":
-            c_forward_list, c_backward_list, temp_c_list = ([] for i in range(3))
+            c_forward_list, c_backward_list = ([], [])
+            temp_c_list = [None for _ in range(self.num_layers)]
                   
         # Forward
         for i in range(x.shape[1]): 
@@ -209,8 +213,8 @@ class myRNN(nn.Module):
             output_forward_list.append(output_forward.unsqueeze(1))           
             
         # Clear temp list
-        temp_h_list = []
-        temp_c_list = []
+        temp_h_list = [None for _ in range(self.num_layers)]
+        temp_c_list = [None for _ in range(self.num_layers)]
 
 
         # Backward

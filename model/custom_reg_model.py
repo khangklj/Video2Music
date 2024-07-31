@@ -191,12 +191,12 @@ class myRNN(nn.Module):
                         if self.cell_name == "lstm":
                             output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :], h0, c0)
                         else:
-                            h_backward = self.backward_layers[j](x[:, i, :], h0)
+                            output_backward, h_backward = self.backward_layers[j](x[:, i, :], h0)
                     else:
                         if self.cell_name == "lstm":
                             output_backward, (h_backward, c_backward) = self.backward_layers[j](output_backward, h_backward, c_backward)
                         else:
-                            h_backward = self.backward_layers[j](output_backward, h_backward)
+                            output_backward, h_backward = self.backward_layers[j](output_backward, h_backward)
             
                 b_outputs.append(output_backward.unsqueeze(1))     
 

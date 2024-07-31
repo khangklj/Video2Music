@@ -140,10 +140,10 @@ class myRNN(nn.Module):
         self.cell_name = cell_name
         
         # Forward layers
-        self.forward_layers = nn.ModuleList()
-        self.forward_layers.append(make_cell(input_dim, hidden_dim, cell_name=cell_name))
+        self.backward_layers = nn.ModuleList()
+        self.backward_layers.append(make_cell(input_dim, hidden_dim, cell_name=cell_name))
         for i in range(self.num_layers - 1):
-            self.forward_layers.append(make_cell(hidden_dim, hidden_dim, cell_name=cell_name))
+            self.backward_layers.append(make_cell(hidden_dim, hidden_dim, cell_name=cell_name))
 
         if bidirectional == True:            
             # Backward layers
@@ -171,14 +171,14 @@ class myRNN(nn.Module):
                 # print(f"i = {i}, j = {j}")
                 if j == 0:
                     if self.cell_name == "lstm":
-                        output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
+                        output_forward, (h_forward, c_forward) = self.backward_layers[j](x[:, i, :], h0, c0)
                     else:
-                        h_forward = self.forward_layers[j](x[:, i, :], h0)
+                        h_forward = self.backward_layers[j](x[:, i, :], h0)
                 else:
                     if self.cell_name == "lstm":
-                        output_forward, (h_forward, c_forward) = self.forward_layers[j](output_forward, h_forward, c_forward)
+                        output_forward, (h_forward, c_forward) = self.backward_layers[j](output_forward, h_forward, c_forward)
                     else:
-                        h_forward = self.forward_layers[j](output_forward, h_forward)
+                        h_forward = self.backward_layers[j](output_forward, h_forward)
                     
             # out_forward.append(h_forward)
             f_outputs.append(output_forward.unsqueeze(1))                   
@@ -189,20 +189,25 @@ class myRNN(nn.Module):
                 for j in range(self.num_layers):
                     if j == 0:
                         if self.cell_name == "lstm":
-                            output_backward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
+                            output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :], h0, c0)
                         else:
-                            h_forward = self.forward_layers[j](x[:, i, :], h0)
+                            h_backward = self.backward_layers[j](x[:, i, :], h0)
                     else:
                         if self.cell_name == "lstm":
-                            output_backward, (h_forward, c_forward) = self.forward_layers[j](output_backward, h_forward, c_forward)
+                            output_backward, (h_backward, c_backward) = self.backward_layers[j](output_backward, h_backward, c_backward)
                         else:
-                            h_forward = self.forward_layers[j](output_backward, h_forward)
+                            h_backward = self.backward_layers[j](output_backward, h_backward)
             
                 b_outputs.append(output_backward.unsqueeze(1))     
 
         if self.bidirectional == True:            
-            out = torch.cat((f_outputs, b_outputs), dim=1)
-        else:            
+            # f_out, b_out: (batch_size, seq_length, hidden_dim)
+            # out: (batch_size, seq_length, hidden_dim * 2)
+            f_out = torch.cat(f_outputs, dim=1)
+            b_out = torch.cat(b_outputs, dim=1)
+            out = torch.cat((f_out, b_out), dim=2)
+        else:
+            # out: (batch_size, seq_length, hidden_dim)            
             out = torch.cat(f_outputs, dim=1)        
         
         out = self.regressor(out)    

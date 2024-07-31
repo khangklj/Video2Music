@@ -166,8 +166,7 @@ class myRNN(nn.Module):
         self.regressor = nn.Linear(hidden_dim * (2 if bidirectional == True else 1), output_dim)
         
     def forward(self, x):
-        # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences
-        print(f"x shape = {x.shape}")
+        # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences        
         
         # out_XXXward: [(batch_size, output_dim), ...] - a batch of output for every tokens (many-to-many)
         # len(out_XXXward) = sequence_lenght

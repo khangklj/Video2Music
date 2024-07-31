@@ -105,7 +105,7 @@ def main():
         chordAttrDic = json.load(json_file)
 
 
-    args = parse_generate_args()
+    args = parse_generate_args()[0]
 
     args.test_id = test_id
     args.num_prime_chord = num_prime_chord

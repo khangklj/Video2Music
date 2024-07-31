@@ -116,9 +116,11 @@ class VideoRegression(nn.Module):
             # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers, bidirectional=True)
         elif self.regModel == "custom_gru":
-            self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
+            # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
+            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers)
         elif self.regModel == "custom_bigru":
-            self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+            # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
 

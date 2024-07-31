@@ -54,27 +54,12 @@ class LSTMCell(nn.Module):
             nn.Sigmoid()
         )
         
-        self.h = None # Hidden state
-        self.c = None # Cell state
+    def forward(self, x, h, c):
+        # x: (batch_size, input_dim) - a batch of tokens        
+        # h: (batch_size, hidden_dim) - a batch of hidden states                     
+        # c: (batch_size, hidden_dim) - a batch of cell states              
         
-    def forward(self, x):
-        # x: (batch_size, input_dim) - a batch of tokens
-        
-        # h: (batch_size, hidden_dim) - a batch of hidden states
-        
-        if self.h == None:
-            self.h = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
-            print("self.h is none")
-        
-            
-        # c: (batch_size, hidden_dim) - a batch of cell states
-        if self.c == None:
-            self.c = torch.zeros((x.shape[0], self.hidden_dim)).cuda()
-        
-        print(f"x shape = {x.shape}")
-        print(f"h.shape = {self.h.shape}")
-        
-        x_h = torch.cat((x, self.h), dim=1)
+        x_h = torch.cat((x, h), dim=1)
                 
         # forget gate
         f = self.forget_gate(x_h)        
@@ -89,13 +74,13 @@ class LSTMCell(nn.Module):
         o = self.output_gate(x_h)
         
         # update new cell state
-        self.c = self.c * f + can_mem * i
+        new_c = c * f + can_mem * i
         
         # update new hidden state
-        self.h = o * F.tanh(self.c)
-        
+        new_h = o * F.tanh(c)
+
         # return new hidden state
-        return self.h, (self.h, self.c)
+        return new_h, (new_h, new_c)
         
 class GRUCell(nn.Module):
     def __init__(self, input_dim, hidden_dim):
@@ -182,25 +167,29 @@ class myRNN(nn.Module):
         
     def forward(self, x):
         # x: (batch_size, sequence_lenght, input_dim) - a batch of sequences
+        print(f"x shape = {x.shape}")
         
         # out_XXXward: [(batch_size, output_dim), ...] - a batch of output for every tokens (many-to-many)
         # len(out_XXXward) = sequence_lenght
+
+        h0, c0 = (torch.zeros((x.shape[0], self.hidden_dim)).cuda(), torch.zeros((x.shape[0], self.hidden_dim)).cuda())
+
         out_forward = []
         
         output = None
         for i in range(x.shape[1]):            
             for j in range(self.num_layers):
-                print(f"i = {i}, j = {j}")
+                # print(f"i = {i}, j = {j}")
                 if j == 0:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :])
+                        output, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
                     else:
-                        h_forward = self.forward_layers[j](x[:, i, :])
+                        h_forward = self.forward_layers[j](x[:, i, :], h0)
                 else:
                     if self.cell_name == "lstm":
-                        output, (h_forward, c_forward) = self.forward_layers[j](output)
+                        output, (h_forward, c_forward) = self.forward_layers[j](output, h_forward, c_forward)
                     else:
-                        h_forward = self.forward_layers[j](h_forward)
+                        h_forward = self.forward_layers[j](output, h_forward)
                     
             # out_forward.append(h_forward)
             out_forward.append(output.unsqueeze(1))

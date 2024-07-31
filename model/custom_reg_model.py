@@ -160,55 +160,105 @@ class myRNN(nn.Module):
         # out: (batch_size, sequence_length, 2)        
 
         # Init
+        last_seq_index = x.shape[1] - 1
+
         h0, c0 = (torch.zeros((x.shape[0], self.hidden_dim)).cuda(), torch.zeros((x.shape[0], self.hidden_dim)).cuda())
+
         output_forward = None
         output_backward = None
-        f_outputs = []
-        b_outputs = []        
-        
-        for i in range(x.shape[1]):            
+
+        output_forward_list, output_backward_list = ([] for i in range(2))
+        h_forward_list, h_backward_list, temp_h_list = ([] for i in range(3))
+        if self.cell_name == "lstm":
+            c_forward_list, c_backward_list, temp_c_list = ([] for i in range(3))
+                  
+        # Forward
+        for i in range(x.shape[1]): 
             for j in range(self.num_layers):
-                # print(f"i = {i}, j = {j}")
-                if j == 0:
+                if i == 0 and j == 0:
                     if self.cell_name == "lstm":
                         output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], h0, c0)
                     else:
-                        h_forward = self.forward_layers[j](x[:, i, :], h0)
+                        output_forward, h_forward = self.forward_layers[j](x[:, i, :], h0)
+                elif i == 0:
+                    if self.cell_name == "lstm":
+                        output_forward, (h_forward, c_forward) = self.forward_layers[j](h_forward, h0, c0)
+                    else:
+                        output_forward, h_forward = self.forward_layers[j](h_forward, h0)
+                elif j == 0:
+                    if self.cell_name == "lstm":
+                        output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :], temp_h_list[j], temp_c_list[j])
+                    else:
+                        output_forward, h_forward = self.forward_layers[j](x[:, i, :], temp_h_list[j])
                 else:
                     if self.cell_name == "lstm":
-                        output_forward, (h_forward, c_forward) = self.forward_layers[j](output_forward, h_forward, c_forward)
+                        output_forward, (h_forward, c_forward) = self.forward_layers[j](h_forward, temp_h_list[j], temp_c_list[j])
                     else:
-                        h_forward = self.forward_layers[j](output_forward, h_forward)
-                    
-            # out_forward.append(h_forward)
-            f_outputs.append(output_forward.unsqueeze(1))                   
+                        output_forward, h_forward = self.forward_layers[j](h_forward, temp_h_list[j])
+
+                # Store temp hidden and cell state
+                temp_h_list[j] = h_forward
+                if self.cell_name == "lstm":
+                    temp_c_list[j] = c_forward
+
+                if i == last_seq_index:
+                    print("First input sequence encounter")
+                    h_forward_list.append(h_forward)
+                    if self.cell_name == "lstm":
+                        c_forward_list.append(c_forward)
+            output_forward_list.append(output_forward.unsqueeze(1))           
             
+        # Clear temp list
+        temp_h_list = []
+        temp_c_list = []
+
+
         # Backward
         if self.bidirectional == True:           
-            for i in reversed(range(x.shape[1])):
+            for i in reversed(range(x.shape[1])): 
                 for j in range(self.num_layers):
-                    if j == 0:
+                    if i == last_seq_index and j == 0:
                         if self.cell_name == "lstm":
                             output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :], h0, c0)
                         else:
-                            h_backward = self.backward_layers[j](x[:, i, :], h0)
+                            output_backward, h_backward = self.backward_layers[j](x[:, i, :], h0)
+                    elif i == last_seq_index:
+                        if self.cell_name == "lstm":
+                            output_backward, (h_backward, c_backward) = self.backward_layers[j](h_backward, h0, c0)
+                        else:
+                            output_backward, h_backward = self.backward_layers[j](h_backward, h0)
+                    elif j == 0:
+                        if self.cell_name == "lstm":
+                            output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :], temp_h_list[j], temp_c_list[j])
+                        else:
+                            output_backward, h_backward = self.backward_layers[j](x[:, i, :], temp_h_list[j])
                     else:
                         if self.cell_name == "lstm":
-                            output_backward, (h_backward, c_backward) = self.backward_layers[j](output_backward, h_backward, c_backward)
+                            output_backward, (h_backward, c_backward) = self.backward_layers[j](h_backward, temp_h_list[j], temp_c_list[j])
                         else:
-                            h_backward = self.backward_layers[j](output_backward, h_backward)
-            
-                b_outputs.append(output_backward.unsqueeze(1))     
+                            output_backward, h_backward = self.backward_layers[j](h_backward, temp_h_list[j])
+
+                    # Store temp hidden and cell state
+                    temp_h_list[j] = h_backward
+                    if self.cell_name == "lstm":
+                        temp_c_list[j] = c_backward
+
+                    if i == 0:
+                        print("Last input sequence encounter")
+                        h_backward_list.append(h_backward)
+                        if self.cell_name == "lstm":
+                            c_backward_list.append(c_backward)
+                output_backward_list.append(output_backward.unsqueeze(1))    
 
         if self.bidirectional == True:            
             # f_out, b_out: (batch_size, seq_length, hidden_dim)
             # out: (batch_size, seq_length, hidden_dim * 2)
-            f_out = torch.cat(f_outputs, dim=1)
-            b_out = torch.cat(b_outputs, dim=1)
+            f_out = torch.cat(output_forward_list, dim=1)
+            b_out = torch.cat(output_backward_list, dim=1)
             out = torch.cat((f_out, b_out), dim=2)
         else:
             # out: (batch_size, seq_length, hidden_dim)            
-            out = torch.cat(f_outputs, dim=1)        
+            out = torch.cat(output_forward_list, dim=1)        
         
         out = self.regressor(out)    
         

@@ -170,7 +170,7 @@ class myRNN(nn.Module):
         output_forward_list, output_backward_list = ([], [])
 
         h_forward_list, h_backward_list = ([], [])
-        
+
         temp_h_list = [None for _ in range(self.num_layers)]
         if self.cell_name == "lstm":
             c_forward_list, c_backward_list = ([], [])
@@ -206,7 +206,6 @@ class myRNN(nn.Module):
                     temp_c_list[j] = c_forward
 
                 if i == last_seq_index:
-                    print("First input sequence encounter")
                     h_forward_list.append(h_forward)
                     if self.cell_name == "lstm":
                         c_forward_list.append(c_forward)
@@ -248,7 +247,6 @@ class myRNN(nn.Module):
                         temp_c_list[j] = c_backward
 
                     if i == 0:
-                        print("Last input sequence encounter")
                         h_backward_list.append(h_backward)
                         if self.cell_name == "lstm":
                             c_backward_list.append(c_backward)

@@ -231,7 +231,7 @@ def parse_generate_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='bilstm', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='bigru', help="Version number. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm

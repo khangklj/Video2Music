@@ -32,30 +32,16 @@ class RNNCell(nn.Module):
         # return new hidden state
         return new_h, new_h
 class LSTMCell(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim, hidden_dim, bias=True):
         super(LSTMCell, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim    
         
-        self.forget_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
-        
-        self.input_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
-        
-        self.candidate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Tanh()
-        )
-        
-        self.output_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
+        # Linear layer for input-to-hidden transformation
+        self.xh = nn.Linear(input_dim, hidden_dim * 4, bias=bias)
+        # Linear layer for hidden-to-hidden transformation
+        self.hh = nn.Linear(hidden_dim, hidden_dim * 4, bias=bias)
+
         self.init_weights()
         
     def init_weights(self):
@@ -66,54 +52,45 @@ class LSTMCell(nn.Module):
                     nn.init.xavier_uniform_(sublayer.weight)
                     nn.init.zeros_(sublayer.bias)
         
-    def forward(self, x, h, c):
+    def forward(self, x, hx):
         # x: (batch_size, input_dim) - a batch of tokens        
-        # h: (batch_size, hidden_dim) - a batch of hidden states                     
-        # c: (batch_size, hidden_dim) - a batch of cell states              
-        
-        x_h = torch.cat((x, h), dim=1)
-                
-        # forget gate
-        f = self.forget_gate(x_h)        
-        
-        # input gate
-        i = self.input_gate(x_h)
-        
-        # candidate hidden state
-        can_mem = self.candidate(x_h)
-        
-        # output gate
-        o = self.output_gate(x_h)
-        
-        # update new cell state
-        new_c = c * f + can_mem * i
-        
-        # update new hidden state
-        new_h = o * F.tanh(c)
+        # hx: Tuple of (hidden_state, cell_state) each of size (batch_size, hidden_size)
 
-        # return new hidden state
-        return new_h, (new_h, new_c)
+        # Unpack hidden and cell states
+        h, c = hx
+        
+        # Compute gates
+        gates = self.xh(x) + self.hh(h)
+        
+        # Split gates into input, forget, cell, and output gates
+        input_gate, forget_gate, cell_gate, output_gate = gates.chunk(4, 1)
+        
+        # Apply activation functions to gates
+        i_t = torch.sigmoid(input_gate)
+        f_t = torch.sigmoid(forget_gate)
+        g_t = torch.tanh(cell_gate)
+        o_t = torch.sigmoid(output_gate)
+        
+        # Update cell state
+        cy = c * f_t + i_t * g_t
+        
+        # Compute new hidden state
+        hy = o_t * torch.tanh(c)
+        
+        return (hy, cy)                     
         
 class GRUCell(nn.Module):
-    def __init__(self, input_dim, hidden_dim):
+    def __init__(self, input_dim, hidden_dim, bias=True):
         super(GRUCell, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
+        self.bias = bias
+
+        # Linear layer for input-to-hidden transformation
+        self.xh = nn.Linear(input_dim, hidden_dim * 3, bias=bias)
+        # Linear layer for hidden-to-hidden transformation
+        self.hh = nn.Linear(hidden_dim, hidden_dim * 3, bias=bias)
         
-        self.reset_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
-        
-        self.update_gate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Sigmoid()
-        )
-        
-        self.candidate = nn.Sequential(
-            nn.Linear(input_dim + hidden_dim, hidden_dim),
-            nn.Tanh()
-        )
         self.init_weights()
         
     def init_weights(self):
@@ -126,24 +103,30 @@ class GRUCell(nn.Module):
     
     def forward(self, x, h):
         # x: (batch_size, input_dim) - a batch of tokens        
-        # h: (batch_size, hidden_dim) - a batch of hidden states        
-            
-        x_h = torch.cat((x, h), dim=1)
-            
-        # reset gate
-        r = self.reset_gate(x_h)
+        # h: (batch_size, hidden_dim) - a batch of hidden states
         
-        # update gate
-        z = self.update_gate(x_h)
+        # Compute linear transformations
+        x_t = self.xh(x)
+        h_t = self.hh(h)
+
+        # Split the transformations into reset, update, and new gate components
+        x_reset, x_upd, x_new = x_t.chunk(3, 1)
+        h_reset, h_upd, h_new = h_t.chunk(3, 1)
+
+        # Compute reset gate
+        reset_gate = torch.sigmoid(x_reset + h_reset)
         
-        # candidate hidden state
-        can_h = self.candidate(torch.cat((x, h * r), dim=1))
+        # Compute update gate
+        update_gate = torch.sigmoid(x_upd + h_upd)
         
-        # update new hidden state
-        new_h = h * z + (1 - z) * can_h
-        
-        # return new hidden state
-        return new_h, new_h
+        # Compute candidate hidden state
+        new_gate = torch.tanh(x_new + (reset_gate * h_new))
+
+        # Compute final hidden state
+        hy = (1 - update_gate) * h + update_gate * new_gate
+
+        return hy            
+
             
 def make_cell(input_dim, hidden_dim, cell_name='rnn'):
     if cell_name == 'rnn':
@@ -188,69 +171,50 @@ class myRNN(nn.Module):
         # Init
         last_seq_index = x.shape[1] - 1
 
-        h0, c0 = (torch.zeros((x.shape[0], self.hidden_dim)).cuda(), torch.zeros((x.shape[0], self.hidden_dim)).cuda())
+        h0, c0 = (torch.zeros((self.num_layers, x.shape[0], self.hidden_dim)).cuda(), torch.zeros((self.num_layers, x.shape[0], self.hidden_dim)).cuda())
 
-        output_forward = None
-        output_backward = None
-
-        output_forward_list, output_backward_list = ([], [])
-
-        h_forward_list, h_backward_list = ([], [])
-
-        temp_h_list = [None for _ in range(self.num_layers)]
-        if self.bidirectional == True:
-            c_forward_list, c_backward_list = ([], [])
-            temp_c_list = [None for _ in range(self.num_layers)]
-                  
-# if self.cell_name == "lstm":
-#     output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :] if j == 0 else h_forward, h0 if i == 0 else temp_h_list[j], c0 if i == 0 else temp_c_list[j])
-# else:
-#     output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :] if j == 0 else h_forward, h0 if i == 0 else temp_h_list[j])
-# 
-#                   
+        output_forward_list, output_backward_list = ([], [])        
+       
+        hidden = list()
+        for layer in range(self.num_layers):
+            hidden.append(h0[layer, :, :])
+        
+        cell = list()
+        if self.cell_name == "lstm":
+            for layer in range(self.num_layers):
+                cell.append(c0[layer, :, :])
+            
         # Forward
         for i in range(x.shape[1]): 
-            for j in range(self.num_layers):
+            for layer in range(self.num_layers):
                 if self.cell_name == "lstm":
-                    output_forward, (h_forward, c_forward) = self.forward_layers[j](x[:, i, :] if j == 0 else h_forward, h0 if i == 0 else temp_h_list[j], c0 if i == 0 else temp_c_list[j])
+                    hidden_l = self.forward_layers[layer](x[:, i, :] if layer == 0 else hidden[layer-1], (hidden[layer], cell[layer]))
+
+                    hidden[layer] = hidden_l[0]
+                    cell[layer] = hidden_l[1]
                 else:
-                    output_forward, h_forward = self.forward_layers[j](x[:, i, :] if j == 0 else h_forward, h0 if i == 0 else temp_h_list[j])
+                    hidden_l = self.forward_layers[layer](x[:, i, :] if layer == 0 else hidden[layer-1], hidden[layer])
 
-                # Store temp hidden and cell state
-                temp_h_list[j] = h_forward
-                if self.cell_name == "lstm":
-                    temp_c_list[j] = c_forward
+                    hidden[layer] = hidden_l                
 
-                if i == last_seq_index:
-                    h_forward_list.append(h_forward)
-                    if self.cell_name == "lstm":
-                        c_forward_list.append(c_forward)
-            output_forward_list.append(output_forward.unsqueeze(1))           
+            output_forward_list.append(hidden_l[0].unsqueeze(1) if self.cell_name == "lstm" else hidden_l.unsqueeze(1))          
             
-        # Clear temp list
-        temp_h_list = [None for _ in range(self.num_layers)]
-        temp_c_list = [None for _ in range(self.num_layers)]
-
-
         # Backward
         if self.bidirectional == True:           
             for i in reversed(range(x.shape[1])): 
-                for j in range(self.num_layers):
+                for layer in range(self.num_layers):
                     if self.cell_name == "lstm":
-                        output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :] if j == 0 else h_backward, h0 if i == last_seq_index else temp_h_list[j], c0 if i == last_seq_index else temp_c_list[j])
+                        hidden_l = self.backward_layers[layer](x[:, i, :] if layer == 0 else hidden[layer-1], (hidden[layer], cell[layer]))
+                    
+                        hidden[layer] = hidden_l[0]
+                        cell[layer] = hidden_l[1]
                     else:
-                        output_backward, h_backward = self.backward_layers[j](x[:, i, :] if j == 0 else h_backward, h0 if i == last_seq_index else temp_h_list[j])
+                        hidden_l = self.backward_layers[layer](x[:, i, :] if layer == 0 else hidden[layer-1], hidden[layer])
 
-                    # Store temp hidden and cell state
-                    temp_h_list[j] = h_backward
-                    if self.cell_name == "lstm":
-                        temp_c_list[j] = c_backward
+                        hidden[layer] = hidden_l
+                
+                output_backward_list.append(hidden_l[0].unsqueeze(1) if self.cell_name == "lstm" else hidden_l.unsqueeze(1))
 
-                    if i == 0:
-                        h_backward_list.append(h_backward)
-                        if self.cell_name == "lstm":
-                            c_backward_list.append(c_backward)
-                output_backward_list.append(output_backward.unsqueeze(1))    
 
         if self.bidirectional == True:            
             # f_out, b_out: (batch_size, seq_length, hidden_dim)

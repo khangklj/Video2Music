@@ -210,11 +210,10 @@ class myRNN(nn.Module):
         if self.bidirectional == True:           
             for i in reversed(range(x.shape[1])): 
                 for j in range(self.num_layers):
-                    print(i, j)
                     if self.cell_name == "lstm":
-                        output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :] if j == 0 else h_backward, h0 if i == 0 else temp_h_list[j], c0 if i == 0 else temp_c_list[j])
+                        output_backward, (h_backward, c_backward) = self.backward_layers[j](x[:, i, :] if j == 0 else h_backward, h0 if i == last_seq_index else temp_h_list[j], c0 if i == last_seq_index else temp_c_list[j])
                     else:
-                        output_backward, h_backward = self.backward_layers[j](x[:, i, :] if j == 0 else h_backward, h0 if i == 0 else temp_h_list[j])
+                        output_backward, h_backward = self.backward_layers[j](x[:, i, :] if j == 0 else h_backward, h0 if i == last_seq_index else temp_h_list[j])
 
                     # Store temp hidden and cell state
                     temp_h_list[j] = h_backward

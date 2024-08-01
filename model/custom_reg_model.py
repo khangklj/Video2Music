@@ -12,7 +12,15 @@ class RNNCell(nn.Module):
         self.cell = nn.Sequential(
             nn.Linear(input_dim + hidden_dim, hidden_dim),
             nn.Tanh()
-        )
+        )        
+        self.init_weights()
+        
+    def init_weights(self):
+        """Initialize the weights using Xavier initialization."""
+        for layer in self.cell:
+            if isinstance(layer, nn.Linear):
+                nn.init.xavier_uniform_(layer.weight)
+                nn.init.zeros_(layer.bias)
 
     def forward(self, x, h): 
         # x: (batch_size, input_dim) - a batch of tokens        
@@ -48,6 +56,15 @@ class LSTMCell(nn.Module):
             nn.Linear(input_dim + hidden_dim, hidden_dim),
             nn.Sigmoid()
         )
+        self.init_weights()
+        
+    def init_weights(self):
+        """Initialize the weights using Xavier initialization."""
+        for layer in [self.forget_gate, self.input_gate, self.candidate, self.output_gate]:
+            for sublayer in layer:
+                if isinstance(sublayer, nn.Linear):
+                    nn.init.xavier_uniform_(sublayer.weight)
+                    nn.init.zeros_(sublayer.bias)
         
     def forward(self, x, h, c):
         # x: (batch_size, input_dim) - a batch of tokens        
@@ -97,7 +114,16 @@ class GRUCell(nn.Module):
             nn.Linear(input_dim + hidden_dim, hidden_dim),
             nn.Tanh()
         )
+        self.init_weights()
         
+    def init_weights(self):
+        """Initialize the weights using Xavier initialization."""
+        for layer in [self.reset_gate, self.update_gate, self.candidate]:
+            for sublayer in layer:
+                if isinstance(sublayer, nn.Linear):
+                    nn.init.xavier_uniform_(sublayer.weight)
+                    nn.init.zeros_(sublayer.bias)
+    
     def forward(self, x, h):
         # x: (batch_size, input_dim) - a batch of tokens        
         # h: (batch_size, hidden_dim) - a batch of hidden states        

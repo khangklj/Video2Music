@@ -13,7 +13,8 @@ from .custom_gru import GRU
 from .custom_reg_model import myRNN
 import torch.nn.functional as F
 
-from mambapy.mamba import Mamba, MambaConfig, JambaLMConfig, Jamba
+from mambapy.mamba import Mamba, MambaConfig
+from mambapy.jamba_lm JambaLMConfig, Jamba
 
 
 class advancedRNNBlock(nn.Module):

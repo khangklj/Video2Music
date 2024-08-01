@@ -69,6 +69,7 @@ class VideoRegression(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
+        print(f"regModel = {self.regModel}")
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         elif self.regModel == "bigru":
@@ -142,6 +143,7 @@ class VideoRegression(nn.Module):
             out = out.permute(1,0,2)
             out = self.bifc(out)
         elif self.regModel == "bigru":
+            print("I'm here")
             out, _ = self.bigru(vf_concat)
             out = out.permute(1,0,2)
             out = self.bifc(out)

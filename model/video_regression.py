@@ -126,12 +126,15 @@ class VideoRegression(nn.Module):
             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            # config = MambaConfig(d_model=self.total_vf_dim, n_layers=2)
-            config = JambaLMConfig(d_model=self.total_vf_dim, n_layers=2, mlp_size=self.d_model)
+            config = MambaConfig(d_model=self.d_model, n_layers=2)
+            # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
             self.model = Jamba(config)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
+        
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
+        self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
+        self.fc4 = nn.Linear(self.d_model, 2)
         
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
@@ -189,8 +192,9 @@ class VideoRegression(nn.Module):
             vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
         elif self.regModel == "mamba":
-            vf_concat = vf_concat.permute(1,0,2)          
-            # out = self.model(vf_concat)
-            out, _ = self.model(vf_concat)            
-            out = self.fc2(out)
+            vf_concat = vf_concat.permute(1,0,2)
+            vf_concat = self.fc3(vf_concat)
+            out = self.model(vf_concat)
+            # out, _ = self.model(vf_concat)            
+            out = self.fc4(out)
         return out

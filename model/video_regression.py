@@ -14,7 +14,7 @@ from .custom_reg_model import myRNN
 import torch.nn.functional as F
 
 from mambapy.mamba import Mamba, MambaConfig
-from mambapy.jamba_lm JambaLMConfig, Jamba
+from mambapy.jamba_lm import JambaLMConfig, Jamba
 
 
 class advancedRNNBlock(nn.Module):

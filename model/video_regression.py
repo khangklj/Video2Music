@@ -127,8 +127,9 @@ class VideoRegression(nn.Module):
             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=2)
+            self.model = Mamba(config)
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
-            self.model = Jamba(config)
+            # self.model = Jamba(config)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
         

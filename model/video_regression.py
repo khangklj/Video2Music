@@ -12,7 +12,9 @@ from .custom_lstm import LSTM
 from .custom_gru import GRU
 from .custom_reg_model import myRNN
 import torch.nn.functional as F
-from mambapy.mamba import Mamba, MambaConfig
+
+# from mambapy.mamba import Mamba, MambaConfig
+from simple_mamba import ModelArgs, Mamba
 
 
 class advancedRNNBlock(nn.Module):
@@ -124,7 +126,8 @@ class VideoRegression(nn.Module):
             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.total_vf_dim, n_layers=2)
+            # config = MambaConfig(d_model=self.total_vf_dim, n_layers=2)
+            config = ModelArgs(d_model=self.total_vf_dim, n_layer=2, vocab_size=2)
             self.model = Mamba(config)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)

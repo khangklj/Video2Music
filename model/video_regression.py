@@ -124,10 +124,11 @@ class VideoRegression(nn.Module):
             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=total_vf_dim, n_layers=2)
+            config = MambaConfig(d_model=self.total_vf_dim, n_layers=2)
             self.model = Mamba(config)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
+        self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
@@ -187,5 +188,5 @@ class VideoRegression(nn.Module):
         elif self.regModel == "mamba":
             vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
-            print(out.shape)
+            out = self.fc2(out)
         return out

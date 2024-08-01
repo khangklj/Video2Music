@@ -8,7 +8,7 @@ VERSION = "AMT"
 #Best Baseline (MT)
 # VERSION = "v27_novideo_rpr_nosep"
 
-IS_SEPERATED = False # True : seperated chord quality and root output
+IS_SEPERATED = True # True : seperated chord quality and root output
 RPR = True
 IS_VIDEO = True
 

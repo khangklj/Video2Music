@@ -131,7 +131,7 @@ class VideoRegression(nn.Module):
             self.model = Jamba(config)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
-        self.fc2 = nn.Linear(self.total_vf_dim, self.d_model)
+        self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):

@@ -13,9 +13,6 @@ from .custom_gru import GRU
 from .custom_reg_model import myRNN
 import torch.nn.functional as F
 
-# from zeta.nn import MambaBlock
-from mamba_ssm import Mamba
-
 
 class advancedRNNBlock(nn.Module):
     def __init__(self, rnn_type='gru', ff_type='mlp', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
@@ -126,8 +123,7 @@ class VideoRegression(nn.Module):
             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            # self.model = MambaBlock(dim=self.d_model, depth=1)
-            self.model = Mamba(d_model=64)
+            print("EMPTY")
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
         

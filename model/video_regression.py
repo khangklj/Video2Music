@@ -130,6 +130,7 @@ class VideoRegression(nn.Module):
             self.model = Mamba(d_model=self.d_model)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
+        
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -186,6 +187,6 @@ class VideoRegression(nn.Module):
             vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
         elif self.regModel == "mamba":
+            vf_concat = vf_concat.permute(1,0,2)
             out = self.model(vf_concat)
-            print(out.shape)
         return out

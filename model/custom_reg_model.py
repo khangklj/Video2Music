@@ -46,7 +46,7 @@ class LSTMCell(nn.Module):
         
     def init_weights(self):
         """Initialize the weights using Xavier initialization."""
-        for layer in [self.forget_gate, self.input_gate, self.candidate, self.output_gate]:
+        for layer in [self.xh, self.hh]:
             for sublayer in layer:
                 if isinstance(sublayer, nn.Linear):
                     nn.init.xavier_uniform_(sublayer.weight)
@@ -55,6 +55,7 @@ class LSTMCell(nn.Module):
     def forward(self, x, hx):
         # x: (batch_size, input_dim) - a batch of tokens        
         # hx: Tuple of (hidden_state, cell_state) each of size (batch_size, hidden_size)
+        # return (hy, cy): Tuple of (hidden_state, cell_state) each of size (batch_size, hidden_dim)
 
         # Unpack hidden and cell states
         h, c = hx
@@ -95,7 +96,7 @@ class GRUCell(nn.Module):
         
     def init_weights(self):
         """Initialize the weights using Xavier initialization."""
-        for layer in [self.reset_gate, self.update_gate, self.candidate]:
+        for layer in [self.xh, self.hh]:
             for sublayer in layer:
                 if isinstance(sublayer, nn.Linear):
                     nn.init.xavier_uniform_(sublayer.weight)
@@ -104,6 +105,7 @@ class GRUCell(nn.Module):
     def forward(self, x, h):
         # x: (batch_size, input_dim) - a batch of tokens        
         # h: (batch_size, hidden_dim) - a batch of hidden states
+        # return hy: (batch_size, hidden_dim)
         
         # Compute linear transformations
         x_t = self.xh(x)
@@ -168,17 +170,20 @@ class myRNN(nn.Module):
         # x: (batch_size, sequence_length, input_dim) - a batch of sequences
         # out: (batch_size, sequence_length, 2)        
 
-        # Init
-        last_seq_index = x.shape[1] - 1
+        # Init        
 
+        # h0, c0: (num_layer, batch_size, hidden_dim)
         h0, c0 = (torch.zeros((self.num_layers, x.shape[0], self.hidden_dim)).cuda(), torch.zeros((self.num_layers, x.shape[0], self.hidden_dim)).cuda())
 
-        output_forward_list, output_backward_list = ([], [])        
-       
+        output_forward_list = list()
+        output_backward_list = list()       
+
+        # hidden: a list of hidden_state of shape (batch_size, hidden_dim)
         hidden = list()
         for layer in range(self.num_layers):
             hidden.append(h0[layer, :, :])
         
+        # cell: a list of cell_state of shape (batch_size, hidden_dim)
         cell = list()
         if self.cell_name == "lstm":
             for layer in range(self.num_layers):
@@ -216,7 +221,8 @@ class myRNN(nn.Module):
                 output_backward_list.append(hidden_l[0].unsqueeze(1) if self.cell_name == "lstm" else hidden_l.unsqueeze(1))
 
 
-        if self.bidirectional == True:            
+        if self.bidirectional == True:
+            # f_out[i_th], b_out[i_th]: (batch_size, 1, hidden_dim) for i in (0 , seq_len)            
             # f_out, b_out: (batch_size, seq_length, hidden_dim)
             # out: (batch_size, seq_length, hidden_dim * 2)
             f_out = torch.cat(output_forward_list, dim=1)

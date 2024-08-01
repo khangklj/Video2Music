@@ -86,16 +86,21 @@ class GRUCell(nn.Module):
         self.hidden_dim = hidden_dim
         self.bias = bias
 
-        # Linear layer for input-to-hidden transformation
-        self.xh = nn.Linear(input_dim, hidden_dim * 3, bias=bias)
-        # Linear layer for hidden-to-hidden transformation
-        self.hh = nn.Linear(hidden_dim, hidden_dim * 3, bias=bias)
+        # Input hidden weights
+        self.w_ir = nn.Linear(input_dim, hidden_dim, bias=bias)
+        self.w_iz = nn.Linear(input_dim, hidden_dim, bias=bias)
+        self.w_in = nn.Linear(input_dim, hidden_dim, bias=bias)
+
+        # Hidden hidden weights
+        self.w_hr = nn.Linear(hidden_dim, hidden_dim, bias=bias)
+        self.w_hz = nn.Linear(hidden_dim, hidden_dim, bias=bias)
+        self.w_hn = nn.Linear(hidden_dim, hidden_dim, bias=bias)
         
         self.init_weights()
         
     def init_weights(self):
         """Initialize the weights using Xavier initialization."""
-        for layer in [self.xh, self.hh]:
+        for layer in [self.w_ir, self.w_iz, self.w_in, self.w_hr, self.w_hz, self.w_hn]:
             if isinstance(layer, nn.Linear):
                 nn.init.xavier_uniform_(layer.weight)
                 nn.init.zeros_(layer.bias)
@@ -103,30 +108,21 @@ class GRUCell(nn.Module):
     def forward(self, x, h):
         # x: (batch_size, input_dim) - a batch of tokens        
         # h: (batch_size, hidden_dim) - a batch of hidden states
-        # return hy: (batch_size, hidden_dim)
-        
-        # Compute linear transformations
-        x_t = self.xh(x)
-        h_t = self.hh(h)
-
-        # Split the transformations into reset, update, and new gate components
-        x_reset, x_upd, x_new = x_t.chunk(3, 1)
-        h_reset, h_upd, h_new = h_t.chunk(3, 1)
-
+        # return hy: (batch_size, hidden_dim)      
+                
         # Compute reset gate
-        reset_gate = torch.sigmoid(x_reset + h_reset)
+        reset_gate = torch.sigmoid(self.w_ir(x) + self.w_hr(h))
         
         # Compute update gate
-        update_gate = torch.sigmoid(x_upd + h_upd)
+        update_gate = torch.sigmoid(self.w_iz(x) + self.w_hz(h))
         
-        # Compute candidate hidden state
-        new_gate = torch.tanh(x_new + (reset_gate * h_new))
+        # Compute candidate hidden state        
+        new_gate = torch.tanh(self.w_in(x) + reset_gate * self.w_hn(h))
 
         # Compute final hidden state
-        hy = (1 - update_gate) * h + update_gate * new_gate
+        hy = (1 - update_gate) * new_gate + update_gate * h
 
         return hy            
-
             
 def make_cell(input_dim, hidden_dim, cell_name='rnn'):
     if cell_name == 'rnn':

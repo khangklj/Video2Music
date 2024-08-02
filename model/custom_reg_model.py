@@ -211,9 +211,14 @@ class myRNN(nn.Module):
             # f_out[i_th], b_out[i_th]: (batch_size, 1, hidden_dim) for i in (0 , seq_len)            
             # f_out, b_out: (batch_size, seq_length, hidden_dim)
             # out: (batch_size, seq_length, hidden_dim * 2)
-            f_out = torch.cat(output_forward_list, dim=1)
-            b_out = torch.cat(output_backward_list, dim=1)
-            out = torch.cat((f_out, b_out), dim=2)
+
+            # f_out = torch.cat(output_forward_list, dim=1)
+            # b_out = torch.cat(output_backward_list, dim=1)
+            # out = torch.cat((f_out, b_out), dim=2)
+
+            out = [ torch.cat((output_forward_list[i], output_backward_list[x.shape[1] - i - 1]), dim=2) for i in range(x.shape[1]) ]
+            out = torch.cat(out, dim=1)
+
         else:
             # out: (batch_size, seq_length, hidden_dim)            
             out = torch.cat(output_forward_list, dim=1)        

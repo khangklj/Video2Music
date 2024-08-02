@@ -18,7 +18,7 @@ from mambapy.jamba import JambaLMConfig, Jamba
 
 
 class advancedRNNBlock(nn.Module):
-    def __init__(self, rnn_type='gru', ff_type='mlp', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
+    def __init__(self, rnn_type='gru', ff_type='mlp', d_model=64, d_hidden=1024, dropout=0.1, bidirectional=True):
         super(advancedRNNBlock, self).__init__()
 
         self.d_model = d_model

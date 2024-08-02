@@ -120,7 +120,7 @@ class GRUCell(nn.Module):
         new_gate = torch.tanh(x_new + (reset_gate * h_new))
 
         # Compute final hidden state
-        hy = (1 - update_gate) * h + update_gate * new_gate
+        hy = (1 - update_gate) * new_gate + (update_gate * h)
 
         return hy           
             

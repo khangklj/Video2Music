@@ -38,8 +38,8 @@ def parse_train_args():
     parser.add_argument("-dropout", type=float, default=0.1, help="Dropout rate")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='custom_bigru', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-regModel', type=str, default='lstm', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm
@@ -135,8 +135,8 @@ def parse_eval_args():
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='custom_bigru', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-regModel', type=str, default='lstm', help="Version number. None is original loudness and note density Regression model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:

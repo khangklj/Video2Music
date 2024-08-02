@@ -93,7 +93,7 @@ class GRUCell(nn.Module):
         
     def init_weights(self):
         """Initialize the weights using Xavier initialization."""
-        for layer in [self.w_ir, self.w_iz, self.w_in, self.w_hr, self.w_hz, self.w_hn]:
+        for layer in [self.xh, self.hh]:
             if isinstance(layer, nn.Linear):
                 nn.init.xavier_uniform_(layer.weight)
                 nn.init.zeros_(layer.bias)

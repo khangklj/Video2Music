@@ -536,7 +536,8 @@ def compute_vevo_correspondence(out, tgt, tgt_emotion, tgt_emotion_prob, emotion
     for i, out_element in enumerate( out ):
 
         all_zeros = torch.all(tgt_emotion_quality[i] == 0)
-        if tgt_emotion[i][-1] == 1 or all_zeros or tgt_emotion_prob[i] < emotion_threshold:
+        # if tgt_emotion[i][-1] == 1 or all_zeros or tgt_emotion_prob[i] < emotion_threshold:
+        if (tgt_emotion[i][-1] == 1).all().item() == 1 or all_zeros.all().item() == 1 or (tgt_emotion_prob[i] < emotion_threshold).all().item() == 1:
             num_right += 0
         else:
             pt += 1

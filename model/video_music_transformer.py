@@ -300,26 +300,11 @@ class VideoMusicTransformer(nn.Module):
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         vf = self.Linear_vis(vf_concat)
         
-        if self.version == None:
-            ### POSITIONAL ENCODING ###
-            xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
-            vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
-            xf = self.positional_encoding(xf)
-            vf = self.positional_encoding_video(vf)
-        elif self.version == 1:
-            ### POSITIONAL ENCODING ###
-            xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
-            vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
-
-            # Generate position indices
-            xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1]).to(get_device())
-            vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1]).to(get_device())
-
-            xf += self.positional_embedding(xf_position_indices)
-            vf += self.positional_embedding_video(vf_position_indices)
-
-            del xf_position_indices, vf_position_indices
-            torch.cuda.empty_cache()
+        ### POSITIONAL ENCODING ###
+        xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
+        vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
+        xf = self.positional_encoding(xf)
+        vf = self.positional_encoding_video(vf)
 
         ### TRANSFORMER ###
         x_out = self.transformer(src=vf, tgt=xf, tgt_mask=mask)

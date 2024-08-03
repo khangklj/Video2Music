@@ -524,35 +524,35 @@ def compute_vevo_correspondence(out, tgt, tgt_emotion, tgt_emotion_prob, emotion
     with open(chordInvDicPath) as json_file:
         chordInvDic = json.load(json_file)
 
-    for b in range(out.shape[0]):
-        softmax = nn.Softmax(dim=-1)
-        out_st = torch.argmax(softmax(out[b]), dim=-1)
-        out_st = out_st.flatten()
+    softmax = nn.Softmax(dim=-1)
+    out = torch.argmax(softmax(out), dim=-1)
+    out = out.flatten()
 
-        tgt_st = tgt[b].flatten()
+    tgt = tgt.flatten()
 
-        num_right = 0
-        tgt_emotion_quality = tgt_emotion[b, :, 0:14]
-        pt = 0 
-        for i, out_element in enumerate( out_st ):
+    num_right = 0
+    tgt_emotion_quality = tgt_emotion[:, 0:14]
+    pt = 0 
+    for i, out_element in enumerate( out ):
 
-            all_zeros = torch.all(tgt_emotion_quality[i] == 0)
-            if tgt_emotion[b][i][-1] == 1 or all_zeros or tgt_emotion_prob[b][i] < emotion_threshold:
-                num_right += 0
-            else:
-                pt += 1
-                if out_element.item() != CHORD_END and out_element.item() != CHORD_PAD:
-                    gen_chord = chordInvDic[ str( out_element.item() ) ]
+        all_zeros = torch.all(tgt_emotion_quality[i] == 0)
+        if tgt_emotion[i][-1] == 1 or all_zeros or tgt_emotion_prob[i] < emotion_threshold:
+            num_right += 0
+        else:
+            pt += 1
+            if out_element.item() != CHORD_END and out_element.item() != CHORD_PAD:
+                gen_chord = chordInvDic[ str( out_element.item() ) ]
 
-                    chord_arr = gen_chord.split(":")
-                    if len(chord_arr) == 1:
-                        out_quality = 1
-                    elif len(chord_arr) == 2:
-                        chordAttrID = chordAttrDic[chord_arr[1]]
-                        out_quality = chordAttrID # 0:N, 1:maj ... 13:maj7
+                chord_arr = gen_chord.split(":")
+                if len(chord_arr) == 1:
+                    out_quality = 1
+                elif len(chord_arr) == 2:
+                    chordAttrID = chordAttrDic[chord_arr[1]]
+                    out_quality = chordAttrID # 0:N, 1:maj ... 13:maj7
 
-                    if tgt_emotion_quality[i][out_quality] == 1:
-                        num_right += 1
+                if tgt_emotion_quality[i][out_quality] == 1:
+                    num_right += 1
+                    
 
     if(len(tgt_emotion) == 0):
         return 1.0
@@ -717,4 +717,3 @@ def compute_vevo_accuracy_root_attr(y_root, y_attr, tgt):
     acc = num_right / len(tgt)
 
     return acc
-

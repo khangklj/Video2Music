@@ -34,8 +34,6 @@ def main( vm = "" , isPrintArgs = True ):
     args = parse_train_args()[0]
     args.epochs = num_epochs
 
-    if isPrintArgs:
-        print_train_args(args)
     if vm != "":
         args.vis_models = vm
     

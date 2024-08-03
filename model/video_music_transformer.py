@@ -120,8 +120,6 @@ class VideoMusicTransformer(nn.Module):
             mask = self.transformer.generate_square_subsequent_mask(x.shape[1]).to(get_device())
         else:
             mask = None
-
-        print(x.shape)
         
         x_root = self.embedding_root(x_root)
         x_attr = self.embedding_attr(x_attr)

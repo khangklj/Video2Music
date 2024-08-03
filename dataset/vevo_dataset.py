@@ -502,8 +502,8 @@ def compute_hits_k_root_attr(out_root, out_attr, tgt, k):
 
 def compute_vevo_correspondence(out, tgt, tgt_emotion, tgt_emotion_prob, emotion_threshold):
 
-    # tgt_emotion = tgt_emotion.squeeze()
-    # tgt_emotion_prob = tgt_emotion_prob.squeeze()
+    tgt_emotion = tgt_emotion.squeeze()
+    tgt_emotion_prob = tgt_emotion_prob.squeeze()
 
     dataset_root = "./dataset/"
     chordRootInvDicPath = os.path.join( dataset_root, "vevo_meta/chord_root_inv.json")

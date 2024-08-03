@@ -66,22 +66,6 @@ class advancedRNNBlock(nn.Module):
 class VideoRegression(nn.Module):
     def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
         super(VideoRegression, self).__init__()
-
-        # Modify print args here
-        is_print_args = True
-        
-        if is_print_args:
-            print("===============================")
-            print("n_layers: ", n_layers)
-            print("d_model: ", d_model)
-            print("d_hidden: ", d_hidden)
-            print("dropout: ", dropout)
-            print("max_sequence_video: ", max_sequence_video)
-            print("total_vf_dim: ", total_vf_dim)
-            print("regModel: ", regModel)
-            print("===============================")
-            print("")
-        
         self.nlayers    = n_layers
         self.d_model    = d_model
         self.d_hidden = d_hidden

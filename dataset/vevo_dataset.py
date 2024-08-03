@@ -532,6 +532,7 @@ def compute_vevo_correspondence(out, tgt, tgt_emotion, tgt_emotion_prob, emotion
 
     num_right = 0
     tgt_emotion_quality = tgt_emotion[:, 0:14]
+    print(tgt_emotion_quality.shape)
     pt = 0 
     for i, out_element in enumerate( out ):
 

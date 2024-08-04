@@ -492,14 +492,14 @@ class VideoMusicTransformer(nn.Module):
 
         # print(feature_semantic_list.shape, feature_key.shape, feature_scene_offset.shape, feature_motion.shape, feature_emotion.shape)
 
-        # tmp_list = list()
-        # for i in range(x.shape[0]):
-        #     tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
-        #     tmp_list.append(tmp)
-        #     print(tmp.shape)
-        # feature_key_padded = torch.cat(tmp_list, dim=0)
+        tmp_list = list()
+        for i in range(x.shape[0]):
+            tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
+            tmp_list.append(tmp)
+            print(tmp.shape)
+        feature_key_padded = torch.cat(tmp_list, dim=0)
         
-        feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
+        # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
         feature_key_padded = feature_key_padded.to(get_device())
         x = torch.cat([x, feature_key_padded], dim=-1)
 

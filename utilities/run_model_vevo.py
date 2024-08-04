@@ -277,12 +277,12 @@ def eval_model(model, dataloader,
                     # cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
                     # ====
                     for i in range(y.shape[0]):
-                        sum_acc += float(compute_vevo_accuracy(y, tgt ))
-                        cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
-                    sum_acc /= batch_num
-                    cor /= batch_num
+                        sum_acc += float(compute_vevo_accuracy(y[i], tgt[i] ))
+                        cor = float(compute_vevo_correspondence(y[i], tgt[i], tgt_emotion[i], tgt_emotion_prob[i], EMOTION_THRESHOLD))
+                    sum_acc /= y.shape[0]
+                    cor /= y.shape[0]
                     # FLAG
-                    
+
                     if cor >= 0 :
                         n_test_cor +=1
                         sum_cor += cor

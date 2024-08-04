@@ -89,7 +89,7 @@ class TransformerEncoderLayerMoE_RoPE(Module):
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
 
-    def forward(self, src, src_mask=None):
+    def forward(self, src, src_mask=None, src_key_padding_mask=None):
         src2 = self.self_attn(src, src, src, attn_mask=src_mask)
         
         src = src + src2
@@ -117,13 +117,11 @@ class TransformerDecoderLayerMoE_RoPE(Module):
         
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
                 tgt_key_padding_mask=None, memory_key_padding_mask=None):
-        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
-                              key_padding_mask=tgt_key_padding_mask)
+        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask)
         tgt = tgt + tgt2
         tgt = self.norm1(tgt)
 
-        tgt2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask,
-                                   key_padding_mask=memory_key_padding_mask)
+        tgt2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask)
         
         tgt = tgt + tgt2
         tgt = self.norm2(tgt)

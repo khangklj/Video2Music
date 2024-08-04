@@ -89,7 +89,11 @@ def train_epoch(cur_epoch, model, dataloader,
                 
                 y   = y.reshape(y.shape[0] * y.shape[1], -1)
                 tgt = tgt.flatten()
-                tgt_emotion = tgt_emotion.squeeze()
+
+                # FLAG
+                # tgt_emotion = tgt_emotion.squeeze()
+                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
+                
                 loss_chord = train_loss_func.forward(y, tgt)
                 loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
@@ -273,9 +277,7 @@ def eval_model(model, dataloader,
                             feature_scene_offset,
                             feature_motion,
                             feature_emotion)
-                    
-                    print(y.shape, tgt.shape, tgt_emotion.shape)
-                    
+                                        
                     # FLAG
                     # sum_acc += float(compute_vevo_accuracy(y, tgt ))
                     # cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
@@ -304,7 +306,7 @@ def eval_model(model, dataloader,
                     # FLAG
                     # tgt_emotion = tgt_emotion.squeeze()
                     tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
-                    print(y.shape, tgt.shape, tgt_emotion.shape)
+                    
 
                     loss_chord = eval_loss_func.forward(y, tgt)
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)

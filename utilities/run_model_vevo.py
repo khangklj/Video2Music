@@ -211,7 +211,7 @@ def eval_model(model, dataloader,
             tgt_emotion = batch["tgt_emotion"].to(get_device())
             tgt_emotion_prob = batch["tgt_emotion_prob"].to(get_device())
 
-            print(tgt.shape, tgt_emotion.shape)
+            
             
             feature_semantic_list = [] 
             for feature_semantic in batch["semanticList"]:
@@ -274,6 +274,8 @@ def eval_model(model, dataloader,
                             feature_motion,
                             feature_emotion)
                     
+                    print(y.shape, tgt.shape, tgt_emotion.shape)
+                    
                     # FLAG
                     # sum_acc += float(compute_vevo_accuracy(y, tgt ))
                     # cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
@@ -300,7 +302,7 @@ def eval_model(model, dataloader,
                     tgt_attr = tgt_attr.flatten()
                     
                     tgt_emotion = tgt_emotion.squeeze()
-                    print(tgt.shape, tgt_emotion.shape)
+                    print(y.shape, tgt.shape, tgt_emotion.shape)
 
                     loss_chord = eval_loss_func.forward(y, tgt)
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)

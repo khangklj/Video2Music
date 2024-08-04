@@ -41,8 +41,6 @@ class VideoMusicTransformer_V1(nn.Module):
         self.positional_embedding = nn.Embedding(self.max_seq_chord, self.d_model)
         self.positional_embedding_video = nn.Embedding(self.max_seq_chord, self.d_model)
 
-        self.dropoutLayer = nn.Dropout(self.dropout)
-
         # Add condition (minor or major)
         self.condition_linear = nn.Linear(1, self.d_model)
         

@@ -47,7 +47,7 @@ class VideoMusicTransformer_V1(nn.Module):
         # Transformer
         encoder_norm = LayerNorm(self.d_model)
         self.n_experts = 6
-        self.n_experts_per_token = 1
+        self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)

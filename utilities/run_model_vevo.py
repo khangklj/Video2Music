@@ -58,7 +58,7 @@ def train_epoch(cur_epoch, model, dataloader,
                 tgt_root = tgt_root.flatten()
                 tgt_attr = tgt_attr.flatten()
 
-                tgt_emotion = tgt_emotion.squeeze()
+                # tgt_emotion = tgt_emotion.squeeze()
 
                 loss_chord_root = train_loss_func.forward(y_root, tgt_root)
                 loss_chord_attr = train_loss_func.forward(y_attr, tgt_attr)

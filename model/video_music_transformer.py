@@ -46,7 +46,7 @@ class VideoMusicTransformer_V1(nn.Module):
         self.condition_linear = nn.Linear(1, self.d_model)
         
         # Transformer
-        encoder_norm = LayerNorm(self.d_model)
+        encoder_norm = None
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
@@ -54,7 +54,7 @@ class VideoMusicTransformer_V1(nn.Module):
         encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
 
-        decoder_norm = LayerNorm(self.d_model)
+        decoder_norm = None
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.dropout)
@@ -83,8 +83,8 @@ class VideoMusicTransformer_V1(nn.Module):
         x_attr = self.embedding_attr(x_attr)
         x = x_root + x_attr
 
-        feature_key_padded = feature_key.unsqueeze(1).repeat(1, x.shape[1], 1)
-        # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
+        # feature_key_padded = feature_key.unsqueeze(1).repeat(1, x.shape[1], 1)
+        feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
         feature_key_padded = feature_key_padded.to(get_device())
         x = torch.cat([x, feature_key_padded], dim=-1)
 
@@ -293,8 +293,8 @@ class VideoMusicTransformer_V1(nn.Module):
 #         x_attr = self.embedding_attr(x_attr)
 #         x = x_root + x_attr
 
-#         feature_key_padded = feature_key.unsqueeze(1).repeat(1, x.shape[1], 1)
-#         # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
+#         # feature_key_padded = feature_key.unsqueeze(1).repeat(1, x.shape[1], 1)
+#         feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
 #         feature_key_padded = feature_key_padded.to(get_device())
 #         x = torch.cat([x, feature_key_padded], dim=-1)
 

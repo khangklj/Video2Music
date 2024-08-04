@@ -32,14 +32,14 @@ class GLUExpert(Module):
         self.linear1 = Linear(d_model, d_ff)
         self.linear2 = Linear(d_ff, d_model)
         self.gate = Linear(d_model, d_ff)
-        self.dropout1 = Dropout(dropout)
-        self.dropout2 = Dropout(dropout)
+        self.dropout = Dropout(dropout)
+        # self.dropout2 = Dropout(dropout)
 
     def forward(self, x):
-        x_ff = self.dropout1(self.linear1(x))
-        x_gated = self.dropout2(self.gate(x))
+        x_ff = self.dropout(self.linear1(x))
+        x_gated = self.gate(x)
         x_ff = x_ff * F.silu(x_gated)
-        x_ff = self.linear2(x_ff)
+        x_ff = self.dropout(self.linear2(x_ff))
         return x_ff
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
@@ -50,7 +50,6 @@ class MoELayer(Module):
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
         self.d_ff = d_ff
-        self.dropout = Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts, bias=False)
 
@@ -74,15 +73,15 @@ class TransformerEncoderLayerMoE(Module):
 
         self.norm1 = LayerNorm(d_model)
         self.norm2 = LayerNorm(d_model)
-        self.dropout1 = Dropout(dropout)
-        self.dropout2 = Dropout(dropout)
+        # self.dropout1 = Dropout(dropout)
+        # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None):
         src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask)[0]
-        src = src + self.dropout1(src2)
+        src = src + src2
         src = self.norm1(src)
         src2 = self.moe(src)
-        src = src + self.dropout2(src2)
+        src = src + src2
         src = self.norm2(src)
         return src
 
@@ -98,23 +97,24 @@ class TransformerDecoderLayerMoE(Module):
         self.norm1 = LayerNorm(d_model)
         self.norm2 = LayerNorm(d_model)
         self.norm3 = LayerNorm(d_model)
-        self.dropout1 = Dropout(dropout)
-        self.dropout2 = Dropout(dropout)
-        self.dropout3 = Dropout(dropout)
+        # self.dropout1 = Dropout(dropout)
+        # self.dropout2 = Dropout(dropout)
+        # self.dropout3 = Dropout(dropout)
         
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
                 tgt_key_padding_mask=None, memory_key_padding_mask=None):
         tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = tgt + self.dropout1(tgt2)
+        tgt = tgt + tgt2
         tgt = self.norm1(tgt)
 
         tgt2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask,
                                    key_padding_mask=memory_key_padding_mask)[0]
         
-        tgt = tgt + self.dropout2(tgt2)
+        tgt = tgt + tgt2
         tgt = self.norm2(tgt)
+
         tgt2 = self.moe(tgt)
-        tgt = tgt + self.dropout3(tgt2)
+        tgt = tgt + tgt2
         tgt = self.norm3(tgt)
         return tgt

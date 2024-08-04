@@ -82,7 +82,7 @@ class VideoMusicTransformer_V1(nn.Module):
         x_attr = self.embedding_attr(x_attr)
         x = x_root + x_attr
 
-        for i in range(shape[0]):
+        for i in range(x.shape[0]):
             tmp = torch.full((i, x.shape[1], 1), feature_key[i,0].item())
             print(tmp.shape)
 

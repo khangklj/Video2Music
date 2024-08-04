@@ -84,6 +84,7 @@ class VideoMusicTransformer_V1(nn.Module):
 
         print("x shape: ", x.shape)
         print("feature_key shape: ", feature_key.shape)
+        print(feature_key)
 
         # feature_key_padded = feature_key.unsqueeze(1).repeat(1, x.shape[1], 1)
         feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())

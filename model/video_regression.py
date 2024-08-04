@@ -76,46 +76,46 @@ class VideoRegression(nn.Module):
             self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
         elif self.regModel == "gru":
             self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
-        elif self.regModel == "version_1":
-            # First RNN layer (bidirectional)
-            self.bigru1 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
+        # elif self.regModel == "version_1":
+        #     # First RNN layer (bidirectional)
+        #     self.bigru1 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
 
-            # First MLP layer
-            self.mlp1 = nn.Sequential(
-                nn.Linear(self.d_model * 2, self.d_hidden),
-                nn.SiLU(),
-                nn.Linear(self.d_hidden, self.total_vf_dim),
-                nn.Dropout(self.dropout)
-            )  
+        #     # First MLP layer
+        #     self.mlp1 = nn.Sequential(
+        #         nn.Linear(self.d_model * 2, self.d_hidden),
+        #         nn.SiLU(),
+        #         nn.Linear(self.d_hidden, self.total_vf_dim),
+        #         nn.Dropout(self.dropout)
+        #     )  
 
-            # Second RNN layer (non-bidirectional)
-            self.bigru2 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
+        #     # Second RNN layer (non-bidirectional)
+        #     self.bigru2 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
 
-            # Second MLP layer
-            self.mlp2 = nn.Sequential(
-                nn.Linear(self.d_model * 2, self.d_hidden),
-                nn.SiLU(),
-                nn.Linear(self.d_hidden, self.d_model * 2),
-                nn.Dropout(self.dropout)
-            )
-        elif self.regModel == "version_2":
-            self.model = nn.Sequential(
-                nn.Linear(self.total_vf_dim, self.d_model),
-                *[advancedRNNBlock('gru', 'mlp', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
-            )
-        elif self.regModel == "version_3":
-            self.model = nn.Sequential(
-                nn.Linear(self.total_vf_dim, self.d_model),
-                *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
-            )
-        elif self.regModel == "custom_lstm":
-            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
-        elif self.regModel == "custom_bilstm":
-            self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
-        elif self.regModel == "custom_gru":
-            self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
-        elif self.regModel == "custom_bigru":
-            self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+        #     # Second MLP layer
+        #     self.mlp2 = nn.Sequential(
+        #         nn.Linear(self.d_model * 2, self.d_hidden),
+        #         nn.SiLU(),
+        #         nn.Linear(self.d_hidden, self.d_model * 2),
+        #         nn.Dropout(self.dropout)
+        #     )
+        # elif self.regModel == "version_2":
+        #     self.model = nn.Sequential(
+        #         nn.Linear(self.total_vf_dim, self.d_model),
+        #         *[advancedRNNBlock('gru', 'mlp', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+        #     )
+        # elif self.regModel == "version_3":
+        #     self.model = nn.Sequential(
+        #         nn.Linear(self.total_vf_dim, self.d_model),
+        #         *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+        #     )
+        # elif self.regModel == "custom_lstm":
+        #     self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+        # elif self.regModel == "custom_bilstm":
+        #     self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+        # elif self.regModel == "custom_gru":
+        #     self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
+        # elif self.regModel == "custom_bigru":
+        #     self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
 

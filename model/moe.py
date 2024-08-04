@@ -13,6 +13,7 @@ from torch.nn.init import *
 from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
 from .rope import *
+from efficient_kan import KANLinear
 
 class GLUExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):

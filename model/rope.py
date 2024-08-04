@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from efficient_kan import KANLinear
 
 # https://www.facebook.com/photo?fbid=122146964042123211&set=pcb.122146964084123211
 def get_rotation_matrix(dim, context_size, period):
@@ -44,8 +45,8 @@ class MultiheadAttention_RoPE(nn.Module):
         self.num_heads = num_heads
         self.head_dim = hidden_size // num_heads
 
-        self.qkv_linear = nn.Linear(hidden_size, num_heads * 3)
-        self.out = nn.Linear(hidden_size, hidden_size)
+        self.qkv_linear = KANLinear(hidden_size, num_heads * 3)
+        self.out = KANLinear(hidden_size, hidden_size)
         self.position_emb = RoPE(rotation_matrix)
 
     def forward(self, x):

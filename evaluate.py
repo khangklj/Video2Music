@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from dataset.vevo_dataset import create_vevo_datasets
 
 from model.music_transformer import MusicTransformer
-from model.video_music_transformer import VideoMusicTransformer, VideoMusicTransformer_V1
+from model.video_music_transformer import *
 
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
@@ -102,6 +102,11 @@ def main( vm = "", isPrintArgs = True):
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim).to(get_device())
+    elif args.music_gen_version == 2:
+        model = VideoMusicTransformer_V2(n_layers=args.n_layers, num_heads=args.num_heads,
+                    d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                    max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim).to(get_device())
         
     model.load_state_dict(torch.load(args.model_weights))
 

@@ -10,7 +10,7 @@ from torch.optim import Adam, AdamW
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 
 from model.music_transformer import MusicTransformer
-from model.video_music_transformer import VideoMusicTransformer, VideoMusicTransformer_V1
+from model.video_music_transformer import *
 
 from model.loss import SmoothCrossEntropyLoss
 
@@ -129,6 +129,11 @@ def main( vm = "" , isPrintArgs = True ):
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim).to(get_device())
+    elif args.music_gen_version == 2:
+        model = VideoMusicTransformer_V2(n_layers=args.n_layers, num_heads=args.num_heads,
+                    d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                    max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim).to(get_device())
 
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
@@ -168,7 +173,7 @@ def main( vm = "" , isPrintArgs = True ):
     ##### Optimizer #####
     if args.music_gen_version == None:
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    elif args.music_gen_version == 1:
+    elif args.music_gen_version == 1 or args.music_gen_version == 2:
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
         
     if(args.lr is None):

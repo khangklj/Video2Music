@@ -303,7 +303,7 @@ def eval_model(model, dataloader,
                     
                     # FLAG
                     # tgt_emotion = tgt_emotion.squeeze()
-                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion[1], -1)
+                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
                     print(y.shape, tgt.shape, tgt_emotion.shape)
 
                     loss_chord = eval_loss_func.forward(y, tgt)

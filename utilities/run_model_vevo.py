@@ -271,8 +271,6 @@ def eval_model(model, dataloader,
                             feature_scene_offset,
                             feature_motion,
                             feature_emotion)
-
-                    print(y.shape, tgt.shape, tgt_emotion.shape)
                     
                     sum_acc += float(compute_vevo_accuracy(y, tgt ))
                     cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))

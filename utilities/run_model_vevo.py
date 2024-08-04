@@ -67,6 +67,7 @@ def train_epoch(cur_epoch, model, dataloader,
                 first_14 = tgt_emotion[:, :, :14]
                 last_2 = tgt_emotion[:, :, -2:]
                 tgt_emotion_attr = torch.cat((first_14, last_2), dim=-1)
+                tgt_emotion_attr = tgt_emotion_attr.reshape(tgt_emotion_attr.shape[0] * tgt_emotion_attr.shape[1], -1)
 
                 loss_emotion = train_loss_emotion_func.forward(y_attr, tgt_emotion_attr)
 

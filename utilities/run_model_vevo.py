@@ -201,7 +201,7 @@ def eval_model(model, dataloader,
         sum_h3 = 0.0
         sum_h5 = 0.0
         
-        for batch in dataloader:
+        for batch_num, batch in enumerate(dataloader):
             x   = batch["x"].to(get_device())
             tgt = batch["tgt"].to(get_device())
             x_root   = batch["x_root"].to(get_device())
@@ -272,8 +272,17 @@ def eval_model(model, dataloader,
                             feature_motion,
                             feature_emotion)
                     
-                    sum_acc += float(compute_vevo_accuracy(y, tgt ))
-                    cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
+                    # FLAG
+                    # sum_acc += float(compute_vevo_accuracy(y, tgt ))
+                    # cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
+                    # ====
+                    for i in range(y.shape[0]):
+                        sum_acc += float(compute_vevo_accuracy(y, tgt ))
+                        cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
+                    sum_acc /= batch_num
+                    cor /= batch_num
+                    # FLAG
+                    
                     if cor >= 0 :
                         n_test_cor +=1
                         sum_cor += cor

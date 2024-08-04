@@ -210,6 +210,8 @@ def eval_model(model, dataloader,
             tgt_attr = batch["tgt_attr"].to(get_device())
             tgt_emotion = batch["tgt_emotion"].to(get_device())
             tgt_emotion_prob = batch["tgt_emotion_prob"].to(get_device())
+
+            print(tgt.shape, tgt_emotion.shape)
             
             feature_semantic_list = [] 
             for feature_semantic in batch["semanticList"]:

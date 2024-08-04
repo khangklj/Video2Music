@@ -110,7 +110,7 @@ def main( vm = "" , isPrintArgs = True ):
             total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-    train_loader_tmp = DataLoader(train_dataset, batch_size=1, num_workers=args.n_workers, shuffle=True)
+    # train_loader_tmp = DataLoader(train_dataset, batch_size=1, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
     if args.music_gen_version == None:
@@ -205,7 +205,7 @@ def main( vm = "" , isPrintArgs = True ):
             print(SEPERATOR)
             print("Baseline model evaluation (Epoch 0):")
 
-        train_metric_dict = eval_model(model, train_loader_tmp, 
+        train_metric_dict = eval_model(model, train_loader, 
                                 train_loss_func, train_loss_emotion_func,
                                 isVideo= args.is_video)
         

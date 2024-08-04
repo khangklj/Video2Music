@@ -33,13 +33,12 @@ class GLUExpert(Module):
         self.linear2 = Linear(d_ff, d_model)
         self.gate = Linear(d_model, d_ff)
         self.dropout = Dropout(dropout)
-        # self.dropout2 = Dropout(dropout)
 
     def forward(self, x):
-        x_ff = self.dropout(self.linear1(x))
+        x_ff = self.linear1(x)
         x_gated = self.gate(x)
-        x_ff = x_ff * F.silu(x_gated)
-        x_ff = self.dropout(self.linear2(x_ff))
+        x_ff = self.dropout(x_ff * F.silu(x_gated))
+        x_ff = self.linear2(x_ff)
         return x_ff
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
@@ -50,6 +49,7 @@ class MoELayer(Module):
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
         self.d_ff = d_ff
+        self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts, bias=False)
 
@@ -61,7 +61,7 @@ class MoELayer(Module):
         for i, expert in enumerate(self.experts):
             batch_idx, token_idx, topk_idx = torch.where(selected_experts == i)
             weight = weights[batch_idx, token_idx, topk_idx, None]
-            out[batch_idx, token_idx] += weight * expert(x[batch_idx, token_idx])
+            out[batch_idx, token_idx] += weight * self.dropout(expert(x[batch_idx, token_idx]))
         return out
 
 class TransformerEncoderLayerMoE(Module):

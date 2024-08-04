@@ -64,6 +64,7 @@ def train_epoch(cur_epoch, model, dataloader,
                 loss_chord_attr = train_loss_func.forward(y_attr, tgt_attr)
                 loss_chord = loss_chord_root + loss_chord_attr
 
+                print(tgt_emotion.shape)
                 first_14 = tgt_emotion[:, :14]
                 last_2 = tgt_emotion[:, -2:]
                 tgt_emotion_attr = torch.cat((first_14, last_2), dim=1)

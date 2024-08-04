@@ -87,9 +87,9 @@ def train_epoch(cur_epoch, model, dataloader,
                         feature_motion,
                         feature_emotion)
                 
-                y   = y.reshape(y.shape[0] * y.shape[1], -1)
-                tgt = tgt.squeeze().flatten()
-                tgt_emotion = tgt_emotion.squeeze().flatten() # Fix bug when training mini batch
+                # y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                tgt = tgt.squeeze()
+                tgt_emotion = tgt_emotion.squeeze() # Fix bug when training mini batch
                 loss_chord = train_loss_func.forward(y, tgt)
                 loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion

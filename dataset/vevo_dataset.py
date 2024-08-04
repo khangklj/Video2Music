@@ -715,5 +715,5 @@ def compute_vevo_accuracy_root_attr(y_root, y_attr, tgt):
     num_right = torch.sum(num_right).type(TORCH_FLOAT)
 
     acc = num_right / len(tgt)
-
+    
     return acc

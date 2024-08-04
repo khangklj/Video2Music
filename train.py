@@ -166,7 +166,11 @@ def main( vm = "" , isPrintArgs = True ):
     train_loss_emotion_func = eval_loss_emotion_func
 
     ##### Optimizer #####
-    opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    if args.music_gen_version == None:
+      opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    else:
+      # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+      opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:

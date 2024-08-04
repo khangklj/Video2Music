@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 
 from dataset.vevo_dataset import create_vevo_datasets
 from model.video_regression import VideoRegression
@@ -24,7 +24,7 @@ version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 
-num_epochs = 100
+num_epochs = 20
 VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
@@ -34,8 +34,6 @@ def main( vm = "" , isPrintArgs = True ):
     args = parse_train_args()[0]
     args.epochs = num_epochs
 
-    if isPrintArgs:
-        print_train_args(args)
     if vm != "":
         args.vis_models = vm
     
@@ -121,22 +119,29 @@ def main( vm = "" , isPrintArgs = True ):
     eval_loss_func = nn.MSELoss()
     train_loss_func = nn.MSELoss()
 
-    ##### Lr Scheduler vs static lr #####
-    if(args.lr is None):
-        if(args.continue_epoch is None):
-            init_step = 0
-        else:
-            init_step = args.continue_epoch * len(train_loader)
-        lr = LR_DEFAULT_START
-        lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)
-    else:
-        lr = args.lr
+    # ##### Lr Scheduler vs static lr #####
+    # if(args.lr is None):
+    #     if(args.continue_epoch is None):
+    #         init_step = 0
+    #     else:
+    #         init_step = args.continue_epoch * len(train_loader)
+    #     lr = LR_DEFAULT_START
+    #     lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)        
+    # else:
+    #     lr = args.lr        
 
-    opt = Adam(model.parameters(), lr=lr, weight_decay=1e-5)
-    if(args.lr is None):
-        lr_scheduler = LambdaLR(opt, lr_stepper.step)
-    else:
-        lr_scheduler = None
+    # ##### Optimizer #####
+    # # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    
+    # if(args.lr is None):
+    #     lr_scheduler = LambdaLR(opt, lr_stepper.step)
+    # else:
+    #     lr_scheduler = None        
+
+    ##### Original code ####
+    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    lr_scheduler = None
 
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")

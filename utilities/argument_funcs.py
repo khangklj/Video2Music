@@ -35,7 +35,7 @@ def parse_train_args():
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-    parser.add_argument("-dropout", type=float, default=0.1, help="Dropout rate")
+    parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
@@ -46,13 +46,7 @@ def parse_train_args():
     # bilstm
     # gru
     # bigru
-    # version_1 (BiGRU + MLP)
-    # version_2 (BiGRU + MLP + skip connection)
-    # version_3 (BiGRU + SwiGLU MoE + skip connection)
-    # custom_lstm
-    # custom_bilstm
-    # custom_gru 
-    # custom_bigru
+    # bigru_v1
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -144,13 +138,7 @@ def parse_eval_args():
     # bilstm
     # gru
     # bigru
-    # version_1 (BiGRU + MLP)
-    # version_2 (BiGRU + MLP + skip connection)
-    # version_3 (BiGRU + SwiGLU MoE + skip connection)
-    # custom_lstm
-    # custom_bilstm
-    # custom_gru 
-    # custom_bigru    
+    # bigru_v1
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -238,9 +226,7 @@ def parse_generate_args():
     # bilstm
     # gru
     # bigru
-    # version_1 (BiGRU + MLP)
-    # version_2 (BiGRU + MLP + skip connection)
-    # version_3 (BiGRU + SwiGLU MoE + skip connection)
+    # bigru_v1
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 

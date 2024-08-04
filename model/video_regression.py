@@ -81,55 +81,34 @@ class VideoRegression(nn.Module):
             self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
         elif self.regModel == "gru":
             self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
-        elif self.regModel == "version_1":
-            # First RNN layer (bidirectional)
-            self.bigru1 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
-
-            # First MLP layer
-            self.mlp1 = nn.Sequential(
-                nn.Linear(self.d_model * 2, self.d_hidden),
-                nn.SiLU(),
-                nn.Linear(self.d_hidden, self.total_vf_dim),
-                nn.Dropout(self.dropout)
-            )  
-
-            # Second RNN layer (non-bidirectional)
-            self.bigru2 = nn.GRU(self.total_vf_dim, self.d_model, 1, bidirectional=True, batch_first=True)
-
-            # Second MLP layer
-            self.mlp2 = nn.Sequential(
-                nn.Linear(self.d_model * 2, self.d_hidden),
-                nn.SiLU(),
-                nn.Linear(self.d_hidden, self.d_model * 2),
-                nn.Dropout(self.dropout)
-            )
-        elif self.regModel == "version_2":
-            self.model = nn.Sequential(
-                nn.Linear(self.total_vf_dim, self.d_model),
-                *[advancedRNNBlock('gru', 'mlp', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
-            )
-        elif self.regModel == "version_3":
-            self.model = nn.Sequential(
-                nn.Linear(self.total_vf_dim, self.d_model),
-                *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
-            )
-        elif self.regModel == "custom_lstm":
-            # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
-            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers)
-        elif self.regModel == "custom_bilstm":
-            # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
-            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers, bidirectional=True)
-        elif self.regModel == "custom_gru":
-            # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
-            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers)
-        elif self.regModel == "custom_bigru":
-            # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
-            self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
+#         elif self.regModel == "version_2":
+#             self.model = nn.Sequential(
+#                 nn.Linear(self.total_vf_dim, self.d_model),
+#                 *[advancedRNNBlock('gru', 'mlp', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+#             )
+#         elif self.regModel == "version_3":
+#             self.model = nn.Sequential(
+#                 nn.Linear(self.total_vf_dim, self.d_model),
+#                 *[advancedRNNBlock('gru', 'moe', d_model, d_hidden, dropout, bidirectional=True) for _ in range(n_layers)]
+#             )
+#         elif self.regModel == "custom_lstm":
+#             # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+#             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers)
+#         elif self.regModel == "custom_bilstm":
+#             # self.model = LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+#             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'lstm', self.nlayers, bidirectional=True)
+#         elif self.regModel == "custom_gru":
+#             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers)
+#             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers)
+#         elif self.regModel == "custom_bigru":
+#             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+#             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=2)
             self.model = Mamba(config)
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
             # self.model = Jamba(config)
+            
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
         
@@ -167,31 +146,31 @@ class VideoRegression(nn.Module):
             out, _ = self.gru(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)
-        elif self.regModel == "version_1":
-            vf_concat = vf_concat.permute(1,0,2)
-            gru1_out, _ = self.bigru1(vf_concat)
-            mlp1_out = self.mlp1(gru1_out)
-            gru2_out, _ = self.bigru2(mlp1_out)
-            out = self.mlp2(gru2_out)
-            out = self.bifc(out)
-        elif self.regModel == "version_2" or self.regModel == "version_3":
-            vf_concat = vf_concat.permute(1,0,2)
-            out = self.model(vf_concat)
-            # out = self.bifc(out)
-        elif self.regModel == "custom_lstm" or self.regModel == "custom_gru":
-            # vf_concat = vf_concat.permute(1,0,2)
-            # out, _ = self.model(vf_concat)
-            # out = self.fc(out)
+#         elif self.regModel == "version_1":
+#             vf_concat = vf_concat.permute(1,0,2)
+#             gru1_out, _ = self.bigru1(vf_concat)
+#             mlp1_out = self.mlp1(gru1_out)
+#             gru2_out, _ = self.bigru2(mlp1_out)
+#             out = self.mlp2(gru2_out)
+#             out = self.bifc(out)
+#         elif self.regModel == "version_2" or self.regModel == "version_3":
+#             vf_concat = vf_concat.permute(1,0,2)
+#             out = self.model(vf_concat)
+#             # out = self.bifc(out)
+#         elif self.regModel == "custom_lstm" or self.regModel == "custom_gru":
+#             # vf_concat = vf_concat.permute(1,0,2)
+#             # out, _ = self.model(vf_concat)
+#             # out = self.fc(out)
 
-            vf_concat = vf_concat.permute(1,0,2)
-            out = self.model(vf_concat)
-        elif self.regModel == "custom_bilstm" or self.regModel == "custom_bigru":
-            # vf_concat = vf_concat.permute(1,0,2)
-            # out, _ = self.model(vf_concat)
-            # out = self.bifc(out)         
+#             vf_concat = vf_concat.permute(1,0,2)
+#             out = self.model(vf_concat)
+#         elif self.regModel == "custom_bilstm" or self.regModel == "custom_bigru":
+#             # vf_concat = vf_concat.permute(1,0,2)
+#             # out, _ = self.model(vf_concat)
+#             # out = self.bifc(out)         
 
-            vf_concat = vf_concat.permute(1,0,2)
-            out = self.model(vf_concat)
+#             vf_concat = vf_concat.permute(1,0,2)
+#             out = self.model(vf_concat)
         elif self.regModel == "mamba":
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)

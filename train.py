@@ -10,7 +10,7 @@ from torch.optim import Adam, AdamW
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 
 from model.music_transformer import MusicTransformer
-from model.video_music_transformer import VideoMusicTransformer
+from model.video_music_transformer import VideoMusicTransformer, VideoMusicTransformer_V1
 
 from model.loss import SmoothCrossEntropyLoss
 
@@ -110,7 +110,8 @@ def main( vm = "" , isPrintArgs = True ):
             total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+    train_loader_tmp = DataLoader(train_dataset, batch_size=1, num_workers=args.n_workers, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
     if args.music_gen_version == None:
         if args.is_video:
@@ -123,13 +124,11 @@ def main( vm = "" , isPrintArgs = True ):
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, 
                         rpr=args.rpr).to(get_device())
-    else:
-        if args.music_gen_version == 1:
-            model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                        d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
-                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=False, 
-                        version=1).to(get_device())
+    elif args.music_gen_version == 1:
+        model = VideoMusicTransformer_V1(n_layers=args.n_layers, num_heads=args.num_heads,
+                    d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
+                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                    max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim).to(get_device())
 
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
@@ -206,7 +205,7 @@ def main( vm = "" , isPrintArgs = True ):
             print(SEPERATOR)
             print("Baseline model evaluation (Epoch 0):")
 
-        train_metric_dict = eval_model(model, train_loader, 
+        train_metric_dict = eval_model(model, train_loader_tmp, 
                                 train_loss_func, train_loss_emotion_func,
                                 isVideo= args.is_video)
         

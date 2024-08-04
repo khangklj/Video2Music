@@ -537,7 +537,6 @@ def compute_vevo_correspondence(out, tgt, tgt_emotion, tgt_emotion_prob, emotion
 
         all_zeros = torch.all(tgt_emotion_quality[i] == 0)
         if tgt_emotion[i][-1] == 1 or all_zeros or tgt_emotion_prob[i] < emotion_threshold:
-        # if (tgt_emotion[i][-1] == 1).all().item() == 1 or all_zeros.all().item() == 1 or (tgt_emotion_prob[i] < emotion_threshold).all().item() == 1:
             num_right += 0
         else:
             pt += 1
@@ -716,5 +715,5 @@ def compute_vevo_accuracy_root_attr(y_root, y_attr, tgt):
     num_right = torch.sum(num_right).type(TORCH_FLOAT)
 
     acc = num_right / len(tgt)
-
+    
     return acc

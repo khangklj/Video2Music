@@ -12,19 +12,7 @@ from torch.nn.init import *
 
 from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
-from typing import Optional
-
-# from efficient_kan import KANLinear
-
-# class KAN_GLUExpert(Module):
-#     def __init__(self, d_model, d_ff=2048, dropout=0.1):
-#         super(KANExpert, self).__init__()
-#         self.w1 = KANLinear(d_model, d_ff)
-#         self.w2 = KANLinear(d_model, d_ff)
-#         self.w3 = KANLinear(d_ff, d_model)
-
-#     def forward(self, x):
-#         return self.w3(self.w1(x) * self.w2(x))
+from .rope import *
 
 class GLUExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
@@ -63,12 +51,91 @@ class MoELayer(Module):
             weight = weights[batch_idx, token_idx, topk_idx, None]
             out[batch_idx, token_idx] += weight * self.dropout(expert(x[batch_idx, token_idx]))
         return out
+    
+class SharedMoELayer(Module):
+    def __init__(self, expert, d_model, d_ff=2048, n_experts=8, n_experts_per_token=2, dropout=0.1):
+        super(MoELayer, self).__init__()
+        self.n_experts = n_experts
+        self.n_experts_per_token = n_experts_per_token
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.dropout = nn.Dropout(dropout)
+        self.experts = _get_clones(expert, n_experts)
+        self.shared_expert = _get_clones(expert, 1)[0]
+        self.gate = nn.Linear(d_model, n_experts, bias=False)
+
+    def forward(self, x):
+        gate_logits = self.gate(x)
+        weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
+        weights = softmax(weights, dim=1)
+        out = torch.zeros_like(x)
+        for i, expert in enumerate(self.experts):
+            batch_idx, token_idx, topk_idx = torch.where(selected_experts == i)
+            weight = weights[batch_idx, token_idx, topk_idx, None]
+            out[batch_idx, token_idx] += weight * self.dropout(expert(x[batch_idx, token_idx]))
+
+        out += self.shared_expert(x)
+        return out
+
+class TransformerEncoderLayerMoE_RoPE(Module):
+    def __init__(self, d_model, nhead, moelayer, rotation_matrix, dropout=0.1):
+        super(TransformerEncoderLayerMoE, self).__init__()
+        self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
+        self.moe = moelayer
+
+        self.norm1 = LayerNorm(d_model)
+        self.norm2 = LayerNorm(d_model)
+        # self.dropout1 = Dropout(dropout)
+        # self.dropout2 = Dropout(dropout)
+
+    def forward(self, src, src_mask=None):
+        src2 = self.self_attn(src, src, src, attn_mask=src_mask)
+        
+        src = src + src2
+        src = self.norm1(src)
+        src2 = self.moe(src)
+        src = src + src2
+        src = self.norm2(src)
+        return src
+    
+class TransformerDecoderLayerMoE_RoPE(Module):
+    def __init__(self, d_model, nhead, moelayer, rotation_matrix, dropout=0.1):
+        super(TransformerDecoderLayerMoE_RoPE, self).__init__()
+        
+        self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
+        self.multihead_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
+        # Implementation of Feedforward model
+        self.moe = moelayer
+
+        self.norm1 = LayerNorm(d_model)
+        self.norm2 = LayerNorm(d_model)
+        self.norm3 = LayerNorm(d_model)
+        # self.dropout1 = Dropout(dropout)
+        # self.dropout2 = Dropout(dropout)
+        # self.dropout3 = Dropout(dropout)
+        
+    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
+                tgt_key_padding_mask=None, memory_key_padding_mask=None):
+        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
+                              key_padding_mask=tgt_key_padding_mask)
+        tgt = tgt + tgt2
+        tgt = self.norm1(tgt)
+
+        tgt2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask,
+                                   key_padding_mask=memory_key_padding_mask)
+        
+        tgt = tgt + tgt2
+        tgt = self.norm2(tgt)
+
+        tgt2 = self.moe(tgt)
+        tgt = tgt + tgt2
+        tgt = self.norm3(tgt)
+        return tgt
 
 class TransformerEncoderLayerMoE(Module):
     def __init__(self, d_model, nhead, moelayer, dropout=0.1):
         super(TransformerEncoderLayerMoE, self).__init__()
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
-        # Implementation of Feedforward model
         self.moe = moelayer
 
         self.norm1 = LayerNorm(d_model)
@@ -91,7 +158,6 @@ class TransformerDecoderLayerMoE(Module):
         
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
         self.multihead_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
-        # Implementation of Feedforward model
         self.moe = moelayer
 
         self.norm1 = LayerNorm(d_model)

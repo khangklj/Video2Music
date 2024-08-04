@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 # https://www.facebook.com/photo?fbid=122146964042123211&set=pcb.122146964084123211
 def get_rotation_matrix(dim, context_size, period):
@@ -34,3 +35,34 @@ class RoPE(nn.Module):
         new_keys = new_keys.reshape(batch_size, num_heads, seq_length, head_dim)
 
         return new_queries, new_keys
+    
+class MultiheadAttention_RoPE(nn.Module):
+    def __init__(self, hidden_size, num_heads, rotation_matrix):
+        super(MultiheadAttention_RoPE, self).__init__()
+
+        self.hidden_size = hidden_size
+        self.num_heads = num_heads
+        self.head_dim = hidden_size // num_heads
+
+        self.qkv_linear = nn.Linear(hidden_size, num_heads * 3)
+        self.out = nn.Linear(hidden_size, hidden_size)
+        self.position_emb = RoPE(rotation_matrix)
+
+    def forward(self, x):
+        batch_size, seg_length, hidden_size = x.size()
+
+        qkv = self.qkv_linear(x)
+        qkv = qkv.reshape(batch_size, seg_length, self.num_heads, 3 * self.head_dim)
+        qkv = qkv.transpose(1, 2)
+        queries, keys, values = qkv.chunk(3, dim=-1)
+        queries, keys = self.position_emb(queries, keys)
+
+        scores = torch.matmul(queries, keys.transpose(2, 3))
+        scores = scores / (self.head_dim ** 0.5)
+
+        attention = F.softmax(scores, dim=-1)
+        context = torch.matmul(attention, values)
+        context = context.transpose(1, 2)
+        context = context.reshape(batch_size, seg_length, hidden_size)
+        output = self.out(context)
+        return output

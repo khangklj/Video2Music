@@ -111,7 +111,8 @@ def main( vm = "" , isPrintArgs = True ):
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     # train_loader_tmp = DataLoader(train_dataset, batch_size=1, num_workers=args.n_workers, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
+    # val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
 
     if args.music_gen_version == None:
         if args.is_video:

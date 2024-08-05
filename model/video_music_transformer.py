@@ -500,13 +500,13 @@ class VideoMusicTransformer(nn.Module):
         x = x_root + x_attr
 
         #FLAG
-        feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
+        # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
         # ====
-        # tmp_list = list()
-        # for i in range(x.shape[0]):
-        #     tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
-        #     tmp_list.append(tmp)
-        # feature_key_padded = torch.cat(tmp_list, dim=0)
+        tmp_list = list()
+        for i in range(x.shape[0]):
+            tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
+            tmp_list.append(tmp)
+        feature_key_padded = torch.cat(tmp_list, dim=0)
         # ====
         
         

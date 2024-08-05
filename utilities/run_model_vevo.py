@@ -299,14 +299,22 @@ def eval_model(model, dataloader,
                     # sum_h3 += float(compute_hits_k(y, tgt,3))
                     # sum_h5 += float(compute_hits_k(y, tgt,5))
 
-                    for i in range(y.shape[0]):
-                        sum_h1 += float(compute_hits_k(y[i], tgt[i],1))
-                        sum_h3 += float(compute_hits_k(y[i], tgt[i],3))
-                        sum_h5 += float(compute_hits_k(y[i], tgt[i],5))
+                    sum_h1_tmp = 0.0
+                    sum_h3_tmp = 0.0
+                    sum_h5_tmp = 0.0
 
-                    sum_h1 /= y.shape[0]
-                    sum_h3 /= y.shape[0]
-                    sum_h5 /= y.shape[0]
+                    for i in range(y.shape[0]):
+                        sum_h1_tmp += float(compute_hits_k(y[i], tgt[i],1))
+                        sum_h3_tmp += float(compute_hits_k(y[i], tgt[i],3))
+                        sum_h5_tmp += float(compute_hits_k(y[i], tgt[i],5))
+
+                    sum_h1_tmp /= y.shape[0]
+                    sum_h3_tmp /= y.shape[0]
+                    sum_h5_tmp /= y.shape[0]
+
+                    sum_h1 += sum_h1_tmp
+                    sum_h3 += sum_h3_tmp
+                    sum_h5 += sum_h5_tmp
                     
                     y   = y.reshape(y.shape[0] * y.shape[1], -1)
 

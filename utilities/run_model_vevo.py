@@ -91,8 +91,8 @@ def train_epoch(cur_epoch, model, dataloader,
                 tgt = tgt.flatten()
 
                 # FLAG
-                # tgt_emotion = tgt_emotion.squeeze()
-                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
+                tgt_emotion = tgt_emotion.squeeze()
+                # tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
                 
                 loss_chord = train_loss_func.forward(y, tgt)
                 loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
@@ -279,15 +279,14 @@ def eval_model(model, dataloader,
                             feature_emotion)
                                         
                     # FLAG
-                    # sum_acc += float(compute_vevo_accuracy(y, tgt ))
-                    # cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
+                    sum_acc += float(compute_vevo_accuracy(y, tgt ))
+                    cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
                     # ====
-                    for i in range(y.shape[0]):
-                        sum_acc += float(compute_vevo_accuracy(y[i], tgt[i] ))
-                        cor = float(compute_vevo_correspondence(y[i], tgt[i], tgt_emotion[i], tgt_emotion_prob[i], EMOTION_THRESHOLD))
-                    sum_acc /= y.shape[0]
-                    cor /= y.shape[0]
-                    # FLAG
+                    # for i in range(y.shape[0]):
+                    #     sum_acc += float(compute_vevo_accuracy(y[i], tgt[i] ))
+                    #     cor = float(compute_vevo_correspondence(y[i], tgt[i], tgt_emotion[i], tgt_emotion_prob[i], EMOTION_THRESHOLD))
+                    # sum_acc /= y.shape[0]
+                    # cor /= y.shape[0]                    
 
                     if cor >= 0 :
                         n_test_cor +=1
@@ -304,8 +303,8 @@ def eval_model(model, dataloader,
                     tgt_attr = tgt_attr.flatten()
                     
                     # FLAG
-                    # tgt_emotion = tgt_emotion.squeeze()
-                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
+                    tgt_emotion = tgt_emotion.squeeze()
+                    # tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
                     
 
                     loss_chord = eval_loss_func.forward(y, tgt)

@@ -206,8 +206,8 @@ def eval_model(model, dataloader,
         sum_h3 = 0.0
         sum_h5 = 0.0
 
-    # FLAG
-    print(n_test)
+        # FLAG
+        print(n_test)
         
         for batch_num, batch in enumerate(dataloader):
             x   = batch["x"].to(get_device())
@@ -297,9 +297,15 @@ def eval_model(model, dataloader,
                         n_test_cor +=1
                         sum_cor += cor
 
-                    sum_h1 += float(compute_hits_k(y, tgt,1))
-                    sum_h3 += float(compute_hits_k(y, tgt,3))
-                    sum_h5 += float(compute_hits_k(y, tgt,5))
+                    # FLAG
+                    # sum_h1 += float(compute_hits_k(y, tgt,1))
+                    # sum_h3 += float(compute_hits_k(y, tgt,3))
+                    # sum_h5 += float(compute_hits_k(y, tgt,5))
+
+                    for i in range(y.shape[0]):
+                        sum_h1 += float(compute_hits_k(y[i], tgt[i],1))
+                        sum_h3 += float(compute_hits_k(y[i], tgt[i],3))
+                        sum_h5 += float(compute_hits_k(y[i], tgt[i],5))
                     
                     y   = y.reshape(y.shape[0] * y.shape[1], -1)
 

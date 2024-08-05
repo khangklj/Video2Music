@@ -210,6 +210,7 @@ def eval_model(model, dataloader,
         print(n_test)
         
         for batch_num, batch in enumerate(dataloader):
+            print(batch_num)
             x   = batch["x"].to(get_device())
             tgt = batch["tgt"].to(get_device())
             x_root   = batch["x_root"].to(get_device())

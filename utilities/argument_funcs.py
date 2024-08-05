@@ -24,8 +24,8 @@ def parse_train_args():
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=None, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
-    parser.add_argument("-batch_size", type=int, default=16, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=50, help="Number of epochs to use")
+    parser.add_argument("-batch_size", type=int, default=1, help="Batch size to use")
+    parser.add_argument("-epochs", type=int, default=5, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
@@ -119,7 +119,7 @@ def parse_eval_args():
     
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
-    parser.add_argument("-batch_size", type=int, default=16, help="Batch size to use")
+    parser.add_argument("-batch_size", type=int, default=1, help="Batch size to use")
     
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")

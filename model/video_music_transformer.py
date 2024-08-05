@@ -86,7 +86,6 @@ class VideoMusicTransformer_V1(nn.Module):
         # FLAG
         # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())        
         # ====
-        print(x.shape, feature_key.shape)
         tmp_list = list()
         for i in range(x.shape[0]):
             tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
@@ -96,7 +95,6 @@ class VideoMusicTransformer_V1(nn.Module):
         
         feature_key_padded = feature_key_padded.to(get_device())
         x = torch.cat([x, feature_key_padded], dim=-1)
-        print(x.shape)
 
         xf = self.Linear_chord(x)
 

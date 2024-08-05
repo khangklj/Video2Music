@@ -205,6 +205,9 @@ def eval_model(model, dataloader,
         sum_h1 = 0.0
         sum_h3 = 0.0
         sum_h5 = 0.0
+
+    # FLAG
+    print(n_test)
         
         for batch_num, batch in enumerate(dataloader):
             x   = batch["x"].to(get_device())

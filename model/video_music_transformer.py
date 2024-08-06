@@ -250,19 +250,13 @@ class VideoMusicTransformer_V2(nn.Module):
         encoder_norm = LayerNorm(self.d_model)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = nn.Sequential(
-            KANLinear(self.d_model, self.d_model),
-            nn.Dropout(self.dropout)
-        )
+        expert = KANExpert(self.d_model, self.d_ff)
         encoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         encoder_layer = TransformerEncoderLayerMoE_RoPE(self.d_model, self.nhead, encoder_moelayer, rotation_maxtrix, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
 
         decoder_norm = LayerNorm(self.d_model)
-        expert = nn.Sequential(
-            KANLinear(self.d_model, self.d_model),
-            nn.Dropout(self.dropout)
-        )
+        expert = KANExpert(self.d_model, self.d_ff)
         decoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         decoder_layer = TransformerDecoderLayerMoE_RoPE(self.d_model, self.nhead, decoder_moelayer, rotation_maxtrix, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, decoder_norm)

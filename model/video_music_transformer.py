@@ -478,7 +478,7 @@ class VideoMusicTransformer(nn.Module):
             tmp_list.append(tmp)
         feature_key_padded = torch.cat(tmp_list, dim=0)
         # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
-        
+
         feature_key_padded = feature_key_padded.to(get_device())
         # print(x.shape, feature_key_padded.shape, feature_key.shape)
         x = torch.cat([x, feature_key_padded], dim=-1)
@@ -501,6 +501,8 @@ class VideoMusicTransformer(nn.Module):
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
         xf = self.positional_encoding(xf)
         vf = self.positional_encoding_video(vf)
+        xf = xf.permute(1,0,2) # -> (batch_size, max_seq-1, d_model)
+        vf = vf.permute(1,0,2) # -> (batch_size, max_seq_video, d_model)
 
         ### TRANSFORMER ###
         x_out = self.transformer(src=vf, tgt=xf, tgt_mask=mask)

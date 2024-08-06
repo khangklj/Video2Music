@@ -385,6 +385,7 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
                                                device=key_padding_mask.device)], dim=1)
 
     attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+    print(q.shape, k.shape)
     print(attn_output_weights.shape)
     assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
 

@@ -21,7 +21,7 @@ class TransformerDecoderRPR(Module):
         self.num_layers = num_layers
         self.norm = norm
         
-    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None, memory_key_padding_mask=None):
+    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None, memory_key_padding_mask=None, **kwargs):
         output = tgt
         for mod in self.layers:
             output = mod(output, memory, tgt_mask=tgt_mask,
@@ -53,7 +53,7 @@ class TransformerDecoderLayerRPR(Module):
         self.dropout3 = Dropout(dropout)
         
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
-                tgt_key_padding_mask=None, memory_key_padding_mask=None):
+                tgt_key_padding_mask=None, memory_key_padding_mask=None, **kwargs):
         tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
                               key_padding_mask=tgt_key_padding_mask)[0]
         tgt = tgt + self.dropout1(tgt2)
@@ -76,7 +76,7 @@ class TransformerEncoderRPR(Module):
         self.layers = _get_clones(encoder_layer, num_layers)
         self.num_layers = num_layers
         self.norm = norm
-    def forward(self, src, mask=None, src_key_padding_mask=None):
+    def forward(self, src, mask=None, src_key_padding_mask=None, **kwargs):
         output = src
         for i in range(self.num_layers):
             output = self.layers[i](output, src_mask=mask,
@@ -98,7 +98,7 @@ class TransformerEncoderLayerRPR(Module):
         self.norm2 = LayerNorm(d_model)
         self.dropout1 = Dropout(dropout)
         self.dropout2 = Dropout(dropout)
-    def forward(self, src, src_mask=None, src_key_padding_mask=None):
+    def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
         src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask)[0]
         src = src + self.dropout1(src2)
@@ -168,7 +168,7 @@ class MultiheadAttentionRPR(Module):
             xavier_normal_(self.bias_v)
 
     def forward(self, query, key, value, key_padding_mask=None,
-                need_weights=True, attn_mask=None):
+                need_weights=True, attn_mask=None, **kwargs):
 
         if hasattr(self, '_qkv_same_embed_dim') and self._qkv_same_embed_dim is False:
 

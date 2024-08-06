@@ -472,7 +472,7 @@ class VideoMusicTransformer(nn.Module):
         x_attr = self.embedding_attr(x_attr)
         x = x_root + x_attr
 
-        feature_key_padded = feature_key.repeat(1, x.shape[1], 1)
+        feature_key_padded = feature_key.unsqueeze().repeat(1, x.shape[1], 1)
         # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
         feature_key_padded = feature_key_padded.to(get_device())
         print(x.shape, feature_key_padded.shape, feature_key.shape)

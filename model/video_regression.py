@@ -174,7 +174,12 @@ class VideoRegression(nn.Module):
         elif self.regModel == "mamba":
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)
+            
+            # For Mamba
             out = self.model(vf_concat)
-            # out, _ = self.model(vf_concat)            
+            
+            # For Jamba:
+            # out, _ = self.model(vf_concat)  
+            
             out = self.fc4(out)
         return out

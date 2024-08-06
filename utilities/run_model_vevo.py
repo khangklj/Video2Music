@@ -441,8 +441,8 @@ def eval_model(model, dataloader,
         true_labels = np.array(true_labels)[mask]
         pred_labels = np.array(pred_labels)[mask]
 
-        print(true_labels, true_labels.shape)
-        print(pred_labels, pred_labels.shape)
+        # print(true_labels, true_labels.shape)
+        # print(pred_labels, pred_labels.shape)
 
         conf_matrix = confusion_matrix(true_labels, pred_labels, labels=topChordList)
         label_names = [ chordInvDic[str(label_id)] for label_id in topChordList ]

@@ -55,7 +55,7 @@ class MoELayer(Module):
     
 class SharedMoELayer(Module):
     def __init__(self, expert, d_model, d_ff=2048, n_experts=8, n_experts_per_token=2, dropout=0.1):
-        super(MoELayer, self).__init__()
+        super(SharedMoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model

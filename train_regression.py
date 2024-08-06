@@ -24,7 +24,7 @@ version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 
-num_epochs = 20
+num_epochs = 50
 VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
@@ -100,7 +100,10 @@ def main( vm = "" , isPrintArgs = True ):
         total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+
+    # FLAG
+    # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+    val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
     model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
     

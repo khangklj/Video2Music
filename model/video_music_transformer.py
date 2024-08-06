@@ -472,8 +472,13 @@ class VideoMusicTransformer(nn.Module):
         x_attr = self.embedding_attr(x_attr)
         x = x_root + x_attr
 
-        feature_key_padded = feature_key.unsqueeze(1).repeat(1, x.shape[1], 1)
+        tmp_list = list()
+        for i in range(x.shape[0]):
+            tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
+            tmp_list.append(tmp)
+        feature_key_padded = torch.cat(tmp_list, dim=0)
         # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
+        
         feature_key_padded = feature_key_padded.to(get_device())
         # print(x.shape, feature_key_padded.shape, feature_key.shape)
         x = torch.cat([x, feature_key_padded], dim=-1)

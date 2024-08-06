@@ -16,7 +16,7 @@ def parse_train_args():
     parser.add_argument("-output_dir", type=str, default="./saved_models", help="Folder to save model weights. Saves one every epoch")
     
     parser.add_argument("-weight_modulus", type=int, default=10, help="How often to save epoch weights (ex: value of 10 means save every 10 epochs)")
-    parser.add_argument("-print_modulus", type=int, default=500, help="How often to print train results for a batch (batch loss, learn rate, etc.)")
+    parser.add_argument("-print_modulus", type=int, default=1, help="How often to print train results for a batch (batch loss, learn rate, etc.)")
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
     parser.add_argument("--no_tensorboard", type=bool, default=True, help="Turns off tensorboard result reporting")
@@ -38,7 +38,7 @@ def parse_train_args():
     parser.add_argument("-dropout", type=float, default=0.1, help="Dropout rate")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
     parser.add_argument('-regModel', type=str, default='bigru', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
@@ -129,7 +129,7 @@ def parse_eval_args():
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-    parser.add_argument('-music_gen_version', type=int, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
     parser.add_argument('-regModel', type=str, default='bigru', help="Version number. None is original loudness and note density Regression model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     

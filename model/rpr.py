@@ -385,6 +385,7 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
                                                device=key_padding_mask.device)], dim=1)
 
     attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+    print(attn_output_weights.shape)
     assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
 
     ######### ADDITION OF RPR ###########
@@ -393,6 +394,7 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
         qe = torch.einsum("hld,md->hlm", q, rpr_mat)
         srel = _skew(qe)
         attn_output_weights += srel
+        print(attn_output_weights.shape)
 
     if attn_mask is not None:
         attn_mask = attn_mask.unsqueeze(0)

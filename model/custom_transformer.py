@@ -10,7 +10,7 @@ class TransformerEncoder(Module):
         self.layers = _get_clones(encoder_layer, num_layers)
         self.num_layers = num_layers
         self.norm = norm
-    def forward(self, src, mask=None, src_key_padding_mask=None):
+    def forward(self, src, mask=None, src_key_padding_mask=None, **kwargs):
         output = src
         for i in range(self.num_layers):
             output = self.layers[i](output, src_mask=mask,
@@ -26,7 +26,7 @@ class TransformerDecoder(Module):
         self.num_layers = num_layers
         self.norm = norm
         
-    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None, memory_key_padding_mask=None):
+    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None, tgt_key_padding_mask=None, memory_key_padding_mask=None, **kwargs):
         output = tgt
         for mod in self.layers:
             output = mod(output, memory, tgt_mask=tgt_mask,

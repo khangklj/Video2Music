@@ -15,6 +15,17 @@ from torch.nn import MultiheadAttention
 from .rope import *
 from efficient_kan import KANLinear
 
+class KANExpert(Module):
+    def __init__(self, d_model, d_ff=2048, dropout=0.1):
+        super(KANExpert, self).__init__()
+        self.linear1 = KANLinear(d_model, d_ff)
+        self.linear2 = KANLinear(d_ff, d_model)
+
+    def forward(self, x):
+        x = self.linear1(x)
+        x = self.linear2(x)
+        return x
+
 class GLUExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
         super(GLUExpert, self).__init__()
@@ -80,7 +91,7 @@ class SharedMoELayer(Module):
 
 class TransformerEncoderLayerMoE_RoPE(Module):
     def __init__(self, d_model, nhead, moelayer, rotation_matrix, dropout=0.1):
-        super(TransformerEncoderLayerMoE, self).__init__()
+        super(TransformerEncoderLayerMoE_RoPE, self).__init__()
         self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
         self.moe = moelayer
 

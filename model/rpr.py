@@ -396,6 +396,7 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
 
     if attn_mask is not None:
         attn_mask = attn_mask.unsqueeze(0)
+        print(attn_output_weights.shape)
         attn_output_weights += attn_mask
 
     if key_padding_mask is not None:

@@ -320,18 +320,24 @@ def eval_model(model, dataloader,
                     sum_h5 += sum_h5_tmp
                     # ====
                     
-                    y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                    # FLAG
+                    # y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                    # tgt = tgt.flatten()
+                    # tgt_root = tgt_root.flatten()
+                    # tgt_attr = tgt_attr.flatten()
+                    # tgt_emotion = tgt_emotion.squeeze()
 
-                    tgt = tgt.flatten()
+                    # loss_chord = eval_loss_func.forward(y, tgt)
+                    # loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)                    
+                    # ====
                     tgt_root = tgt_root.flatten()
                     tgt_attr = tgt_attr.flatten()
+
+                    loss_chord = eval_loss_func.forward(y.permute(0,2,1), tgt)
+                    loss_emotion = eval_loss_emotion_func.forward(y.permute(0,2,1), tgt_emotion.permute(0,2,1))
+                    # ====
                     
-                    # FLAG
-                    # tgt_emotion = tgt_emotion.squeeze()
-                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
                     
-                    loss_chord = eval_loss_func.forward(y, tgt)
-                    loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 
                     sum_loss_chord += float(loss_chord)

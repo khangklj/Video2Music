@@ -18,8 +18,8 @@ from efficient_kan import KANLinear
 class KANExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
         super(KANExpert, self).__init__()
-        self.linear1 = KANLinear(d_model, d_ff)
-        self.linear2 = KANLinear(d_ff, d_model)
+        self.linear1 = KANLinear(d_model, d_ff + 1)
+        self.linear2 = KANLinear(d_ff + 1, d_model)
 
     def forward(self, x):
         x = self.linear1(x)

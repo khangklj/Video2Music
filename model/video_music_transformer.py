@@ -454,7 +454,7 @@ class VideoMusicTransformer(nn.Module):
             self.transformer = nn.Transformer(
                 d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
                 num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
-                dim_feedforward=self.d_ff, custom_decoder=decoder, batch_first=True
+                dim_feedforward=self.d_ff, custom_decoder=decoder #, batch_first=True
             )        
     
         self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)

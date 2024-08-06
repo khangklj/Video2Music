@@ -49,7 +49,7 @@ class MultiheadAttention_RoPE(nn.Module):
         self.out = KANLinear(hidden_size, hidden_size)
         self.position_emb = RoPE(rotation_matrix)
 
-    def forward(self, q, k, v, attention_mask=None):
+    def forward(self, q, k, v, attn_mask=None):
         x = torch.cat((q, k, v), dim=2)
         batch_size, seg_length, hidden_size = x.size()
 
@@ -60,7 +60,7 @@ class MultiheadAttention_RoPE(nn.Module):
         queries, keys = self.position_emb(queries, keys)
 
         scores = torch.matmul(queries, keys.transpose(2, 3))
-        scores = scores / (self.head_dim ** 0.5) + attention_mask
+        scores = scores / (self.head_dim ** 0.5) + attn_mask
 
         attention = F.softmax(scores, dim=-1)
         context = torch.matmul(attention, values)

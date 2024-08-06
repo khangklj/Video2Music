@@ -337,6 +337,7 @@ def eval_model(model, dataloader,
                     loss_emotion = eval_loss_emotion_func.forward(y.permute(0,2,1), tgt_emotion.permute(0,2,1))
                     y = y.reshape(y.shape[0] * y.shape[1], -1)
                     tgt = tgt.flatten()
+                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
                     # ====
                     
                     

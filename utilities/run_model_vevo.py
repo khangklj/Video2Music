@@ -318,7 +318,6 @@ def eval_model(model, dataloader,
                     sum_h1 += sum_h1_tmp
                     sum_h3 += sum_h3_tmp
                     sum_h5 += sum_h5_tmp
-                    print("batch: ", batch_num, "; sum_h5_tmp: ", sum_h5_tmp)
                     # ====
                     
                     y   = y.reshape(y.shape[0] * y.shape[1], -1)

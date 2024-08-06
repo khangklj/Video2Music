@@ -238,9 +238,9 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
     qkv_same = torch.equal(query, key) and torch.equal(key, value)
     kv_same = torch.equal(key, value)
     
-    bsz, tgt_len, embed_dim = query.size()
+    bsz, tgt_len, embed_dim = query.size() # switch bsz and tgt_len
     assert embed_dim == embed_dim_to_check
-    assert list(query.size()) == [tgt_len, bsz, embed_dim]
+    assert list(query.size()) == [bsz, tgt_len, embed_dim] # switch bsz and tgt_len
     assert key.size() == value.size()
 
     head_dim = embed_dim // num_heads

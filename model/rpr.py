@@ -251,6 +251,7 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
         if qkv_same:
             # self-attention
             q, k, v = linear(query, in_proj_weight, in_proj_bias).chunk(3, dim=-1)
+            print(q.shape, k.shape, v.shape)
 
         elif kv_same:
             # encoder-decoder attention

@@ -238,7 +238,7 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
     qkv_same = torch.equal(query, key) and torch.equal(key, value)
     kv_same = torch.equal(key, value)
     
-    tgt_len, bsz, embed_dim = query.size()
+    bsz, tgt_len, embed_dim = query.size()
     assert embed_dim == embed_dim_to_check
     assert list(query.size()) == [tgt_len, bsz, embed_dim]
     assert key.size() == value.size()
@@ -251,7 +251,6 @@ def multi_head_attention_forward_rpr(query,                       # type: Tensor
         if qkv_same:
             # self-attention
             q, k, v = linear(query, in_proj_weight, in_proj_bias).chunk(3, dim=-1)
-            print(q.shape, k.shape, v.shape)
 
         elif kv_same:
             # encoder-decoder attention

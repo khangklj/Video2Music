@@ -253,8 +253,6 @@ class VideoMusicTransformer_V2(nn.Module):
         self.Linear_vis     = KANLinear(self.total_vf_dim, self.d_model)
         self.Linear_chord     = KANLinear(self.d_model+1, self.d_model)
 
-        rotation_maxtrix = get_rotation_matrix(d_model, 300, 10000.0)
-
         # Add condition (minor or major)
         self.condition_linear = KANLinear(1, self.d_model)
         
@@ -270,12 +268,12 @@ class VideoMusicTransformer_V2(nn.Module):
 
         # Encoder
         encoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
-        encoder_layer = TransformerEncoderLayerMoE_RoPE(self.d_model, self.nhead, encoder_moelayer, rotation_maxtrix, norm, self.dropout)
+        encoder_layer = TransformerEncoderLayerMoE_RoPE(self.d_model, self.nhead, encoder_moelayer, norm, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
         decoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
-        decoder_layer = TransformerDecoderLayerMoE_RoPE(self.d_model, self.nhead, decoder_moelayer, rotation_maxtrix, norm, self.dropout)
+        decoder_layer = TransformerDecoderLayerMoE_RoPE(self.d_model, self.nhead, decoder_moelayer, norm, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
         
         self.transformer = nn.Transformer(

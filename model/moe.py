@@ -91,9 +91,9 @@ class SharedMoELayer(Module):
         return out
 
 class TransformerEncoderLayerMoE_RoPE(Module):
-    def __init__(self, d_model, nhead, moelayer, rotation_matrix, norm=None, dropout=0.1):
+    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
         super(TransformerEncoderLayerMoE_RoPE, self).__init__()
-        self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
+        self.self_attn = MultiheadAttention_RoPE(d_model, nhead)
         self.moe = moelayer
 
         self.norm1, self.norm2 = _get_clones(norm, 2)
@@ -111,11 +111,11 @@ class TransformerEncoderLayerMoE_RoPE(Module):
         return src
     
 class TransformerDecoderLayerMoE_RoPE(Module):
-    def __init__(self, d_model, nhead, moelayer, rotation_matrix, norm=None, dropout=0.1):
+    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
         super(TransformerDecoderLayerMoE_RoPE, self).__init__()
         
-        self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
-        self.multihead_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
+        self.self_attn = MultiheadAttention_RoPE(d_model, nhead)
+        self.multihead_attn = MultiheadAttention_RoPE(d_model, nhead)
         # Implementation of Feedforward model
         self.moe = moelayer
 

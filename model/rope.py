@@ -49,7 +49,7 @@ class MultiheadAttention_RoPE(nn.Module):
 
         self.qkv_linear = KANLinear(hidden_size * 3, hidden_size * 3)
         self.out = KANLinear(hidden_size, hidden_size)
-        self.position_emb = RotaryEmbedding(hidden_size) # input must (batch, heads, seq_len, dim_of_head)
+        self.position_emb = RotaryEmbedding(hidden_size, learned_freq=False, use_xpos=True) # input must (batch, heads, seq_len, dim_of_head)
 
     def forward(self, q, k, v, attn_mask=None):
         x = torch.cat((q, k, v), dim=2)

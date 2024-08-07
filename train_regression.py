@@ -135,8 +135,8 @@ def main( vm = "" , isPrintArgs = True ):
         lr = args.lr        
 
     ##### Optimizer #####
-    # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
@@ -144,10 +144,8 @@ def main( vm = "" , isPrintArgs = True ):
         lr_scheduler = None        
 
     ##### Original code ####
-    # opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-    opt = Adam(model.parameters(), lr=lr, weight_decay=1e-5)
-    # opt = Adam(model.parameters(), lr=5e-5, weight_decay=5e-7)
-    lr_scheduler = None
+    # opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
+    # lr_scheduler = None
 
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")

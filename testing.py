@@ -18,7 +18,7 @@ def main():
     input = torch.randn(1, 50, 128, requires_grad=True)
     target_ce = torch.empty(1, 50, dtype=torch.long).random_(1)
     targe_bce = torch.empty(1, 50, 128).random_(1)
-    input_2 = input
+    input_2 = input.detach().clone()
 
     print("Original: ") 
     output_ce = ce_loss(reshape_tensor(input), target_ce.flatten())
@@ -39,7 +39,7 @@ def main():
     input = torch.randn(16, 50, 128, requires_grad=True)
     target_ce = torch.empty(16, 50, dtype=torch.long).random_(1)
     targe_bce = torch.empty(16, 50, 128).random_(1)
-    input_2 = input
+    input_2 = input.detach().clone()
 
 
     print("Original: ") 

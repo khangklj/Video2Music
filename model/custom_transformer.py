@@ -53,7 +53,7 @@ class RMSNorm(nn.Module):
 class MyRMSNorm(Module):
     def __init__(self, dim, eps=1e-6, batch_first=False): # dim = d_model
         super(MyRMSNorm, self).__init__()
-        self.norm = RMSNorm(dim, eps)
+        self.norm = RMSNorm(dim)
         self.batch_first = batch_first
 
     def forward(self, x):

@@ -65,8 +65,8 @@ class MoELayer(Module):
             tmp = x[token_idx, batch_idx]
             tmp = expert(tmp)
             # tmp = tmp.permute(1, 0)
-            print(out[token_idx, batch_idx].shape, weight.shape, tmp.shape)
-            out[token_idx, batch_idx] += weight * self.dropout(tmp)
+            # print(out[token_idx, batch_idx].shape, weight.shape, tmp.shape)
+            out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(tmp)
         return out
     
 class SharedMoELayer(Module):

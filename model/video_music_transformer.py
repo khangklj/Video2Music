@@ -47,7 +47,6 @@ class VideoMusicTransformer_V1(nn.Module):
         
         rms_norm = True
 
-        # Encoder
         if rms_norm == True:
             norm = MyRMSNorm(self.d_model, batch_first=False)
         else:
@@ -56,12 +55,13 @@ class VideoMusicTransformer_V1(nn.Module):
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+
+        # Encoder
         encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, norm, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
-        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, norm, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)

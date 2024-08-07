@@ -53,12 +53,14 @@ class MultiheadAttention_RoPE(nn.Module):
 
     def forward(self, q, k, v, attn_mask=None):
         x = torch.cat((q, k, v), dim=2)
+        print(x.shape)
         batch_size, seg_length, hidden_size = x.size()
 
         qkv = self.qkv_linear(x)
         qkv = qkv.reshape(batch_size, seg_length, self.num_heads, 3 * self.head_dim)
         qkv = qkv.transpose(1, 2)
         queries, keys, values = qkv.chunk(3, dim=-1)
+        print(queries.shape, keys.shape)
         queries, keys = self.position_emb.rotate_queries_and_keys(queries, keys)
 
         scores = torch.matmul(queries, keys.transpose(2, 3))

@@ -17,7 +17,8 @@ from utilities.argument_funcs import parse_train_args, print_train_args, write_m
 
 from utilities.run_model_regression import train_epoch, eval_model
 
-CSV_HEADER = ["Epoch", "Learn rate", "Avg Train loss", "Train RMSE", "Avg Eval loss", "Eval RMSE"]
+CSV_HEADER = ["Epoch", "Learn rate", "Avg Train loss", "Avg Train RMSE", "Avg Train RMSE (Note Density)", "Avg Train RMSE (Loudness)", 
+              "Avg Eval loss", "Avg Eval RMSE", "Avg Eval RMSE (Note Density)", "Avg Eval RMSE (Loudness)"]
 BASELINE_EPOCH = -1
 
 version = VERSION
@@ -216,7 +217,8 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, train_loss, train_rmse, eval_loss, eval_rmse])
+            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, 
+                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness])
     return
 
 if __name__ == "__main__":

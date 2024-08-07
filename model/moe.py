@@ -13,6 +13,7 @@ from torch.nn.init import *
 from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
 from .rope import *
+from utilities.device import get_device
 from efficient_kan import KANLinear
 
 class KANExpert(Module):
@@ -54,10 +55,10 @@ class MoELayer(Module):
         self.gate = nn.Linear(d_model, n_experts, bias=False)
 
     def forward(self, x):
-        print(x.shape)
         gate_logits = self.gate(x)
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
-        weights = softmax(weights, dim=1)
+        weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
+        print(weights.shape)
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
             batch_idx, token_idx, topk_idx = torch.where(selected_experts == i)

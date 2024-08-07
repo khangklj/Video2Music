@@ -144,7 +144,8 @@ def main( vm = "" , isPrintArgs = True ):
     #     lr_scheduler = None        
 
     ##### Original code ####
-    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    # opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    opt = Adam(model.parameters(), lr=5e-5, weight_decay=5e-7)
     lr_scheduler = None
 
     ##### Tracking best evaluation accuracy #####

@@ -1,8 +1,25 @@
-from torch.nn import Module
+import torch
+from torch.nn import Module, RMSNorm
 from torch.nn.modules.transformer import _get_clones
 from torch.nn.init import *
 
 from torch.nn.functional import linear, softmax, dropout
+
+class MyRMSNorm(Module):
+    def __init__(self, dim, eps=1e-6, batch_first=False): # dim = (seq_len, d_model)
+        super(MyRMSNorm, self).__init__()
+        self.norm = RMSNorm(dim, eps)
+        self.batch_first = batch_first
+
+    def forward(self, x):
+        if self.batch_first: # x.shape = (batch, seq_len, d_model)
+            return self.norm(x)
+        else: # x.shape = (seq_len, batch, d_model)
+            x = x.permute(1,0,2)
+            x = self.norm(x)
+            x = x.permute(1,0,2)
+            return x
+        pass
 
 class TransformerEncoder(Module):
     def __init__(self, encoder_layer, num_layers, norm=None):

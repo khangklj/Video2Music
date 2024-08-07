@@ -40,13 +40,19 @@ class VideoMusicTransformer_V1(nn.Module):
     
         # Positional embedding
         self.positional_embedding = nn.Embedding(self.max_seq_chord, self.d_model)
-        self.positional_embedding_video = nn.Embedding(self.max_seq_chord, self.d_model)
+        self.positional_embedding_video = nn.Embedding(self.max_seq_video, self.d_model)
 
         # Add condition (minor or major)
         self.condition_linear = nn.Linear(1, self.d_model)
         
-        # Transformer
-        encoder_norm = LayerNorm(self.d_model)
+        # Encoder
+        rms_norm = False
+
+        if rms_norm == True:
+            encoder_norm = MyRMSNorm((self.max_seq_video, self.d_model), batch_first=False)
+        else:
+            encoder_norm = nn.LayerNorm(self.d_model)
+
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
@@ -54,11 +60,18 @@ class VideoMusicTransformer_V1(nn.Module):
         encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
 
-        decoder_norm = LayerNorm(self.d_model)
+        # Decoder
+        if rms_norm == True:
+            decoder_norm = MyRMSNorm((self.max_seq_video, self.d_model), batch_first=False)
+        else:
+            decoder_norm = nn.LayerNorm(self.d_model)
+
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, decoder_norm)
+
+        # Full model
         self.transformer = nn.Transformer(
             d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
             num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,

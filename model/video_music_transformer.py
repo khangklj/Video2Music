@@ -259,7 +259,7 @@ class VideoMusicTransformer_V2(nn.Module):
         self.condition_linear = KANLinear(1, self.d_model)
         
         # Transformer
-        if rms_norm == True:
+        if rms_norm:
             norm = MyRMSNorm(self.d_model, batch_first=False)
         else:
             norm = nn.LayerNorm(self.d_model)
@@ -270,12 +270,12 @@ class VideoMusicTransformer_V2(nn.Module):
 
         # Encoder
         encoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
-        encoder_layer = TransformerEncoderLayerMoE_RoPE(self.d_model, self.nhead, encoder_moelayer, rotation_maxtrix, self.dropout)
+        encoder_layer = TransformerEncoderLayerMoE_RoPE(self.d_model, self.nhead, encoder_moelayer, rotation_maxtrix, norm, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
         decoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
-        decoder_layer = TransformerDecoderLayerMoE_RoPE(self.d_model, self.nhead, decoder_moelayer, rotation_maxtrix, self.dropout)
+        decoder_layer = TransformerDecoderLayerMoE_RoPE(self.d_model, self.nhead, decoder_moelayer, rotation_maxtrix, norm, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
         
         self.transformer = nn.Transformer(

@@ -5,7 +5,7 @@ import torch.nn.functional as F
 SEPERATOR = "==========="
 
 def reshape_tensor(tensor):
-    return tensor.reshape(input.shape[0] * input.shape[1], -1)
+    return tensor.reshape(tensor.shape[0] * tensor.shape[1], -1)
 
 def reshape_tensor_2(tensor):
     return tensor.reshape(0,2,1)

@@ -51,7 +51,7 @@ class RMSNorm(nn.Module):
         return self.scale * x_normed
 
 class MyRMSNorm(Module):
-    def __init__(self, dim, eps=1e-6, batch_first=False): # dim = (seq_len, d_model)
+    def __init__(self, dim, eps=1e-6, batch_first=False): # dim = d_model
         super(MyRMSNorm, self).__init__()
         self.norm = RMSNorm(dim, eps)
         self.batch_first = batch_first

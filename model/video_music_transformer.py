@@ -49,7 +49,7 @@ class VideoMusicTransformer_V1(nn.Module):
 
         # Encoder
         if rms_norm == True:
-            encoder_norm = MyRMSNorm((self.max_seq_video, self.d_model), batch_first=False)
+            encoder_norm = MyRMSNorm(self.d_model, batch_first=False)
         else:
             encoder_norm = nn.LayerNorm(self.d_model)
 
@@ -62,7 +62,7 @@ class VideoMusicTransformer_V1(nn.Module):
 
         # Decoder
         if rms_norm == True:
-            decoder_norm = MyRMSNorm((self.max_seq_video, self.d_model), batch_first=False)
+            decoder_norm = MyRMSNorm(self.d_model, batch_first=False)
         else:
             decoder_norm = nn.LayerNorm(self.d_model)
 

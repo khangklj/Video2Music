@@ -57,11 +57,13 @@ class MoELayer(Module):
     def forward(self, x):
         gate_logits = self.gate(x)
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
+        print(selected_experts.shape)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
         print(weights.shape)
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
+            print(token_idx, batch_idx, topk_idx)
             weight = weights[token_idx, batch_idx, topk_idx]
             out[token_idx, batch_idx] += weight * self.dropout(expert(x[token_idx, batch_idx]))
         return out

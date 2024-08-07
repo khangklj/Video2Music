@@ -16,7 +16,7 @@ import json
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
         super(VideoMusicTransformer_V1, self).__init__()
 
         self.nlayers    = n_layers
@@ -45,8 +45,6 @@ class VideoMusicTransformer_V1(nn.Module):
         # Add condition (minor or major)
         self.condition_linear = nn.Linear(1, self.d_model)
         
-        rms_norm = True
-
         if rms_norm == True:
             norm = MyRMSNorm(self.d_model, batch_first=False)
         else:
@@ -234,7 +232,7 @@ class VideoMusicTransformer_V1(nn.Module):
 class VideoMusicTransformer_V2(nn.Module):
     def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
         super(VideoMusicTransformer_V2, self).__init__()
 
         self.nlayers    = n_layers
@@ -261,19 +259,25 @@ class VideoMusicTransformer_V2(nn.Module):
         self.condition_linear = KANLinear(1, self.d_model)
         
         # Transformer
-        encoder_norm = LayerNorm(self.d_model)
+        if rms_norm == True:
+            norm = MyRMSNorm(self.d_model, batch_first=False)
+        else:
+            norm = nn.LayerNorm(self.d_model)
+
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = KANExpert(self.d_model, self.d_ff)
+
+        # Encoder
         encoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         encoder_layer = TransformerEncoderLayerMoE_RoPE(self.d_model, self.nhead, encoder_moelayer, rotation_maxtrix, self.dropout)
-        encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
+        encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
-        decoder_norm = LayerNorm(self.d_model)
-        expert = KANExpert(self.d_model, self.d_ff)
+        # Decoder
         decoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         decoder_layer = TransformerDecoderLayerMoE_RoPE(self.d_model, self.nhead, decoder_moelayer, rotation_maxtrix, self.dropout)
-        decoder = TransformerDecoder(decoder_layer, self.nlayers, decoder_norm)
+        decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
+        
         self.transformer = nn.Transformer(
             d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
             num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
@@ -284,9 +288,6 @@ class VideoMusicTransformer_V2(nn.Module):
         self.Wout_attr       = KANLinear(self.d_model, CHORD_ATTR_SIZE)
         self.Wout       = KANLinear(self.d_model, CHORD_SIZE)
         self.softmax    = nn.Softmax(dim=-1)
-
-        del encoder_norm, expert, encoder_moelayer, encoder_layer, decoder_norm, decoder_moelayer, decoder_layer
-        torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):
         if(mask is True):

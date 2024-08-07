@@ -37,7 +37,7 @@ class GLUExpert(Module):
     def forward(self, x):
         x_ff = self.linear1(x)
         x_gated = self.gate(x)
-        x_ff = x_ff * F.silu(x_gated)
+        x_ff = x_ff * F.sigmoid(x_gated)
         x_ff = self.linear2(x_ff)
         return x_ff
 
@@ -54,6 +54,7 @@ class MoELayer(Module):
         self.gate = nn.Linear(d_model, n_experts, bias=False)
 
     def forward(self, x):
+        print(x.shape)
         gate_logits = self.gate(x)
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
         weights = softmax(weights, dim=1)

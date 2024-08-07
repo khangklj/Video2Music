@@ -62,11 +62,7 @@ class MoELayer(Module):
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             weight = weights[token_idx, batch_idx, topk_idx]
-            tmp = x[token_idx, batch_idx]
-            tmp = expert(tmp)
-            # tmp = tmp.permute(1, 0)
-            # print(out[token_idx, batch_idx].shape, weight.shape, tmp.shape)
-            out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(tmp)
+            out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
         return out
     
 class SharedMoELayer(Module):
@@ -87,9 +83,9 @@ class SharedMoELayer(Module):
         weights = softmax(weights, dim=1)
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
-            batch_idx, token_idx, topk_idx = torch.where(selected_experts == i)
-            weight = weights[batch_idx, token_idx, topk_idx, None]
-            out[batch_idx, token_idx] += weight * self.dropout(expert(x[batch_idx, token_idx]))
+            token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
+            weight = weights[token_idx, batch_idx, topk_idx]
+            out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
         out += self.shared_expert(x)
         return out

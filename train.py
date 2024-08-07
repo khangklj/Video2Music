@@ -162,7 +162,9 @@ def main( vm = "" , isPrintArgs = True ):
     if(args.ce_smoothing is None):
         train_loss_func = eval_loss_func
     else:
-        train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
+        # FLAG
+        # train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
+        train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
 
     eval_loss_emotion_func = nn.BCEWithLogitsLoss()
     train_loss_emotion_func = eval_loss_emotion_func

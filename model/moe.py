@@ -90,13 +90,12 @@ class SharedMoELayer(Module):
         return out
 
 class TransformerEncoderLayerMoE_RoPE(Module):
-    def __init__(self, d_model, nhead, moelayer, rotation_matrix, dropout=0.1):
+    def __init__(self, d_model, nhead, moelayer, rotation_matrix, norm=None, dropout=0.1):
         super(TransformerEncoderLayerMoE_RoPE, self).__init__()
         self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
         self.moe = moelayer
 
-        self.norm1 = LayerNorm(d_model)
-        self.norm2 = LayerNorm(d_model)
+        self.norm1, self.norm2 = _get_clones(norm, 2)
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
 
@@ -111,7 +110,7 @@ class TransformerEncoderLayerMoE_RoPE(Module):
         return src
     
 class TransformerDecoderLayerMoE_RoPE(Module):
-    def __init__(self, d_model, nhead, moelayer, rotation_matrix, dropout=0.1):
+    def __init__(self, d_model, nhead, moelayer, rotation_matrix, norm=None, dropout=0.1):
         super(TransformerDecoderLayerMoE_RoPE, self).__init__()
         
         self.self_attn = MultiheadAttention_RoPE(d_model, nhead, rotation_matrix)
@@ -119,9 +118,7 @@ class TransformerDecoderLayerMoE_RoPE(Module):
         # Implementation of Feedforward model
         self.moe = moelayer
 
-        self.norm1 = LayerNorm(d_model)
-        self.norm2 = LayerNorm(d_model)
-        self.norm3 = LayerNorm(d_model)
+        self.norm1, self.norm2, self.norm3 = _get_clones(norm, 3)
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
         # self.dropout3 = Dropout(dropout)
@@ -143,13 +140,12 @@ class TransformerDecoderLayerMoE_RoPE(Module):
         return tgt
 
 class TransformerEncoderLayerMoE(Module):
-    def __init__(self, d_model, nhead, moelayer, dropout=0.1):
+    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
         super(TransformerEncoderLayerMoE, self).__init__()
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
         self.moe = moelayer
 
-        self.norm1 = LayerNorm(d_model)
-        self.norm2 = LayerNorm(d_model)
+        self.norm1, self.norm2 = _get_clones(norm, 2)
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
@@ -163,16 +159,14 @@ class TransformerEncoderLayerMoE(Module):
         return src
 
 class TransformerDecoderLayerMoE(Module):
-    def __init__(self, d_model, nhead, moelayer, dropout=0.1):
+    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
         super(TransformerDecoderLayerMoE, self).__init__()
         
         self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
         self.multihead_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
         self.moe = moelayer
-
-        self.norm1 = LayerNorm(d_model)
-        self.norm2 = LayerNorm(d_model)
-        self.norm3 = LayerNorm(d_model)
+        
+        self.norm1, self.norm2, self.norm3 = _get_clones(norm, 3)
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
         # self.dropout3 = Dropout(dropout)

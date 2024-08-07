@@ -49,27 +49,22 @@ class VideoMusicTransformer_V1(nn.Module):
 
         # Encoder
         if rms_norm == True:
-            encoder_norm = MyRMSNorm(self.d_model, batch_first=False)
+            norm = MyRMSNorm(self.d_model, batch_first=False)
         else:
-            encoder_norm = nn.LayerNorm(self.d_model)
+            norm = nn.LayerNorm(self.d_model)
 
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         encoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
-        encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)
-        encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
+        encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, norm, self.dropout)
+        encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
-        if rms_norm == True:
-            decoder_norm = MyRMSNorm(self.d_model, batch_first=False)
-        else:
-            decoder_norm = nn.LayerNorm(self.d_model)
-
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
-        decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.dropout)
-        decoder = TransformerDecoder(decoder_layer, self.nlayers, decoder_norm)
+        decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, norm, self.dropout)
+        decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model
         self.transformer = nn.Transformer(

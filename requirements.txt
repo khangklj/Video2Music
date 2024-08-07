@@ -2,6 +2,7 @@ torch==2.3.1
 torchvision==0.18.1
 clip @ git+https://github.com/openai/CLIP.git
 efficient_kan @ git+https://github.com/Blealtan/efficient-kan.git
+mambapy @ git+https://github.com/alxndrTL/mamba.py.git
 Cython==3.0.5
 numpy==1.21.2
 coloredlogs==15.0.1

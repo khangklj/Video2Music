@@ -46,7 +46,7 @@ class VideoMusicTransformer_V1(nn.Module):
         self.condition_linear = nn.Linear(1, self.d_model)
         
         # Transformer
-        encoder_norm = None
+        encoder_norm = LayerNorm(self.d_model)
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
@@ -54,7 +54,7 @@ class VideoMusicTransformer_V1(nn.Module):
         encoder_layer = TransformerEncoderLayerMoE(self.d_model, self.nhead, encoder_moelayer, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, encoder_norm)
 
-        decoder_norm = None
+        decoder_norm = LayerNorm(self.d_model)
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         decoder_moelayer = MoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
         decoder_layer = TransformerDecoderLayerMoE(self.d_model, self.nhead, decoder_moelayer, self.dropout)

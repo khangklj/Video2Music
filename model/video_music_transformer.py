@@ -45,9 +45,9 @@ class VideoMusicTransformer_V1(nn.Module):
         # Add condition (minor or major)
         self.condition_linear = nn.Linear(1, self.d_model)
         
-        # Encoder
-        rms_norm = False
+        rms_norm = True
 
+        # Encoder
         if rms_norm == True:
             encoder_norm = MyRMSNorm((self.max_seq_video, self.d_model), batch_first=False)
         else:

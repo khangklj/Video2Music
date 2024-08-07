@@ -91,9 +91,9 @@ def eval_model(model, dataloader, loss):
             
             y   = y.reshape(y.shape[0] * y.shape[1], -1)
 
-            feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
-            feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
-            feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
+            feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size * seq_length, 1)
+            feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size * seq_length, 1)        
+            feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size * seq_length, 2)
 
             # print(feature_loudness.shape, feature_note_density.shape, feature_combined.shape)
 

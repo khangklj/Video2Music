@@ -1,5 +1,6 @@
 import torch
-from torch.nn import Module, RMSNorm
+import torch.nn as nn
+from torch.nn import Module
 from torch.nn.modules.transformer import _get_clones
 from torch.nn.init import *
 
@@ -8,7 +9,7 @@ from torch.nn.functional import linear, softmax, dropout
 class MyRMSNorm(Module):
     def __init__(self, dim, eps=1e-6, batch_first=False): # dim = (seq_len, d_model)
         super(MyRMSNorm, self).__init__()
-        self.norm = RMSNorm(dim, eps)
+        self.norm = nn.RMSNorm(dim, eps)
         self.batch_first = batch_first
 
     def forward(self, x):

@@ -266,7 +266,7 @@ class VideoMusicTransformer_V2(nn.Module):
 
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = KANExpert(self.d_model, self.d_ff)
+        expert = KANLinear(self.d_model, self.d_model)
 
         # Encoder
         encoder_moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)

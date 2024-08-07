@@ -8,7 +8,7 @@ def reshape_tensor(tensor):
     return tensor.reshape(tensor.shape[0] * tensor.shape[1], -1)
 
 def reshape_tensor_2(tensor):
-    return tensor.reshape(0,2,1)
+    return tensor.permute(0,2,1)
 
 def main():
     ce_loss = nn.CrossEntropyLoss()
@@ -20,15 +20,12 @@ def main():
     targe_bce = torch.empty(1, 50, 128).random_(1)
     input_2 = input.detach().clone()
 
-    print(input.shape, input_2.shape)
-
     print("Original: ") 
     output_ce = ce_loss(reshape_tensor(input), target_ce.flatten())
     output_bce = bce_loss(reshape_tensor(input), reshape_tensor(targe_bce))    
     print("ce_loss = ", output_ce, "bce_loss = ", output_bce)
 
     print(SEPERATOR)
-    print(input.shape, input_2.shape)
 
     print("Modify: ")
     output_ce = ce_loss(reshape_tensor_2(input_2), target_ce)

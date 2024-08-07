@@ -16,16 +16,16 @@ def parse_train_args():
     parser.add_argument("-output_dir", type=str, default="./saved_models", help="Folder to save model weights. Saves one every epoch")
     
     parser.add_argument("-weight_modulus", type=int, default=10, help="How often to save epoch weights (ex: value of 10 means save every 10 epochs)")
-    parser.add_argument("-print_modulus", type=int, default=500, help="How often to print train results for a batch (batch loss, learn rate, etc.)")
+    parser.add_argument("-print_modulus", type=int, default=20, help="How often to print train results for a batch (batch loss, learn rate, etc.)")
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
     parser.add_argument("--no_tensorboard", type=bool, default=True, help="Turns off tensorboard result reporting")
     parser.add_argument("-continue_weights", type=str, default=None, help="Model weights to continue training based on")
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
-    parser.add_argument("-ce_smoothing", type=float, default=None, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
+    parser.add_argument("-ce_smoothing", type=float, default=0.1, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
     parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=50, help="Number of epochs to use")
+    parser.add_argument("-epochs", type=int, default=100, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
@@ -39,7 +39,7 @@ def parse_train_args():
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='mamba', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='bigru', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm
@@ -119,7 +119,7 @@ def parse_eval_args():
     
     parser.add_argument("-n_workers", type=int, default=4, help="Number of threads for the dataloader")
     parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
-    parser.add_argument("-batch_size", type=int, default=1, help="Batch size to use")
+    parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
     
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
@@ -130,7 +130,7 @@ def parse_eval_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-music_gen_version', type=int, default=1, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='mamba', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='bigru', help="Version number. None is original loudness and note density Regression model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:

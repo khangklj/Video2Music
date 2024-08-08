@@ -97,6 +97,7 @@ class RoPE(Module):
 
         rotation_matrix = self.rotation_matrix[:seq_length]
 
+        print(queries_complex.shape, rotation_matrix.shape)
         queries_rotated = queries_complex * rotation_matrix
         keys_rotated = keys_complex * rotation_matrix
 

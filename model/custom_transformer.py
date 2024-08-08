@@ -157,12 +157,16 @@ class MyMultiheadAttention(Module):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v)
 
         # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
-        q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim)
-        k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim)
-        v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim)
+        q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim).transpose(1, 2)
+        k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim).transpose(1, 2)
+        v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim).transpose(1, 2)
 
         if self.rope is not None:
             q, k = self.rope(q, k)
+
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
 
         attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
 

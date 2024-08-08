@@ -8,6 +8,7 @@ import torch.nn.functional as F
 
 def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, print_modulus=1):
     out = -1
+    sum_loss = 0
     model.train()
     for batch_num, batch in enumerate(dataloader):
         time_before = time.time()
@@ -39,11 +40,12 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         out = loss.forward(y, feature_combined)
         out.backward()
         opt.step()
-        
-        if(lr_scheduler is not None):
-            # FLAG
+
+
+        # FLAG
+        # if(lr_scheduler is not None):            
             # lr_scheduler.step()
-            lr_scheduler.step(out)
+        sum_loss += float(out)
                         
         time_after = time.time()
         time_took = time_after - time_before
@@ -56,7 +58,10 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
             print("")
             print("Time (s):", time_took)
             print(SEPERATOR)
-            print("")    
+            print("")
+
+    if(lr_scheduler is not None):
+        lr_scheduler.step(sum_loss/len(dataloader))
     return
 
 def eval_model(model, dataloader, loss):

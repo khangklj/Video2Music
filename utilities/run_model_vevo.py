@@ -98,9 +98,11 @@ def train_epoch(cur_epoch, model, dataloader,
                 loss_emotion = train_loss_emotion_func.forward(y.permute(0,2,1), tgt_emotion.permute(0,2,1))
                 y = y.reshape(y.shape[0] * y.shape[1], -1)
                 tgt = tgt.flatten()
-                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
-                # ====
-
+                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1) # Fix bug
+                # print(y.shape, tgt.shape, tgt[:10], tgt_emotion.shape)
+                tgt_emotion = tgt_emotion.squeeze()
+                loss_chord = train_loss_func.forward(y, tgt)
+                loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
                 total_loss.backward()
                 opt.step()
@@ -493,6 +495,9 @@ def eval_model(model, dataloader,
         mask = np.isin(true_labels, topChordList)
         true_labels = np.array(true_labels)[mask]
         pred_labels = np.array(pred_labels)[mask]
+
+        # print(true_labels, true_labels.shape)
+        # print(pred_labels, pred_labels.shape)
 
         conf_matrix = confusion_matrix(true_labels, pred_labels, labels=topChordList)
         label_names = [ chordInvDic[str(label_id)] for label_id in topChordList ]

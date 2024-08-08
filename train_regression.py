@@ -184,8 +184,12 @@ def main( vm = "" , isPrintArgs = True ):
             print("Baseline model evaluation (Epoch 0):")
             
         # Eval
+        # FLAG 
+        # train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader, train_loss_func)
+        # eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func)
+      
         train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader, train_loss_func)
-        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func)
+        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func, lr_scheduler)
 
         # Learn rate
         lr = get_lr(opt)

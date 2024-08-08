@@ -54,6 +54,7 @@ class RMSNorm(Module):
 
         return self.scale * x_normed
 
+# By our and need batch_first option
 class MyRMSNorm(Module):
     def __init__(self, dim, eps=1e-6, batch_first=False): # dim = d_model
         super(MyRMSNorm, self).__init__()
@@ -70,6 +71,7 @@ class MyRMSNorm(Module):
             return x
         pass
 
+# By ChatGPT and some modify
 class RotaryPositionalEmbedding(Module):
     def __init__(self, dim):
         super(RotaryPositionalEmbedding, self).__init__()
@@ -113,6 +115,7 @@ class RotaryPositionalEmbedding(Module):
         x_rotated = torch.cat((-x2, x1), dim=-1)
         return x_rotated
     
+# By our and need batch_first option
 class MyRoPE(Module):
     def __init__(self, d_model, dropout=0.0, batch_first=False):
         super(MyRoPE, self).__init__()
@@ -132,8 +135,8 @@ class MyRoPE(Module):
             new_keys = new_keys.permute(1, 0, 2, 3)
 
         return new_queries, new_keys
-        
 
+# By our and need batch_first, use_KAN, RoPE option       
 class MyMultiheadAttention(Module):
     def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False, RoPE=False):
         super(MyMultiheadAttention, self).__init__()

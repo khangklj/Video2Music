@@ -9,10 +9,8 @@ from torch.nn.modules.linear import Linear
 from torch.nn.modules.dropout import Dropout
 from torch.nn.modules.normalization import LayerNorm
 from torch.nn.init import *
-
 from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
-from .rope import *
 from utilities.device import get_device
 from efficient_kan import KANLinear
 
@@ -89,103 +87,3 @@ class SharedMoELayer(Module):
 
         out += self.shared_expert(x)
         return out
-
-class TransformerEncoderLayerMoE_RoPE(Module):
-    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
-        super(TransformerEncoderLayerMoE_RoPE, self).__init__()
-        self.self_attn = MultiheadAttention_RoPE(d_model, nhead)
-        self.moe = moelayer
-
-        self.norm1, self.norm2 = _get_clones(norm, 2)
-        # self.dropout1 = Dropout(dropout)
-        # self.dropout2 = Dropout(dropout)
-
-    def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
-        src2 = self.self_attn(src, src, src, attn_mask=src_mask)
-        
-        src = src + src2
-        src = self.norm1(src)
-        src2 = self.moe(src)
-        src = src + src2
-        src = self.norm2(src)
-        return src
-    
-class TransformerDecoderLayerMoE_RoPE(Module):
-    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
-        super(TransformerDecoderLayerMoE_RoPE, self).__init__()
-        
-        self.self_attn = MultiheadAttention_RoPE(d_model, nhead)
-        self.multihead_attn = MultiheadAttention_RoPE(d_model, nhead)
-        # Implementation of Feedforward model
-        self.moe = moelayer
-
-        self.norm1, self.norm2, self.norm3 = _get_clones(norm, 3)
-        # self.dropout1 = Dropout(dropout)
-        # self.dropout2 = Dropout(dropout)
-        # self.dropout3 = Dropout(dropout)
-        
-    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
-                tgt_key_padding_mask=None, memory_key_padding_mask=None):
-        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask)
-        tgt = tgt + tgt2
-        tgt = self.norm1(tgt)
-
-        tgt2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask)
-        
-        tgt = tgt + tgt2
-        tgt = self.norm2(tgt)
-
-        tgt2 = self.moe(tgt)
-        tgt = tgt + tgt2
-        tgt = self.norm3(tgt)
-        return tgt
-
-class TransformerEncoderLayerMoE(Module):
-    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
-        super(TransformerEncoderLayerMoE, self).__init__()
-        self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.moe = moelayer
-
-        self.norm1, self.norm2 = _get_clones(norm, 2)
-        # self.dropout1 = Dropout(dropout)
-        # self.dropout2 = Dropout(dropout)
-    def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
-        src2 = self.self_attn(src, src, src, attn_mask=src_mask,
-                              key_padding_mask=src_key_padding_mask)[0]
-        src = src + src2
-        src = self.norm1(src)
-        src2 = self.moe(src)
-        src = src + src2
-        src = self.norm2(src)
-        return src
-
-class TransformerDecoderLayerMoE(Module):
-    def __init__(self, d_model, nhead, moelayer, norm=None, dropout=0.1):
-        super(TransformerDecoderLayerMoE, self).__init__()
-        
-        self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.multihead_attn = MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.moe = moelayer
-        
-        self.norm1, self.norm2, self.norm3 = _get_clones(norm, 3)
-        # self.dropout1 = Dropout(dropout)
-        # self.dropout2 = Dropout(dropout)
-        # self.dropout3 = Dropout(dropout)
-        
-    def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
-                tgt_key_padding_mask=None, memory_key_padding_mask=None):
-        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
-                              key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = tgt + tgt2
-        tgt = self.norm1(tgt)
-
-        tgt2 = self.multihead_attn(tgt, memory, memory, attn_mask=memory_mask,
-                                   key_padding_mask=memory_key_padding_mask)[0]
-        
-        tgt = tgt + tgt2
-        tgt = self.norm2(tgt)
-
-        tgt2 = self.moe(tgt)
-        tgt = tgt + tgt2
-        tgt = self.norm3(tgt)
-        return tgt

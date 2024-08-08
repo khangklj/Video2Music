@@ -156,6 +156,8 @@ class MyMultiheadAttention(Module):
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v)
 
+        print(q.shape)
+
         # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
         q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim).transpose(1, 2)
         k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim).transpose(1, 2)
@@ -164,9 +166,9 @@ class MyMultiheadAttention(Module):
         if self.rope is not None:
             q, k = self.rope(q, k)
 
-        # q = q.transpose(1, 2)
-        # k = k.transpose(1, 2)
-        # v = v.transpose(1, 2)
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
 
         print(q.shape)
 

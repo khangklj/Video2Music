@@ -77,7 +77,7 @@ def get_rotation_matrix(d_model, max_seq_len, period):
     return torch.polar(torch.ones_like(thetas), thetas)
 
 class RoPE(Module):
-    def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0, ):
+    def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0):
         super(RoPE, self).__init__()
         self.d_model = d_model
         self.max_seq_len = max_seq_len

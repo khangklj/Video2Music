@@ -6,7 +6,6 @@ import numpy as np
 from utilities.constants import *
 from utilities.device import get_device
 from .positional_encoding import PositionalEncoding
-from rotary_embedding_torch import RotaryEmbedding
 from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
 from efficient_kan import KANLinear
 from .custom_transformer import *
@@ -264,7 +263,7 @@ class VideoMusicTransformer_V2(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = True
-        RoPE = RotaryEmbedding(dim=self.d_model, use_xpos=True)
+        RoPE = MyRoPE(self.d_model, max_seq_len=300, period=10000.0, dropout=self.dropout, batch_first=False)
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = KANLinear(self.d_model, self.d_ff)

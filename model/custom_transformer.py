@@ -69,6 +69,65 @@ class MyRMSNorm(Module):
             return x
         pass
 
+# https://www.facebook.com/photo/?fbid=122146964042123211&set=pcb.122146964084123211
+def get_rotation_matrix(d_model, max_seq_len, period):
+    freqs = 1.0 / (period ** (torch.arange(0, d_model, 2) / d_model))
+    token_indexes = torch.arange(max_seq_len)
+    thetas = torch.outer(token_indexes, freqs).float()
+    return torch.polar(torch.ones_like(thetas), thetas)
+
+class RoPE(Module):
+    def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0, ):
+        super(RoPE, self).__init__()
+        self.d_model = d_model
+        self.max_seq_len = max_seq_len
+        self.dropout = nn.Dropout(dropout)
+        self.period = period
+
+        self.rotation_matrix = get_rotation_matrix(d_model, max_seq_len, period)
+
+    def forward(self, queries, keys):
+        batch_size, num_heads, seq_length, head_dim = queries.shape
+
+        queries = queries.reshape(batch_size, num_heads, seq_length, head_dim // 2, 2)
+        keys = keys.reshape(batch_size, num_heads, seq_length, head_dim // 2, 2)
+
+        queries_complex = torch.view_as_complex(queries)
+        keys_complex = torch.view_as_complex(keys)
+
+        rotation_matrix = self.rotation_maxtrix[:seq_length]
+
+        queries_rotated = queries_complex * rotation_matrix
+        keys_rotated = keys_complex * rotation_matrix
+
+        new_queries = torch.view_as_real(queries_rotated)
+        new_keys = torch.view_as_real(keys_rotated)
+
+        new_queries = new_queries.reshape(batch_size, num_heads, seq_length, head_dim)
+        new_keys = new_keys.reshape(batch_size, num_heads, seq_length, head_dim)
+
+        return new_queries, new_keys
+    
+class MyRoPE(Module):
+    def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0, batch_first=False):
+        self.batch_first = batch_first
+        self.rope = RoPE(d_model, max_seq_len, period, dropout)
+
+    def forward(self, queries, keys):
+        if self.batch_first:
+            new_queries, new_keys = self.rope(queries, keys)
+        else:
+            queries = queries.permute(1, 0, 2, 3)
+            keys = keys.permute(1, 0, 2, 3)
+
+            new_queries, new_keys = self.rope(queries, keys)
+
+            new_queries = new_queries.permute(1, 0, 2, 3)
+            new_keys = new_keys.permute(1, 0, 2, 3)
+
+        return new_queries, new_keys
+        
+
 class MyMultiheadAttention(Module):
     def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False, RoPE=False):
         super(MyMultiheadAttention, self).__init__()

@@ -95,7 +95,7 @@ class RoPE(Module):
         queries_complex = torch.view_as_complex(queries)
         keys_complex = torch.view_as_complex(keys)
 
-        rotation_matrix = self.rotation_maxtrix[:seq_length]
+        rotation_matrix = self.rotation_matrix[:seq_length]
 
         queries_rotated = queries_complex * rotation_matrix
         keys_rotated = keys_complex * rotation_matrix

@@ -41,7 +41,10 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         opt.step()
         
         if(lr_scheduler is not None):
+            # FLAG
+            # lr_scheduler.step()
             lr_scheduler.step(out)
+            
             
         time_after = time.time()
         time_took = time_after - time_before

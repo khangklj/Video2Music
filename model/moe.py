@@ -85,7 +85,6 @@ class SharedMoELayer(Module):
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             weight = weights[token_idx, batch_idx, topk_idx]
-            print(weight.shape, expert(x[token_idx, batch_idx]).shape)
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
         # Sharing

@@ -75,7 +75,7 @@ class RotaryPositionalEmbedding(Module):
         super(RotaryPositionalEmbedding, self).__init__()
         self.dim = dim
         self.inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))
-        self.inv_freq.to(get_device())
+        self.inv_freq = self.inv_freq.to(get_device())
 
     def get_angles(self, pos_seq):
         angles = pos_seq[:, None] * self.inv_freq[None, :]

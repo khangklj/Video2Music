@@ -154,7 +154,7 @@ class MyMultiheadAttention(Module):
         v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim).transpose(1, 2)
 
         if self.rope is not None:
-            q, k = self.rope.rotate_queries_and_keys(q, k)
+            q, k = self.rope(q, k)
 
         attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
 

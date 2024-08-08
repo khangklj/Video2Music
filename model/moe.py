@@ -80,7 +80,7 @@ class SharedMoELayer(Module):
     def forward(self, x):
         gate_logits = self.gate(x)
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
-        weights = softmax(weights, dim=1)
+        weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)

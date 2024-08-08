@@ -156,27 +156,22 @@ class MyMultiheadAttention(Module):
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v)
 
-        print(q.shape)
-
-        # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
+        # Reshape Q, K, V for multi-head attention # (seq_len, batch_size, num_head, head_dim)
         q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim).transpose(1, 2)
         k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim).transpose(1, 2)
         v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim).transpose(1, 2)
 
         if self.rope is not None:
-            q, k = self.rope(q, k)
+            q, k = self.rope(q, k) # q.shape = (seq_len, batch_size, num_head, head_dim)
 
-        q = q.transpose(1, 2)
-        k = k.transpose(1, 2)
-        v = v.transpose(1, 2)
-
-        print(q.shape)
+        q = torch.permute(q, (2, 1, 0, 3)) # q.shape = (num_head, batch_size, seq_len, head_dim)
+        k = torch.permute(k, (2, 1, 0, 3))
+        v = torch.permute(v, (2, 1, 0, 3))
 
         attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
 
         # Apply attention mask, if provided
         if attn_mask is not None:
-            print(attn_scores.shape, attn_mask.shape)
             attn_scores += attn_mask
 
         # Apply key padding mask, if provided
@@ -186,7 +181,7 @@ class MyMultiheadAttention(Module):
         attn_weights = F.softmax(attn_scores, dim=-1)
         attn_weights = self.dropout(attn_weights)
         attn_output = torch.matmul(attn_weights, v)  # (batch_size, num_head, seq_len, head_dim)
-
+        print(attn_output.shape)
         # Combine heads and apply the final linear layer
         attn_output = attn_output.transpose(1, 2).contiguous().view(q.size(0), -1, self.d_model)  # (batch_size, seq_len, d_model)
         attn_output = self.out(attn_output)

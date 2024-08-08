@@ -152,7 +152,7 @@ def main( vm = "" , isPrintArgs = True ):
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                                                             opt,
                                                             mode='min',
-                                                            factor=0.2, #factor by which the lr is multiplied
+                                                            factor=0.1, #factor by which the lr is multiplied
                                                             patience=1,
                                                         )
 

@@ -8,7 +8,6 @@ import torch.nn.functional as F
 
 def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, print_modulus=1):
     out = -1
-    # sum_loss = 0
     model.train()
     for batch_num, batch in enumerate(dataloader):
         time_before = time.time()
@@ -40,12 +39,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         out = loss.forward(y, feature_combined)
         out.backward()
         opt.step()
-
-        # FLAG
-        # if(lr_scheduler is not None):            
-            # lr_scheduler.step()
-        # sum_loss += float(out)
-                        
+        
+        if(lr_scheduler is not None):
+            lr_scheduler.step()
         time_after = time.time()
         time_took = time_after - time_before
         
@@ -57,10 +53,10 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
             print("")
             print("Time (s):", time_took)
             print(SEPERATOR)
-            print("")    
+            print("")
     return
 
-def eval_model(model, dataloader, loss, lr_scheduler=None):
+def eval_model(model, dataloader, loss):
     model.eval()
     
     avg_rmse     = -1
@@ -95,11 +91,9 @@ def eval_model(model, dataloader, loss, lr_scheduler=None):
             
             y   = y.reshape(y.shape[0] * y.shape[1], -1)
 
-            feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size * seq_length, 1)
-            feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size * seq_length, 1)        
-            feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size * seq_length, 2)
-
-            # print(feature_loudness.shape, feature_note_density.shape, feature_combined.shape)
+            feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
+            feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
+            feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
 
             mse = F.mse_loss(y, feature_combined)
             rmse = torch.sqrt(mse)
@@ -117,13 +111,10 @@ def eval_model(model, dataloader, loss, lr_scheduler=None):
 
             out = loss.forward(y, feature_combined)
             sum_loss += float(out)
-                    
+            
         avg_loss    = sum_loss / n_test
         avg_rmse     = sum_rmse / n_test
         avg_rmse_note_density     = sum_rmse_note_density / n_test
         avg_rmse_loudness     = sum_rmse_loudness / n_test
-
-        if(lr_scheduler is not None):
-            lr_scheduler.step(avg_loss)
 
     return avg_loss, avg_rmse, avg_rmse_note_density, avg_rmse_loudness

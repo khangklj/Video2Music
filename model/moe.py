@@ -80,14 +80,11 @@ class SharedMoELayer(Module):
     def forward(self, x):
         gate_logits = self.gate(x)
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
-        print(selected_experts, gate_logits)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             weight = weights[token_idx, batch_idx, topk_idx]
-            print(x.shape, x[token_idx, batch_idx].shape)
-            print(token_idx, token_idx.shape)
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
         # Sharing

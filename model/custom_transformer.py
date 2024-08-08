@@ -157,9 +157,9 @@ class MyMultiheadAttention(Module):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v)
 
         # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
-        q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim).transpose(1, 2)
-        k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim).transpose(1, 2)
-        v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim).transpose(1, 2)
+        q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim)
+        k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim)
+        v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim)
 
         if self.rope is not None:
             q, k = self.rope(q, k)

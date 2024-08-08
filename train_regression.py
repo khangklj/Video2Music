@@ -17,14 +17,15 @@ from utilities.argument_funcs import parse_train_args, print_train_args, write_m
 
 from utilities.run_model_regression import train_epoch, eval_model
 
-CSV_HEADER = ["Epoch", "Learn rate", "Avg Train loss", "Train RMSE", "Avg Eval loss", "Eval RMSE"]
+CSV_HEADER = ["Epoch", "Learn rate", "Avg Train loss", "Avg Train RMSE", "Avg Train RMSE (Note Density)", "Avg Train RMSE (Loudness)", 
+              "Avg Eval loss", "Avg Eval RMSE", "Avg Eval RMSE (Note Density)", "Avg Eval RMSE (Loudness)"]
 BASELINE_EPOCH = -1
 
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 
-num_epochs = 20
+num_epochs = 50
 VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
@@ -100,7 +101,10 @@ def main( vm = "" , isPrintArgs = True ):
         total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+
+    # FLAG
+    # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+    val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
     model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
     
@@ -119,7 +123,7 @@ def main( vm = "" , isPrintArgs = True ):
     eval_loss_func = nn.MSELoss()
     train_loss_func = nn.MSELoss()
 
-    # ##### Lr Scheduler vs static lr #####
+    ##### Lr Scheduler vs static lr #####
     # if(args.lr is None):
     #     if(args.continue_epoch is None):
     #         init_step = 0
@@ -130,8 +134,8 @@ def main( vm = "" , isPrintArgs = True ):
     # else:
     #     lr = args.lr        
 
-    # ##### Optimizer #####
-    # # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    ##### Optimizer #####
+    # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     
     # if(args.lr is None):
@@ -140,8 +144,17 @@ def main( vm = "" , isPrintArgs = True ):
     #     lr_scheduler = None        
 
     ##### Original code ####
-    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
+    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
     lr_scheduler = None
+
+    # Modify
+    # opt = AdamW(model.parameters(), lr=1e-3)
+    # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    #                                                         opt,
+    #                                                         mode='min',
+    #                                                         factor=0.1, #factor by which the lr is multiplied
+    #                                                         patience=1,
+    #                                                     )
 
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")
@@ -172,7 +185,7 @@ def main( vm = "" , isPrintArgs = True ):
             
         # Eval
         train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader, train_loss_func)
-        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func)
+        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func)      
 
         # Learn rate
         lr = get_lr(opt)
@@ -213,7 +226,8 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, train_loss, train_rmse, eval_loss, eval_rmse])
+            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, 
+                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness])
     return
 
 if __name__ == "__main__":

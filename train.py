@@ -110,7 +110,9 @@ def main( vm = "" , isPrintArgs = True ):
             total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-    train_loader_tmp = DataLoader(train_dataset, batch_size=1, num_workers=args.n_workers, shuffle=True)
+    # train_loader_tmp = DataLoader(train_dataset, batch_size=1, num_workers=args.n_workers, shuffle=True)
+    
+    # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
     if args.music_gen_version == None:
@@ -169,7 +171,9 @@ def main( vm = "" , isPrintArgs = True ):
     if(args.ce_smoothing is None):
         train_loss_func = eval_loss_func
     else:
-        train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
+        # FLAG
+        # train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
+        train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
 
     eval_loss_emotion_func = nn.BCEWithLogitsLoss()
     train_loss_emotion_func = eval_loss_emotion_func
@@ -214,7 +218,7 @@ def main( vm = "" , isPrintArgs = True ):
             print(SEPERATOR)
             print("Baseline model evaluation (Epoch 0):")
 
-        train_metric_dict = eval_model(model, train_loader_tmp, 
+        train_metric_dict = eval_model(model, train_loader, 
                                 train_loss_func, train_loss_emotion_func,
                                 isVideo= args.is_video)
         

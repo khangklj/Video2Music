@@ -74,8 +74,7 @@ def train_epoch(cur_epoch, model, dataloader,
                 total_loss.backward()
                 opt.step()
                 if(lr_scheduler is not None):
-                    lr_scheduler.step()
-                
+                    lr_scheduler.step()    
             else:
                 #videomusic tran nosep
                 y = model(x,
@@ -87,7 +86,17 @@ def train_epoch(cur_epoch, model, dataloader,
                         feature_motion,
                         feature_emotion)
                 
-                y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                # FLAG
+                # y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                # tgt = tgt.flatten()
+                # tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
+                
+                # loss_chord = train_loss_func.forward(y, tgt)
+                # loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)               
+                # ====
+                loss_chord = train_loss_func.forward(y.permute(0,2,1), tgt)
+                loss_emotion = train_loss_emotion_func.forward(y.permute(0,2,1), tgt_emotion.permute(0,2,1))
+                y = y.reshape(y.shape[0] * y.shape[1], -1)
                 tgt = tgt.flatten()
                 tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1) # Fix bug
                 # print(y.shape, tgt.shape, tgt[:10], tgt_emotion.shape)
@@ -203,7 +212,7 @@ def eval_model(model, dataloader,
         sum_h3 = 0.0
         sum_h5 = 0.0
         
-        for batch in dataloader:
+        for batch_num, batch in enumerate(dataloader):
             x   = batch["x"].to(get_device())
             tgt = batch["tgt"].to(get_device())
             x_root   = batch["x_root"].to(get_device())
@@ -212,6 +221,8 @@ def eval_model(model, dataloader,
             tgt_attr = batch["tgt_attr"].to(get_device())
             tgt_emotion = batch["tgt_emotion"].to(get_device())
             tgt_emotion_prob = batch["tgt_emotion_prob"].to(get_device())
+
+            
             
             feature_semantic_list = [] 
             for feature_semantic in batch["semanticList"]:
@@ -273,27 +284,69 @@ def eval_model(model, dataloader,
                             feature_scene_offset,
                             feature_motion,
                             feature_emotion)
-                    
-                    sum_acc += float(compute_vevo_accuracy(y, tgt ))
-                    cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
+                                        
+                    # FLAG
+                    # sum_acc += float(compute_vevo_accuracy(y, tgt ))
+                    # cor = float(compute_vevo_correspondence(y, tgt, tgt_emotion, tgt_emotion_prob, EMOTION_THRESHOLD))
+                    # ====
+                    sum_acc_tmp = 0.0
+                    for i in range(y.shape[0]):
+                        sum_acc_tmp += float(compute_vevo_accuracy(y[i], tgt[i] ))
+                        cor = float(compute_vevo_correspondence(y[i], tgt[i], tgt_emotion[i], tgt_emotion_prob[i], EMOTION_THRESHOLD))
+                    sum_acc_tmp /= y.shape[0]
+                    cor /= y.shape[0]
+
+                    sum_acc += sum_acc_tmp                    
+                    # ====
+
                     if cor >= 0 :
                         n_test_cor +=1
                         sum_cor += cor
 
-                    sum_h1 += float(compute_hits_k(y, tgt,1))
-                    sum_h3 += float(compute_hits_k(y, tgt,3))
-                    sum_h5 += float(compute_hits_k(y, tgt,5))
-                    
-                    y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                    # FLAG
+                    # sum_h1 += float(compute_hits_k(y, tgt,1))
+                    # sum_h3 += float(compute_hits_k(y, tgt,3))
+                    # sum_h5 += float(compute_hits_k(y, tgt,5))
+                    # ====
+                    sum_h1_tmp = 0.0
+                    sum_h3_tmp = 0.0
+                    sum_h5_tmp = 0.0
 
-                    tgt = tgt.flatten()
+                    for i in range(y.shape[0]):
+                        sum_h1_tmp += float(compute_hits_k(y[i], tgt[i],1))
+                        sum_h3_tmp += float(compute_hits_k(y[i], tgt[i],3))
+                        sum_h5_tmp += float(compute_hits_k(y[i], tgt[i],5))
+
+                    sum_h1_tmp /= y.shape[0]
+                    sum_h3_tmp /= y.shape[0]
+                    sum_h5_tmp /= y.shape[0]
+
+                    sum_h1 += sum_h1_tmp
+                    sum_h3 += sum_h3_tmp
+                    sum_h5 += sum_h5_tmp
+                    # ====
+                    
+                    # FLAG
+                    # y   = y.reshape(y.shape[0] * y.shape[1], -1)
+                    # tgt = tgt.flatten()
+                    # tgt_root = tgt_root.flatten()
+                    # tgt_attr = tgt_attr.flatten()
+                    # tgt_emotion = tgt_emotion.squeeze()
+
+                    # loss_chord = eval_loss_func.forward(y, tgt)
+                    # loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)                    
+                    # ====
                     tgt_root = tgt_root.flatten()
                     tgt_attr = tgt_attr.flatten()
-                    
-                    tgt_emotion = tgt_emotion.squeeze()
 
-                    loss_chord = eval_loss_func.forward(y, tgt)
-                    loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)
+                    loss_chord = eval_loss_func.forward(y.permute(0,2,1), tgt)
+                    loss_emotion = eval_loss_emotion_func.forward(y.permute(0,2,1), tgt_emotion.permute(0,2,1))
+                    y = y.reshape(y.shape[0] * y.shape[1], -1)
+                    tgt = tgt.flatten()
+                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
+                    # ====
+                    
+                    
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 
                     sum_loss_chord += float(loss_chord)

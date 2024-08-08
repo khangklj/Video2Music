@@ -149,7 +149,7 @@ def main( vm = "" , isPrintArgs = True ):
 
     # Modify
     opt = AdamW(model.parameters(), lr=1e-3)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                                                             opt,
                                                             mode='min',
                                                             factor=0.1, #factor by which the lr is multiplied

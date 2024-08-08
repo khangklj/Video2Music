@@ -69,51 +69,40 @@ class MyRMSNorm(Module):
             return x
         pass
 
-# https://www.facebook.com/photo/?fbid=122146964042123211&set=pcb.122146964084123211
-def get_rotation_matrix(d_model, max_seq_len, period):
-    freqs = 1.0 / (period ** (torch.arange(0, d_model, 2) / d_model))
-    token_indexes = torch.arange(max_seq_len)
-    thetas = torch.outer(token_indexes, freqs).float()
-    return torch.polar(torch.ones_like(thetas), thetas)
+class RotaryPositionalEmbedding(Module):
+    def __init__(self, dim):
+        super(RotaryPositionalEmbedding, self).__init__()
+        self.dim = dim
+        self.inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))
 
-class RoPE(Module):
-    def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0):
-        super(RoPE, self).__init__()
-        self.d_model = d_model
-        self.max_seq_len = max_seq_len
-        self.dropout = nn.Dropout(dropout)
-        self.period = period
+    def get_angles(self, pos_seq):
+        angles = pos_seq[:, None] * self.inv_freq[None, :]
+        return torch.cat([angles, angles], dim=-1)
 
-        self.rotation_matrix = get_rotation_matrix(d_model, max_seq_len, period)
+    def forward(self, q, k): # q.shape = (batch_size,seq_len,dim)
+        seq_len = q.shape[-2]
+        pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device)
+        angles = self.get_angles(pos_seq)
 
-    def forward(self, queries, keys):
-        batch_size, num_heads, seq_length, head_dim = queries.shape
+        cos = angles.cos()
+        sin = angles.sin()
 
-        queries = queries.reshape(batch_size, num_heads, seq_length, head_dim // 2, 2)
-        keys = keys.reshape(batch_size, num_heads, seq_length, head_dim // 2, 2)
+        # The query and key are rotated using the angles
+        q_rot = (q * cos) + (self.rotate_half(q) * sin)
+        k_rot = (k * cos) + (self.rotate_half(k) * sin)
 
-        queries_complex = torch.view_as_complex(queries)
-        keys_complex = torch.view_as_complex(keys)
+        return q_rot, k_rot
 
-        rotation_matrix = self.rotation_matrix[:seq_length]
-
-        print(queries_complex.shape, rotation_matrix.shape)
-        queries_rotated = queries_complex * rotation_matrix
-        keys_rotated = keys_complex * rotation_matrix
-
-        new_queries = torch.view_as_real(queries_rotated)
-        new_keys = torch.view_as_real(keys_rotated)
-
-        new_queries = new_queries.reshape(batch_size, num_heads, seq_length, head_dim)
-        new_keys = new_keys.reshape(batch_size, num_heads, seq_length, head_dim)
-
-        return new_queries, new_keys
+    def rotate_half(self, x):
+        x1, x2 = x[..., ::2], x[..., 1::2]
+        x_rotated = torch.cat((-x2, x1), dim=-1)
+        return x_rotated
     
 class MyRoPE(Module):
-    def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0, batch_first=False):
+    def __init__(self, d_model, dropout=0.0, batch_first=False):
         super(MyRoPE, self).__init__()
         self.batch_first = batch_first
-        self.rope = RoPE(d_model, max_seq_len, period, dropout)
+        self.rope = RotaryPositionalEmbedding(d_model)
 
     def forward(self, queries, keys):
         if self.batch_first:

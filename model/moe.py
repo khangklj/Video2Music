@@ -75,10 +75,11 @@ class SharedMoELayer(Module):
         if not use_KAN:
             self.gate = nn.Linear(d_model, n_experts)
         else:
-            self.gate =KANLinear(d_model, n_experts)
+            self.gate = KANLinear(d_model, n_experts)
 
     def forward(self, x):
         gate_logits = self.gate(x)
+        print(gate_logits)
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)

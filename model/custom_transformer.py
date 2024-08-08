@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from efficient_kan import KANLinear
-from rotary_embedding_torch import RotaryEmbedding
 from torch.nn import Module
 from torch.nn.modules.transformer import _get_clones
 from torch.nn.init import *
@@ -78,14 +77,44 @@ class MyMultiheadAttention(Module):
         self.head_dim = d_model // num_head
         self.dropout = nn.Dropout(dropout)
 
-        self.att = nn.MultiheadAttention(d_model, num_head, dropout)
+        if not use_KAN:
+            self.W_q, self.W_k, self.W_v, self.out = _get_clones(nn.Linear(d_model, d_model), 4)
+        else:
+            self.W_q, self.W_k, self.W_v, self.out = _get_clones(KANLinear(d_model, d_model), 4)
 
         if RoPE:
             self.rope = RoPE
     
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
+        q, k, v = self.W_q(q), self.W_k(k), self.W_v(v)
+
+        # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
+        q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim).transpose(1, 2)
+        k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim).transpose(1, 2)
+        v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim).transpose(1, 2)
+
         if self.rope is not None:
-            pass
+            q, k = self.rope.rotate_queries_and_keys(q, k)
+
+        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+
+        # Apply attention mask, if provided
+        if attn_mask is not None:
+            attn_scores += attn_mask
+
+        # Apply key padding mask, if provided
+        if key_padding_mask is not None:
+            attn_scores = attn_scores.masked_fill(key_padding_mask.unsqueeze(1).unsqueeze(2), float('-inf'))
+
+        attn_weights = F.softmax(attn_scores, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+        attn_output = torch.matmul(attn_weights, v)  # (batch_size, num_head, seq_len, head_dim)
+
+        # Combine heads and apply the final linear layer
+        attn_output = attn_output.transpose(1, 2).contiguous().view(q.size(0), -1, self.d_model)  # (batch_size, seq_len, d_model)
+        attn_output = self.out(attn_output)
+
+        return attn_output
 
 class TransformerEncoderLayer(Module):
     def __init__(self, self_att_layer, ff_layer, norm=None, dropout=0.1):

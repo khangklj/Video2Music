@@ -144,17 +144,17 @@ def main( vm = "" , isPrintArgs = True ):
     #     lr_scheduler = None        
 
     ##### Original code ####
-    # opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
-    # lr_scheduler = None
+    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
+    lr_scheduler = None
 
     # Modify
-    opt = AdamW(model.parameters(), lr=1e-3)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-                                                            opt,
-                                                            mode='min',
-                                                            factor=0.1, #factor by which the lr is multiplied
-                                                            patience=1,
-                                                        )
+    # opt = AdamW(model.parameters(), lr=1e-3)
+    # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    #                                                         opt,
+    #                                                         mode='min',
+    #                                                         factor=0.1, #factor by which the lr is multiplied
+    #                                                         patience=1,
+    #                                                     )
 
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")
@@ -184,12 +184,8 @@ def main( vm = "" , isPrintArgs = True ):
             print("Baseline model evaluation (Epoch 0):")
             
         # Eval
-        # FLAG 
-        # train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader, train_loss_func)
-        # eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func)
-      
         train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader, train_loss_func)
-        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func, lr_scheduler)
+        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader, eval_loss_func)      
 
         # Learn rate
         lr = get_lr(opt)

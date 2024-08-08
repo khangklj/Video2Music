@@ -6,6 +6,7 @@ from torch.nn import Module
 from torch.nn.modules.transformer import _get_clones
 from torch.nn.init import *
 from copy import deepcopy
+from utilities.device import get_device
 
 from torch.nn.functional import linear, softmax, dropout
 
@@ -102,7 +103,7 @@ class MyRoPE(Module):
     def __init__(self, d_model, dropout=0.0, batch_first=False):
         super(MyRoPE, self).__init__()
         self.batch_first = batch_first
-        self.rope = RotaryPositionalEmbedding(d_model)
+        self.rope = RotaryPositionalEmbedding(d_model).to(get_device())
 
     def forward(self, queries, keys):
         if self.batch_first:

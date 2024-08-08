@@ -42,15 +42,14 @@ class GLUExpert(Module):
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
-    def __init__(self, expert, d_model, d_ff=2048, n_experts=8, n_experts_per_token=2, dropout=0.1):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1):
         super(MoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
-        self.d_ff = d_ff
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
-        self.gate = nn.Linear(d_model, n_experts, bias=False)
+        self.gate = nn.Linear(d_model, n_experts)
 
     def forward(self, x):
         gate_logits = self.gate(x)
@@ -64,16 +63,19 @@ class MoELayer(Module):
         return out
     
 class SharedMoELayer(Module):
-    def __init__(self, expert, d_model, d_ff=2048, n_experts=8, n_experts_per_token=2, dropout=0.1):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, use_KAN=False):
         super(SharedMoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
-        self.d_ff = d_ff
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
         self.shared_expert = _get_clones(expert, 1)[0]
-        self.gate = nn.Linear(d_model, n_experts, bias=False)
+        
+        if not use_KAN:
+            self.gate = nn.Linear(d_model, n_experts)
+        else:
+            self.gate =KANLinear(d_model, n_experts)
 
     def forward(self, x):
         gate_logits = self.gate(x)

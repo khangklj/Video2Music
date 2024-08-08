@@ -144,8 +144,17 @@ def main( vm = "" , isPrintArgs = True ):
     #     lr_scheduler = None        
 
     ##### Original code ####
-    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
-    lr_scheduler = None
+    # opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
+    # lr_scheduler = None
+
+    # Modify
+    opt = AdamW(model.parameters(), lr=1e-3)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                                                            opt,
+                                                            mode='min',
+                                                            factor=0.1, #factor by which the lr is multiplied
+                                                            patience=2,
+                                                        )
 
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")

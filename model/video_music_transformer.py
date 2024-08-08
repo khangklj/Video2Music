@@ -76,7 +76,7 @@ class VideoMusicTransformer_V1(nn.Module):
         self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
         self.softmax    = nn.Softmax(dim=-1)
 
-        del norm, expert, encoder_moelayer, encoder_layer, decoder_moelayer, decoder_layer
+        del norm, expert, encoder_layer, decoder_layer
         torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):

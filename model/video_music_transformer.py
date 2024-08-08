@@ -263,11 +263,12 @@ class VideoMusicTransformer_V2(nn.Module):
         else:
             norm = nn.LayerNorm(self.d_model)
 
+        use_KAN = True
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
-        att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=True, RoPE=RotaryEmbedding(dim=self.d_model))
-        moelayer = SharedMoELayer(expert, self.d_model, self.d_ff, self.n_experts, self.n_experts_per_token, self.dropout)
+        expert = KANLinear(self.d_model, self.d_ff)
+        att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=use_KAN, RoPE=RotaryEmbedding(dim=self.d_model))
+        moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout, use_KAN=use_KAN)
 
         # Encoder
         encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)

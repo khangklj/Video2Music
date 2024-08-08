@@ -81,7 +81,15 @@ class RotaryPositionalEmbedding(Module):
         angles = pos_seq[:, None] * self.inv_freq[None, :]
         return torch.cat([angles, angles], dim=-1)
 
-    def forward(self, q, k): # q.shape = (batch_size,seq_len,dim)
+    def forward(self, q, k): # q.shape = (num_heads, seq_len, batch_size, dim_head)
+        num_heads, seq_len, batch_size, dim_head = q.shape
+
+        q = q.permute(2, 1, 0, 3)
+        q = q.contiguous().view(batch_size, seq_len, num_heads * dim_head)
+        
+        k = k.permute(2, 1, 0, 3)
+        k = k.contiguous().view(batch_size, seq_len, num_heads * dim_head)
+
         seq_len = q.shape[-2]
         pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device)
         angles = self.get_angles(pos_seq)
@@ -89,11 +97,14 @@ class RotaryPositionalEmbedding(Module):
         cos = angles.cos()
         sin = angles.sin()
         
-        print(q.shape, cos.shape)
+        # print(q.shape, cos.shape)
 
         # The query and key are rotated using the angles
         q_rot = (q * cos) + (self.rotate_half(q) * sin)
         k_rot = (k * cos) + (self.rotate_half(k) * sin)
+
+        q_rot = q_rot.view(num_heads, seq_len, batch_size, dim_head)
+        k_rot = k_rot.view(num_heads, seq_len, batch_size, dim_head)
 
         return q_rot, k_rot
 

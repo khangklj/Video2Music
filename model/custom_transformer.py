@@ -180,11 +180,13 @@ class MyMultiheadAttention(Module):
 
         attn_weights = F.softmax(attn_scores, dim=-1)
         attn_weights = self.dropout(attn_weights)
-        attn_output = torch.matmul(attn_weights, v)  # (batch_size, num_head, seq_len, head_dim)
-        print(attn_output.shape)
+        attn_output = torch.matmul(attn_weights, v)  # attn_output.shape = (batch_size, num_head, seq_len, head_dim)
+
         # Combine heads and apply the final linear layer
-        attn_output = attn_output.transpose(1, 2).contiguous().view(q.size(0), -1, self.d_model)  # (batch_size, seq_len, d_model)
+        attn_output = attn_output.transpose(1, 2).contiguous().view(q.size(0), -1, self.d_model)  # attn_output.shape = (batch_size, seq_len, d_model)
         attn_output = self.out(attn_output)
+
+        attn_output = torch.permute(attn_output, (1, 0, 2)) # attn_output.shape = (seq_len, batch_size, d_model)
 
         return attn_output
 

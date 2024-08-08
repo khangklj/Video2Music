@@ -168,6 +168,7 @@ class MyMultiheadAttention(Module):
 
         # Apply attention mask, if provided
         if attn_mask is not None:
+            print(attn_scores.shape, attn_mask.shape)
             attn_scores += attn_mask
 
         # Apply key padding mask, if provided

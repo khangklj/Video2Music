@@ -71,17 +71,21 @@ class MyRMSNorm(Module):
         pass
 
 class MyMultiheadAttention(Module):
-    def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False):
+    def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False, RoPE=False):
         super(MyMultiheadAttention, self).__init__()
         self.d_model = d_model
         self.num_head = num_head
         self.head_dim = d_model // num_head
+        self.dropout = nn.Dropout(dropout)
 
-        if not use_KAN:
-            self.projection = nn.Linear()
-        else:
-            self.projection = KANLinear(d_model * 3, d_model * 3)
-    pass
+        self.att = nn.MultiheadAttention(d_model, num_head, dropout)
+
+        if RoPE:
+            self.rope = RoPE
+    
+    def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
+        if self.rope is not None:
+            pass
 
 class TransformerEncoderLayer(Module):
     def __init__(self, self_att_layer, ff_layer, norm=None, dropout=0.1):

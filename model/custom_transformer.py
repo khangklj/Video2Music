@@ -110,6 +110,7 @@ class RoPE(Module):
     
 class MyRoPE(Module):
     def __init__(self, d_model, max_seq_len, period=10000.0, dropout=0.0, batch_first=False):
+        super(MyRoPE, self).__init__()
         self.batch_first = batch_first
         self.rope = RoPE(d_model, max_seq_len, period, dropout)
 

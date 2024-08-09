@@ -88,7 +88,7 @@ class RotaryPositionalEmbedding(Module):
         q = q.permute(1, 0, 2) # q.shape = (batch_size, seq_len, d_model)
         k = k.permute(1, 0, 2)
 
-        pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device)
+        pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device, requires_grad=False)
         angles = self.get_angles(pos_seq)
 
         cos = angles.cos()
@@ -98,8 +98,8 @@ class RotaryPositionalEmbedding(Module):
         q_rot = (q * cos) + (self.rotate_half(q) * sin)
         k_rot = (k * cos) + (self.rotate_half(k) * sin)
 
-        del cos, sin, pos_seq
-        torch.cuda.empty_cache()
+        # del cos, sin, pos_seq
+        # torch.cuda.empty_cache()
 
         q_rot = q_rot.permute(1, 0, 2)
         k_rot = k_rot.permute(1, 0, 2)

@@ -58,7 +58,7 @@ class MoELayer(Module):
         gate_logits = self.gate(x)
 
         # Balancing the experts
-        # if self.training and self.temperature.item() > 1:
+        # if self.training and self.temperature > 1:
         #     gate_logits /= self.temperature
         #     self.temperature *= self.decay_rate
 
@@ -97,7 +97,7 @@ class SharedMoELayer(Module):
         gate_logits = self.gate(x)
 
         # Balancing the experts
-        if self.training and self.temperature.item() > 1:
+        if self.training and self.temperature > 1:
             gate_logits /= self.temperature
             self.temperature *= self.decay_rate
 

@@ -184,7 +184,7 @@ class MyMultiheadAttention(Module):
         attn_output = self.out(attn_output)
 
         attn_output = torch.permute(attn_output, (1, 0, 2)) # attn_output.shape = (seq_len, batch_size, d_model)
-
+        print(f'attn_output.shape = {attn_output.shape}')
         return attn_output
 
 class TransformerEncoderLayer(Module):

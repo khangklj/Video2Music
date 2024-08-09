@@ -268,7 +268,8 @@ class VideoMusicTransformer_V2(nn.Module):
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = KANLinear(self.d_model, self.d_model)
-        att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=False, RoPE=RoPE)
+        # att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=False, RoPE=RoPE)
+        att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
         moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout, use_KAN=use_KAN)
 
         # Encoder

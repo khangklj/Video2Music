@@ -94,9 +94,6 @@ class RotaryPositionalEmbedding(Module):
 
         cos = angles.cos()
         sin = angles.sin()
-        
-        # print(q.shape, cos.shape)
-        # print(self.rotate_half(q).shape, sin.shape)
 
         # The query and key are rotated using the angles
         q_rot = (q * cos) + (self.rotate_half(q) * sin)

@@ -51,16 +51,8 @@ class MoELayer(Module):
         self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts)
 
-        # self.temperature = 10000.0
-        # self.decay_rate = 0.9
-
     def forward(self, x):
         gate_logits = self.gate(x)
-
-        # Balancing the experts
-        # if self.training and self.temperature > 1:
-        #     gate_logits /= self.temperature
-        #     self.temperature *= self.decay_rate
 
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
@@ -68,8 +60,8 @@ class MoELayer(Module):
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
 
-            # if token_idx.shape[0] == 0:
-            #     continue
+            if token_idx.shape[0] == 0:
+                continue
 
             weight = weights[token_idx, batch_idx, topk_idx]
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))

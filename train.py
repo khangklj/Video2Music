@@ -21,6 +21,8 @@ from utilities.argument_funcs import parse_train_args, print_train_args, write_m
 
 from utilities.run_model_vevo import train_epoch, eval_model
 
+torch.autograd.set_detect_anomaly(True)
+
 CSV_HEADER = ["Epoch", "Learn rate", 
               "Avg Train loss (total)", "Avg Train loss (chord)", "Avg Train loss (emotion)", 
               "Avg Train h1", "Avg Train h3", "Avg Train h5",

@@ -68,8 +68,8 @@ class MoELayer(Module):
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
 
-            # if token_idx.shape[0] == 0:
-            #     continue
+            if token_idx.shape[0] == 0:
+                continue
 
             weight = weights[token_idx, batch_idx, topk_idx]
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))

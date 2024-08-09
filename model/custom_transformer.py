@@ -123,13 +123,13 @@ class MyRoPE(Module):
         if self.batch_first:
             new_queries, new_keys = self.rope(queries, keys)
         else:
-            queries = queries.permute(1, 0, 2, 3)
-            keys = keys.permute(1, 0, 2, 3)
+            queries = queries.permute(1, 0, 2)
+            keys = keys.permute(1, 0, 2)
 
             new_queries, new_keys = self.rope(queries, keys)
 
-            new_queries = new_queries.permute(1, 0, 2, 3)
-            new_keys = new_keys.permute(1, 0, 2, 3)
+            new_queries = new_queries.permute(1, 0, 2)
+            new_keys = new_keys.permute(1, 0, 2)
 
         return new_queries, new_keys
 

@@ -250,11 +250,11 @@ class VideoMusicTransformer_V2(nn.Module):
         self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
         
         self.total_vf_dim = total_vf_dim
-        self.Linear_vis     = KANLinear(self.total_vf_dim, self.d_model)
-        self.Linear_chord     = KANLinear(self.d_model+1, self.d_model)
+        self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
+        self.Linear_chord     = nn.Linear(self.d_model+1, self.d_model)
 
         # Add condition (minor or major)
-        self.condition_linear = KANLinear(1, self.d_model)
+        self.condition_linear = nn.Linear(1, self.d_model)
         
         # Transformer
         if rms_norm:
@@ -262,7 +262,7 @@ class VideoMusicTransformer_V2(nn.Module):
         else:
             norm = nn.LayerNorm(self.d_model)
 
-        use_KAN = True
+        use_KAN = False
         RoPE = MyRoPE(self.d_model, dropout=self.dropout, batch_first=False)
         self.n_experts = 6
         self.n_experts_per_token = 2

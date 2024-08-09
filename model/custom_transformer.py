@@ -83,31 +83,27 @@ class RotaryPositionalEmbedding(Module):
         angles = pos_seq[:, None] * self.inv_freq[None, :]
         return torch.cat([angles, angles], dim=-1)
 
-    def forward(self, q, k): # q.shape = (seq_len, num_heads, batch_size, dim_head)
-        seq_len, num_heads, batch_size, dim_head = q.shape
+    def forward(self, q, k): # q.shape = (seq_len, batch_size, d_model)
+        seq_len, batch_size, d_model = q.shape
 
-        q = q.permute(2, 1, 0, 3)
-        q = q.contiguous().view(batch_size, seq_len, num_heads * dim_head)
-        
-        k = k.permute(2, 1, 0, 3)
-        k = k.contiguous().view(batch_size, seq_len, num_heads * dim_head)
+        q = q.permute(1, 0, 2) # q.shape = (batch_size, seq_len, d_model)
+        k = k.permute(1, 0, 2)
 
-        seq_len = q.shape[-2]
         pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device)
         angles = self.get_angles(pos_seq)
 
         cos = angles.cos()
         sin = angles.sin()
         
-        print(q.shape, cos.shape)
-        print(self.rotate_half(q).shape, sin.shape)
+        # print(q.shape, cos.shape)
+        # print(self.rotate_half(q).shape, sin.shape)
 
         # The query and key are rotated using the angles
         q_rot = (q * cos) + (self.rotate_half(q) * sin)
         k_rot = (k * cos) + (self.rotate_half(k) * sin)
 
-        q_rot = q_rot.view(seq_len, num_heads, batch_size, dim_head)
-        k_rot = k_rot.view(seq_len, num_heads, batch_size, dim_head)
+        q_rot = q_rot.permute(1, 0, 2)
+        k_rot = k_rot.permute(1, 0, 2)
 
         return q_rot, k_rot
 
@@ -156,7 +152,6 @@ class MyMultiheadAttention(Module):
     
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)
-        print(f'q.shape =  {q.shape}')
 
         if self.rope is not None:
             q, k = self.rope(q, k)

@@ -51,8 +51,8 @@ class MoELayer(Module):
         self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts)
 
-        # self.temperature = torch.tensor([10000.0], requires_grad=False).to(get_device())
-        # self.decay_rate = torch.tensor([0.9], requires_grad=False).to(get_device())
+        # self.temperature = 10000.0
+        # self.decay_rate = 0.9
 
     def forward(self, x):
         gate_logits = self.gate(x)
@@ -68,8 +68,8 @@ class MoELayer(Module):
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
 
-            if token_idx.shape[0] == 0:
-                continue
+            # if token_idx.shape[0] == 0:
+            #     continue
 
             weight = weights[token_idx, batch_idx, topk_idx]
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))

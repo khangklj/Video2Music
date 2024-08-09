@@ -106,7 +106,7 @@ def main( vm = "" , isPrintArgs = True ):
     # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
-    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
+    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel, dropout=args.dropout).to(get_device())
     
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
@@ -124,28 +124,28 @@ def main( vm = "" , isPrintArgs = True ):
     train_loss_func = nn.MSELoss()
 
     ##### Lr Scheduler vs static lr #####
-    # if(args.lr is None):
-    #     if(args.continue_epoch is None):
-    #         init_step = 0
-    #     else:
-    #         init_step = args.continue_epoch * len(train_loader)
-    #     lr = LR_DEFAULT_START
-    #     lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)        
-    # else:
-    #     lr = args.lr        
+    if(args.lr is None):
+        if(args.continue_epoch is None):
+            init_step = 0
+        else:
+            init_step = args.continue_epoch * len(train_loader)
+        lr = LR_DEFAULT_START
+        lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)        
+    else:
+        lr = args.lr        
 
     ##### Optimizer #####
     # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     
-    # if(args.lr is None):
-    #     lr_scheduler = LambdaLR(opt, lr_stepper.step)
-    # else:
-    #     lr_scheduler = None        
+    if(args.lr is None):
+        lr_scheduler = LambdaLR(opt, lr_stepper.step)
+    else:
+        lr_scheduler = None        
 
     ##### Original code ####
-    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
-    lr_scheduler = None
+    # opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
+    # lr_scheduler = None
 
     # Modify
     # opt = AdamW(model.parameters(), lr=1e-3)

@@ -51,8 +51,8 @@ class MoELayer(Module):
         self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts)
 
-        # self.temperature = torch.tensor([10000.0]).requires_grad_(False).to(get_device())
-        # self.decay_rate = torch.tensor([0.9]).requires_grad_(False).to(get_device())
+        # self.temperature = torch.tensor([10000.0]).requires_grad(False).to(get_device())
+        # self.decay_rate = torch.tensor([0.9]).requires_grad(False).to(get_device())
 
     def forward(self, x):
         gate_logits = self.gate(x)
@@ -90,8 +90,8 @@ class SharedMoELayer(Module):
         else:
             self.gate = KANLinear(d_model, n_experts)
 
-        self.temperature = torch.tensor([10000.0]).requires_grad_(False).to(get_device())
-        self.decay_rate = torch.tensor([0.9]).requires_grad_(False).to(get_device())
+        self.temperature = torch.tensor([10000.0]).requires_grad(False).to(get_device())
+        self.decay_rate = torch.tensor([0.9]).requires_grad(False).to(get_device())
 
     def forward(self, x):
         gate_logits = self.gate(x)

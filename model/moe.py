@@ -90,16 +90,16 @@ class SharedMoELayer(Module):
         else:
             self.gate = KANLinear(d_model, n_experts)
 
-        # self.temperature = torch.tensor([10000.0], requires_grad=False).to(get_device())
-        # self.decay_rate = torch.tensor([0.9], requires_grad=False).to(get_device())
+        self.temperature = 10000.0
+        self.decay_rate = 0.9
 
     def forward(self, x):
         gate_logits = self.gate(x)
 
         # Balancing the experts
-        # if self.training and self.temperature.item() > 1:
-        #     gate_logits /= self.temperature
-        #     self.temperature *= self.decay_rate
+        if self.training and self.temperature.item() > 1:
+            gate_logits /= self.temperature
+            self.temperature *= self.decay_rate
 
         weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())

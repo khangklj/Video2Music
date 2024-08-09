@@ -146,7 +146,7 @@ class MyMultiheadAttention(Module):
         else:
             self.W_q, self.W_k, self.W_v, self.out = _get_clones(KANLinear(d_model, d_model), 4)
 
-        self.rope = deepcopy(RoPE) if self.rope is not None else None
+        self.rope = deepcopy(RoPE) if RoPE is not None else None
     
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)

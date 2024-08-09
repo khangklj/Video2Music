@@ -77,8 +77,8 @@ class SharedMoELayer(Module):
         else:
             self.gate = KANLinear(d_model, n_experts)
 
-        self.temperature = torch.tensor([10000]).requires_grad_(False)
-        self.decay_rate = torch.tensor([0.9]).requires_grad_(False)
+        self.temperature = torch.tensor([10000]).requires_grad_(False).to(get_device())
+        self.decay_rate = torch.tensor([0.9]).requires_grad_(False).to(get_device())
 
     def forward(self, x):
         gate_logits = self.gate(x)

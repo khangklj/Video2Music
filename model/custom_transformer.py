@@ -178,13 +178,11 @@ class MyMultiheadAttention(Module):
         attn_weights = F.softmax(attn_scores, dim=-1)
         attn_weights = self.dropout(attn_weights)
         attn_output = torch.matmul(attn_weights, v)  # attn_output.shape = (num_head, batch_size, seq_len, head_dim)
-        print(f'attn_output.shape = {attn_output.shape}')
 
         # Combine heads and apply the final linear layer
         attn_output = attn_output.contiguous().view(q.shape[2], q.shape[1], self.d_model)  # attn_output.shape = (seq_len, batch_size, d_model)
-        print(f'attn_output.shape = {attn_output.shape}')
         attn_output = self.out(attn_output)
-        
+
         return attn_output
 
 class TransformerEncoderLayer(Module):
@@ -197,10 +195,8 @@ class TransformerEncoderLayer(Module):
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
-        print(src.shape)
         src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                               key_padding_mask=src_key_padding_mask)[0]
-        print(src2.shape)
         src = src + src2
         src = self.norm1(src)
         src2 = self.ff(src)

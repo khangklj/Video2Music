@@ -76,7 +76,7 @@ class VideoMusicTransformer_V1(nn.Module):
         self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
         self.softmax    = nn.Softmax(dim=-1)
 
-        del norm, expert, encoder_layer, decoder_layer
+        del norm, expert, encoder_layer, att, moelayer, encoder_layer, decoder_layer
         torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):
@@ -267,7 +267,7 @@ class VideoMusicTransformer_V2(nn.Module):
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = KANLinear(self.d_model, self.d_model)
-        att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=use_KAN, RoPE=RoPE)
+        att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=False, RoPE=RoPE)
         moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout, use_KAN=use_KAN)
 
         # Encoder
@@ -285,10 +285,16 @@ class VideoMusicTransformer_V2(nn.Module):
             dim_feedforward=self.d_ff, custom_encoder=encoder, custom_decoder=decoder
         )   
     
-        self.Wout_root       = KANLinear(self.d_model, CHORD_ROOT_SIZE)
-        self.Wout_attr       = KANLinear(self.d_model, CHORD_ATTR_SIZE)
-        self.Wout       = KANLinear(self.d_model, CHORD_SIZE)
+        if IS_SEPERATED:
+            self.Wout_root       = KANLinear(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = KANLinear(self.d_model, CHORD_ATTR_SIZE)
+        else:
+            self.Wout       = KANLinear(self.d_model, CHORD_SIZE)
+
         self.softmax    = nn.Softmax(dim=-1)
+
+        del RoPE, expert, att, moelayer, encoder_layer, decoder_layer
+        torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):
         if(mask is True):
@@ -332,14 +338,14 @@ class VideoMusicTransformer_V2(nn.Module):
         x_out = self.transformer(src=vf, tgt=xf, tgt_mask=mask)
         x_out = x_out.permute(1,0,2)
 
+        del mask
+
         if IS_SEPERATED:
             y_root = self.Wout_root(x_out)
             y_attr = self.Wout_attr(x_out)
-            del mask
             return y_root, y_attr
         else:
             y = self.Wout(x_out)
-            del mask
             return y
         
     def generate(self, feature_semantic_list = [], feature_key=None, feature_scene_offset=None, feature_motion=None, feature_emotion=None,

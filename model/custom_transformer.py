@@ -77,7 +77,7 @@ class RotaryPositionalEmbedding(Module):
         super(RotaryPositionalEmbedding, self).__init__()
         self.dim = dim
         self.inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))
-        self.inv_freq = self.inv_freq.to(get_device())
+        self.inv_freq = self.inv_freq.requires_grad_(False).to(get_device())
 
     def get_angles(self, pos_seq):
         angles = pos_seq[:, None] * self.inv_freq[None, :]
@@ -98,6 +98,9 @@ class RotaryPositionalEmbedding(Module):
         # The query and key are rotated using the angles
         q_rot = (q * cos) + (self.rotate_half(q) * sin)
         k_rot = (k * cos) + (self.rotate_half(k) * sin)
+
+        del cos, sin, pos_seq
+        torch.cuda.empty_cache()
 
         q_rot = q_rot.permute(1, 0, 2)
         k_rot = k_rot.permute(1, 0, 2)
@@ -132,7 +135,7 @@ class MyRoPE(Module):
 
 # By our and need batch_first, use_KAN, RoPE option       
 class MyMultiheadAttention(Module):
-    def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False, RoPE=False):
+    def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False, RoPE=None):
         super(MyMultiheadAttention, self).__init__()
         self.d_model = d_model
         self.num_head = num_head
@@ -144,8 +147,8 @@ class MyMultiheadAttention(Module):
         else:
             self.W_q, self.W_k, self.W_v, self.out = _get_clones(KANLinear(d_model, d_model), 4)
 
-        if RoPE:
-            self.rope = RoPE
+        if RoPE is not None:
+            self.rope = deepcopy(RoPE)
     
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)

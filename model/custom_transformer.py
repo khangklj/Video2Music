@@ -140,7 +140,7 @@ class MyMultiheadAttention(Module):
         self.d_model = d_model
         self.num_head = num_head
         self.head_dim = d_model // num_head
-        self.dropout = nn.Dropout(dropout)
+        # self.dropout = nn.Dropout(dropout)
 
         if not use_KAN:
             self.W_q, self.W_k, self.W_v, self.out = _get_clones(nn.Linear(d_model, d_model), 4)
@@ -175,7 +175,7 @@ class MyMultiheadAttention(Module):
             attn_scores = attn_scores.masked_fill(key_padding_mask.unsqueeze(1).unsqueeze(2), float('-inf'))
 
         attn_weights = F.softmax(attn_scores, dim=-1)
-        attn_weights = self.dropout(attn_weights)
+        # attn_weights = self.dropout(attn_weights)
         attn_output = torch.matmul(attn_weights, v)  # attn_output.shape = (num_head, batch_size, seq_len, head_dim)
 
         # Combine heads and apply the final linear layer

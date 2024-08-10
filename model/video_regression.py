@@ -67,21 +67,21 @@ class advancedRNNBlock(nn.Module):
 class VideoRegression(nn.Module):
     def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
         super(VideoRegression, self).__init__()
-        self.nlayers    = n_layers
+        self.n_layers    = n_layers
         self.d_model    = d_model
         self.d_hidden = d_hidden
-        self.dropout    = dropout
+        self.dropout    = nn.Dropout(dropout)
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
         if self.regModel == "bilstm":
-            self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+            self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
         elif self.regModel == "bigru":
-            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
+            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
         elif self.regModel == "lstm":
-            self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.nlayers)
+            self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers)
         elif self.regModel == "gru":
-            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.nlayers)
+            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers)
 #         elif self.regModel == "version_2":
 #             self.model = nn.Sequential(
 #                 nn.Linear(self.total_vf_dim, self.d_model),
@@ -105,7 +105,7 @@ class VideoRegression(nn.Module):
 #             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
 #             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=2, d_state=768)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, bias=True)
             self.model = Mamba(config)
             
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
@@ -133,7 +133,7 @@ class VideoRegression(nn.Module):
         vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) 
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1)
         vf_concat = vf_concat.permute(1,0,2)
-        vf_concat = F.dropout(vf_concat, p=self.dropout, training=self.training)
+        # vf_concat = F.dropout(vf_concat, p=self.dropout, training=self.training)
         # print(vf_concat.shape)
 
         if self.regModel == "bilstm":
@@ -188,4 +188,5 @@ class VideoRegression(nn.Module):
             # out, _ = self.model(vf_concat)  
             
             out = self.fc4(out)
+            out *= torch.tensor([[5, 1]])
         return out

@@ -103,7 +103,13 @@ def main( vm = "" , isPrintArgs = True ):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
-    model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
+    n_layers = 4
+    d_model = args.d_model
+    d_hidden = 512
+    dropout = args.dropout
+    max_sequence_video = args.max_sequence_video
+    regModel = args.regModel
+    model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, dropout=dropout, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
     
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
@@ -140,11 +146,12 @@ def main( vm = "" , isPrintArgs = True ):
     # else:
     #     lr_scheduler = None        
 
-    ##### Original code ####
+    ##### Optimizer ####
+    lr = 0.0005
     if args.regModel == 'mamba':
-        opt = AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
+        opt = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     else:
-        opt = Adam(model.parameters(), lr=1e-3) 
+        opt = Adam(model.parameters(), lr=lr) 
 
     lr_scheduler = None
     

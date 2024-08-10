@@ -30,8 +30,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
                   feature_motion,
                   feature_emotion)
         
+        print('Before:', y.shape)
         y   = y.reshape(y.shape[0] * y.shape[1], -1)
-        
+        print('After:', y.shape)
         feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)

@@ -31,11 +31,17 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
                   feature_emotion)
         
         y   = y.reshape(y.shape[0] * y.shape[1], -1)
+        y_note_density, y_loudness = torch.split(y, split_size_or_sections=1, dim=1)
         feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
-        feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
+        # feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
 
-        out = loss.forward(y, feature_combined)
+        # out = loss.forward(y, feature_combined)
+
+        mse_note_density = F.mse_loss(y_note_density, feature_note_density)
+        mse_loudness = F.mse_loss(y_loudness, feature_loudness)
+        out = mse_note_density + 32 * mse_loudness
+
         out.backward()
         opt.step()
         

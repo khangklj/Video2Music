@@ -10,6 +10,7 @@ import torch.nn.functional as F
 
 from .pscan import *
 from efficient_kan import KANLinear
+import copy
 
 """
 
@@ -119,7 +120,7 @@ class ResidualMoE(nn.Module):
     def __init__(self, moe_layer, config= MambaConfig):
         super(ResidualMoE, self).__init__()
 
-        self.moe_layer = moe_layer
+        self.moe_layer = copy.deepcopy(moe_layer)
         self.norm = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
 
     def forward(self, x):

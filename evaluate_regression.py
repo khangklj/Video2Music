@@ -54,6 +54,7 @@ def main( vm = "", isPrintArgs = True):
     
     _, _, test_dataset = create_vevo_datasets(
         dataset_root = "./dataset/", 
+        max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 
         vis_models = args.vis_models,
         emo_model = args.emo_model, 

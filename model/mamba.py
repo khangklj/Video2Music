@@ -104,7 +104,7 @@ class Mamba(nn.Module):
 
 class MoEMamba(nn.Module):
     def __init__(self, moe_layer, config: MambaConfig):
-        super(MoEMamba).__init__()
+        super(MoEMamba, self).__init__()
 
         layer = nn.Sequential(
                 ResidualBlock(config),
@@ -119,7 +119,7 @@ class MoEMamba(nn.Module):
         return x
 
 class ResidualMoE(nn.Module):
-    def __init__(self, moe_layer, config= MambaConfig):
+    def __init__(self, moe_layer, config: MambaConfig):
         super(ResidualMoE, self).__init__()
 
         self.moe_layer = copy.deepcopy(moe_layer)

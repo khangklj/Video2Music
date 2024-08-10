@@ -42,7 +42,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         mse_loudness = loss.forward(y_loudness, feature_loudness)
         combined_loss = mse_note_density + 32 * mse_loudness
         combined_loss.backward()
-        combined_loss.step()
+        opt.step()
 
         # out.backward()
         # opt.step()

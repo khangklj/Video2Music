@@ -103,11 +103,11 @@ def main( vm = "" , isPrintArgs = True ):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
-    n_layers = 4
+    n_layers = 2
     d_model = 64
     d_hidden = 64
     use_KAN = True
-    dropout = 0
+    dropout = 0.2
     max_sequence_video = args.max_sequence_video
     regModel = args.regModel
     model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, dropout=dropout, use_KAN=use_KAN, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())

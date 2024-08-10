@@ -14,7 +14,7 @@ from .moe import *
 import torch.nn.functional as F
 from efficient_kan import KANLinear
 
-from .mamba import Mamba, MambaConfig
+from .mamba import Mamba, MoEMamba, MambaConfig
 # from mamba_ssm import Mamba as MambaSSM
 
 
@@ -112,13 +112,18 @@ class VideoRegression(nn.Module):
             # self.model = Jamba(config)
 
             # self.model = MambaSSM(d_model=self.d_model, d_state=16, d_conv=4)
+        elif self.regModel == "moemamba":
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
+            expert = KANLinear(self.d_model, self.d_model)
+            moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            self.model = MoEMamba(moe_layer, config)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
         
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
-        if self.regModel == "mamba":
+        if self.regModel in ('mamba', 'moemamba'):
             self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
             self.fc4 = KANLinear(self.d_model, 2)
         

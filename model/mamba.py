@@ -101,6 +101,31 @@ class Mamba(nn.Module):
 
         return x, caches
 
+class MoEMamba(nn.Module):
+    def __init__(self, moe_layer, config: MambaConfig):
+        super(MoEMamba).__init__()
+
+        self.layers = nn.Sequential([
+            nn.Sequential(
+                ResidualBlock(config),
+                ResidualMoE(moe_layer, config)
+            ) for _ in range(config.n_layers)
+        ])
+
+    def forward(self, x):
+        return self.layers(x)
+
+class ResidualMoE(nn.Module):
+    def __init__(self, moe_layer, config= MambaConfig):
+        super(ResidualMoE, self).__init__()
+
+        self.moe_layer = moe_layer
+        self.norm = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
+
+    def forward(self, x):
+        output = self.moe_layer(self.norm(x)) + x
+        return output
+
 class ResidualBlock(nn.Module):
     def __init__(self, config: MambaConfig):
         super().__init__()

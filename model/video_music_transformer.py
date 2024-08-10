@@ -330,7 +330,6 @@ class VideoMusicTransformer_V2(nn.Module):
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         vf = self.Linear_vis(vf_concat)
         
-        ### POSITIONAL EMBEDDING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
 

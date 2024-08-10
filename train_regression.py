@@ -101,9 +101,6 @@ def main( vm = "" , isPrintArgs = True ):
         total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-
-    # FLAG
-    # val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
     model = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())
@@ -144,18 +141,13 @@ def main( vm = "" , isPrintArgs = True ):
     #     lr_scheduler = None        
 
     ##### Original code ####
-    opt = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)    
+    if args.regModel == 'mamba':
+        opt = AdamW(model.parameters(), lr=1e-3, weight_decay=0.01)
+    else:
+        opt = Adam(model.parameters(), lr=1e-3) 
+
     lr_scheduler = None
-
-    # Modify
-    # opt = AdamW(model.parameters(), lr=1e-3)
-    # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    #                                                         opt,
-    #                                                         mode='min',
-    #                                                         factor=0.1, #factor by which the lr is multiplied
-    #                                                         patience=1,
-    #                                                     )
-
+    
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")
     best_eval_rmse_epoch  = -1

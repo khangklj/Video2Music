@@ -60,7 +60,7 @@ def main( vm = "", isPrintArgs = True):
         split_ver = SPLIT_VER, 
         random_seq = True)
     
-    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
+    test_loader = DataLoader(test_dataset, batch_size=1, num_workers=args.n_workers)
 
     total_vf_dim = 0
     if args.is_video:

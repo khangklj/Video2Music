@@ -105,7 +105,7 @@ class MoEMamba(nn.Module):
     def __init__(self, moe_layer, config: MambaConfig):
         super(MoEMamba).__init__()
 
-        self.layers = nn.Sequential([
+        self.layers = nn.Sequential(*[
             nn.Sequential(
                 ResidualBlock(config),
                 ResidualMoE(moe_layer, config)

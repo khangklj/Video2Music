@@ -169,6 +169,7 @@ def main( vm = "" , isPrintArgs = True ):
             writer.writerow(CSV_HEADER)
 
     ##### TRAIN LOOP #####
+    print("Training with our combined loss")
     for epoch in range(start_epoch, args.epochs):
         if(epoch > BASELINE_EPOCH):
             print(SEPERATOR)

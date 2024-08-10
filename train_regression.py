@@ -105,7 +105,7 @@ def main( vm = "" , isPrintArgs = True ):
 
     n_layers = 2
     d_model = 64
-    d_hidden = 64
+    d_hidden = 128
     use_KAN = True
     dropout = 0.2
     max_sequence_video = args.max_sequence_video
@@ -150,7 +150,7 @@ def main( vm = "" , isPrintArgs = True ):
     ##### Optimizer ####
     lr = 0.0005
     if args.regModel == 'mamba':
-        opt = AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+        opt = AdamW(model.parameters(), lr=lr, weight_decay=0.005)
     else:
         opt = Adam(model.parameters(), lr=lr) 
 

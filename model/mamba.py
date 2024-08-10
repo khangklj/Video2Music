@@ -135,6 +135,8 @@ class MambaBlock(nn.Module):
 
         self.config = config
 
+        self.dropout = nn.Dropout(config.dropout) # OUR MODIFY
+
         # projects block input from D to 2*ED (two branches)
         if config.use_KAN:
             self.in_proj = KANLinear(config.d_model, 2 * config.d_inner) # OUR MODIFY
@@ -242,7 +244,7 @@ class MambaBlock(nn.Module):
         # z branch
         z = F.silu(z)
 
-        output = y * z
+        output = y * self.dropout(z)
         output = self.out_proj(output) # (B, L, D)
 
         return output

@@ -106,15 +106,17 @@ class MoEMamba(nn.Module):
     def __init__(self, moe_layer, config: MambaConfig):
         super(MoEMamba).__init__()
 
-        self.layers = nn.Sequential(*[
-            nn.Sequential(
+        layer = nn.Sequential(
                 ResidualBlock(config),
                 ResidualMoE(moe_layer, config)
-            ) for _ in range(config.n_layers)
-        ])
+            )
+        self.layers = nn.ModuleList([copy.deepcopy(layer) for _ in range(config.n_layers)])
 
     def forward(self, x):
-        return self.layers(x)
+        for layer in self.layers:
+            x = layer(x)
+
+        return x
 
 class ResidualMoE(nn.Module):
     def __init__(self, moe_layer, config= MambaConfig):

@@ -106,8 +106,8 @@ def main( vm = "" , isPrintArgs = True ):
     n_layers = 4
     d_model = 64
     d_hidden = 64
-    use_KAN = False
-    dropout = args.dropout
+    use_KAN = True
+    dropout = 0
     max_sequence_video = args.max_sequence_video
     regModel = args.regModel
     model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, dropout=dropout, use_KAN=use_KAN, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())

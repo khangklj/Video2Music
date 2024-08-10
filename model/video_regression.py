@@ -189,5 +189,6 @@ class VideoRegression(nn.Module):
             # out, _ = self.model(vf_concat)  
             
             out = self.fc4(out)
-            out *= torch.tensor([[5, 1]])
+            tmp = torch.tensor([[5, 1]]).to(get_device())
+            out *= tmp
         return out

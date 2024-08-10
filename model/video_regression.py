@@ -183,6 +183,7 @@ class VideoRegression(nn.Module):
             
             # For Mamba & MambaSSM
             out = self.model(vf_concat)
+            out = self.dropout(out)
             
             # For Jamba:
             # out, _ = self.model(vf_concat)  

@@ -103,9 +103,9 @@ def main( vm = "" , isPrintArgs = True ):
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
 
-    n_layers = 2
-    d_model = args.d_model
-    d_hidden = 512
+    n_layers = 4
+    d_model = 64
+    d_hidden = 64
     dropout = args.dropout
     max_sequence_video = args.max_sequence_video
     regModel = args.regModel

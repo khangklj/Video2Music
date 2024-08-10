@@ -204,14 +204,19 @@ def main( vm = "" , isPrintArgs = True ):
         print("")
 
         new_best = False
-        if(eval_rmse < best_eval_rmse):
+        if (eval_rmse < best_eval_rmse):
             best_eval_rmse = eval_rmse
             best_eval_rmse_epoch  = epoch+1
             torch.save(model.state_dict(), best_rmse_file)
             new_best = True
+
+        if (eval_loss < best_eval_loss):
+            best_eval_loss = eval_loss
+            best_eval_loss_epoch = epoch+1
+            new_best = True
         
         # Writing out new bests
-        if(new_best):
+        if (new_best):
             with open(best_text, "w") as o_stream:
                 print("Best val RMSE epoch:", best_eval_rmse_epoch, file=o_stream)
                 print("Best val RMSE:", best_eval_rmse, file=o_stream)

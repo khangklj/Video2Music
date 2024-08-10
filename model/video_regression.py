@@ -8,13 +8,13 @@ from utilities.constants import *
 from utilities.device import get_device
 from datetime import datetime
 from .moe import *
-from .custom_lstm import LSTM
-from .custom_gru import GRU
-from .custom_reg_model import myRNN
+# from .custom_lstm import LSTM
+# from .custom_gru import GRU
+# from .custom_reg_model import myRNN
 import torch.nn.functional as F
+from efficient_kan import KANLinear
 
-from mambapy.mamba import Mamba, MambaConfig
-from mambapy.jamba import JambaLMConfig, Jamba
+from .mamba import Mamba, MambaConfig
 # from mamba_ssm import Mamba as MambaSSM
 
 
@@ -65,7 +65,7 @@ class advancedRNNBlock(nn.Module):
         x = self.last_layer(x)
         return x
 class VideoRegression(nn.Module):
-    def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
+    def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, use_KAN=False, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
         super(VideoRegression, self).__init__()
         self.n_layers    = n_layers
         self.d_model    = d_model
@@ -105,7 +105,7 @@ class VideoRegression(nn.Module):
 #             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
 #             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, bias=True)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)
             
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
@@ -189,6 +189,4 @@ class VideoRegression(nn.Module):
             # out, _ = self.model(vf_concat)  
             
             out = self.fc4(out)
-            tmp = torch.tensor([[5, 1]]).to(get_device())
-            out *= tmp
         return out

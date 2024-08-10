@@ -79,10 +79,11 @@ def main( vm = "", isPrintArgs = True):
     n_layers = 4
     d_model = 64
     d_hidden = 64
+    use_KAN = True
+    dropout = args.dropout
     max_sequence_video = args.max_sequence_video
     regModel = args.regModel
-    model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
-    model.load_state_dict(torch.load(args.model_weights))
+    model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, dropout=dropout, use_KAN=use_KAN, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
     
     loss = nn.MSELoss()
 

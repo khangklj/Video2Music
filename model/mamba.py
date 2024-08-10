@@ -155,21 +155,17 @@ class MambaBlock(nn.Module):
             self.x_proj = nn.Linear(config.d_inner, config.dt_rank + 2 * config.d_state, bias=False)
 
         # projects delta from dt_rank to d_inner
-        if config.use_KAN:
-            self.dt_proj = KANLinear(config.dt_rank, config.d_inner) # OUR MODIFY
-        else:
-            self.dt_proj = nn.Linear(config.dt_rank, config.d_inner, bias=True)
+        self.dt_proj = nn.Linear(config.dt_rank, config.d_inner, bias=True)
 
         # dt initialization
-        if not config.use_KAN:
-            # dt weights
-            dt_init_std = config.dt_rank**-0.5 * config.dt_scale
-            if config.dt_init == "constant":
-                nn.init.constant_(self.dt_proj.weight, dt_init_std)
-            elif config.dt_init == "random":
-                nn.init.uniform_(self.dt_proj.weight, -dt_init_std, dt_init_std)
-            else:
-                raise NotImplementedError
+        # dt weights
+        dt_init_std = config.dt_rank**-0.5 * config.dt_scale
+        if config.dt_init == "constant":
+            nn.init.constant_(self.dt_proj.weight, dt_init_std)
+        elif config.dt_init == "random":
+            nn.init.uniform_(self.dt_proj.weight, -dt_init_std, dt_init_std)
+        else:
+            raise NotImplementedError
         
         # delta bias
         dt = torch.exp(

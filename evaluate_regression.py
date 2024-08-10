@@ -76,7 +76,7 @@ def main( vm = "", isPrintArgs = True):
     else:
         total_vf_dim += 5
     
-    n_layers = 4
+    n_layers = 2
     d_model = 64
     d_hidden = 64
     use_KAN = True

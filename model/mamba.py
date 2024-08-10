@@ -161,14 +161,15 @@ class MambaBlock(nn.Module):
             self.dt_proj = nn.Linear(config.dt_rank, config.d_inner, bias=True)
 
         # dt initialization
-        # dt weights
-        dt_init_std = config.dt_rank**-0.5 * config.dt_scale
-        if config.dt_init == "constant":
-            nn.init.constant_(self.dt_proj.weight, dt_init_std)
-        elif config.dt_init == "random":
-            nn.init.uniform_(self.dt_proj.weight, -dt_init_std, dt_init_std)
-        else:
-            raise NotImplementedError
+        if not config.use_KAN:
+            # dt weights
+            dt_init_std = config.dt_rank**-0.5 * config.dt_scale
+            if config.dt_init == "constant":
+                nn.init.constant_(self.dt_proj.weight, dt_init_std)
+            elif config.dt_init == "random":
+                nn.init.uniform_(self.dt_proj.weight, -dt_init_std, dt_init_std)
+            else:
+                raise NotImplementedError
         
         # delta bias
         dt = torch.exp(
@@ -189,7 +190,10 @@ class MambaBlock(nn.Module):
         self.D._no_weight_decay = True
 
         # projects block output from ED back to D
-        self.out_proj = nn.Linear(config.d_inner, config.d_model, bias=config.bias)
+        if config.use_KAN:
+            self.out_proj = KANLinear(config.d_inner, config.d_model) # OUR MODIFY
+        else:
+            self.out_proj = nn.Linear(config.d_inner, config.d_model, bias=config.bias)
 
         # used in jamba
         if self.config.inner_layernorms:

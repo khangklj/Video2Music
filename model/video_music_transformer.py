@@ -71,12 +71,15 @@ class VideoMusicTransformer_V1(nn.Module):
             dim_feedforward=self.d_ff, custom_encoder=encoder, custom_decoder=decoder
         )   
     
-        self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
-        self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
-        self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
+        if IS_SEPERATED:
+            self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = nn.Linear(self.d_model, CHORD_ATTR_SIZE)
+        else:
+            self.Wout       = nn.Linear(self.d_model, CHORD_SIZE)
+
         self.softmax    = nn.Softmax(dim=-1)
 
-        del norm, expert, encoder_layer, att, moelayer, encoder_layer, decoder_layer
+        del norm, expert, att, moelayer, encoder_layer, decoder_layer
         torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):

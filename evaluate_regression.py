@@ -83,7 +83,8 @@ def main( vm = "", isPrintArgs = True):
     use_KAN = True
     max_sequence_video = args.max_sequence_video
     regModel = args.regModel
-    model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, use_KAN=use_KAN, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
+    # model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, use_KAN=use_KAN, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
+    model = VideoRegression(n_layers=args.n_layers, d_model=64, use_KAN=use_KAN, dropout=args.dropout, max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
     
     # Load weights
     state_dict = torch.load(args.model_weights)

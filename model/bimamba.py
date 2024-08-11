@@ -33,7 +33,7 @@ class BiMambaEncoder(nn.Module):
         # Backward
         mamba_out_backward = self.mamba_backward(x_flip)
         mamba_out_backward = self.norm2(mamba_out_backward)
-        output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backwards
+        output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backward
 
         # Combine output
         # output = output_forward + output_backward

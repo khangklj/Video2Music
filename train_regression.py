@@ -106,7 +106,7 @@ def main( vm = "" , isPrintArgs = True ):
     n_layers = 2
     d_model = 64
     d_hidden = 128
-    use_KAN = True
+    use_KAN = False
     dropout = 0.2
     max_sequence_video = args.max_sequence_video
     regModel = args.regModel

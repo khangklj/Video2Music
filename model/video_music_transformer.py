@@ -267,8 +267,8 @@ class VideoMusicTransformer_V2(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        # RoPE = Rotary(self.d_model)
-        RoPE = None
+        RoPE = Rotary(self.d_model)
+        # RoPE = None
         self.n_experts = 6
         self.n_experts_per_token = 2
         # expert = KANLinear(self.d_model, self.d_model)

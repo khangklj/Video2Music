@@ -12,8 +12,10 @@ class BiMambaEncoder(nn.Module):
         self.d_ff = dim_feedforward
 
         # Norm and FF_layer
-        self.norm1 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
-        self.norm2 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
+        # self.norm1 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
+        # self.norm2 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
+        self.norm1 = nn.LayerNorm(config.d_model)
+        self.norm2 = nn.LayerNorm(config.d_model)
         self.feed_forward = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),
             nn.ReLU(),
@@ -31,9 +33,10 @@ class BiMambaEncoder(nn.Module):
         # Backward
         mamba_out_backward = self.mamba_backward(x_flip)
         mamba_out_backward = self.norm2(mamba_out_backward)
-        output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backward
+        output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backwards
 
         # Combine output
-        output = output_forward + output_backward
+        # output = output_forward + output_backward
+        output = torch.cat((output_forward, output_backward), dim=-1)
 
         return output

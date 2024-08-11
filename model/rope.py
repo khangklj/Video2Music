@@ -29,6 +29,5 @@ def rotate_half(x):
         (-x2, x1), dim=x1.ndim - 1
     )  # dim=-1 triggers a bug in torch < 1.8.0
 
-@torch.jit.script
 def apply_rotary_pos_emb(x, cos, sin):
     return (x * cos) + (rotate_half(x) * sin)

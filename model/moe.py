@@ -75,12 +75,19 @@ class SharedMoELayer(Module):
         self.d_model = d_model
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
-        self.shared_expert = KANLinear(d_model, d_model)
 
         if not use_KAN:
             self.gate = nn.Linear(d_model, n_experts)
+
+            self.shared_expert = nn.Sequential(
+                nn.Linear(d_model, d_model * 2 + 1),
+                nn.SiLU(),
+                nn.Linear(d_model * 2 + 1, d_model)
+            )
         else:
             self.gate = KANLinear(d_model, n_experts)
+            
+            self.shared_expert = KANLinear(d_model, d_model)
 
     def forward(self, x):
         gate_logits = self.gate(x)

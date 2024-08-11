@@ -8,7 +8,7 @@ class BiMambaEncoder(nn.Module):
         super().__init__()
         self.n_encoder_layers = n_encoder_layers
 
-        self.layers = []
+        self.layers = nn.ModuleList()
         for i in range(n_encoder_layers):
             self.layers.append(BiMambaEncoderLayer(config, dim_feedforward))
 

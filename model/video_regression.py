@@ -15,6 +15,7 @@ import torch.nn.functional as F
 from efficient_kan import KANLinear
 
 from .mamba import Mamba, MoEMamba, MambaConfig
+from .bimamba import BiMambaEncoder
 # from mamba_ssm import Mamba as MambaSSM
 
 
@@ -120,6 +121,9 @@ class VideoRegression(nn.Module):
             expert = KANLinear(self.d_model, self.d_model)
             moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
+        elif self.regModel == "bimamba":
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
+            self.model = BiMambaEncoder(config, self.d_ff)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
@@ -202,7 +206,7 @@ class VideoRegression(nn.Module):
             # out, _ = self.model(vf_concat)  
             
             out = self.fc4(out)
-        elif self.regModel in ('bimamaba'):
+        elif self.regModel in ('bimamba'):
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)
             

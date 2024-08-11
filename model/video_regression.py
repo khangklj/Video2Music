@@ -130,15 +130,11 @@ class VideoRegression(nn.Module):
         
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
-        if self.regModel in ('mamba', 'moemamba', 'mamba+'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba'):
             # self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
             # self.fc4 = KANLinear(self.d_model, 2)
             self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
             self.fc4 = nn.Linear(self.d_model, 2)
-
-        if self.regModel in ('bimamba'):
-            self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
-            self.bifc4 = nn.Linear(self.d_model * 2, 2)
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -213,5 +209,5 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
             out = self.dropout(out)
 
-            out = self.bifc4(out)
+            out = self.fc4(out)
         return out

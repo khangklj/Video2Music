@@ -105,7 +105,7 @@ class VideoRegression(nn.Module):
 #             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
 #             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, dropout=dropout, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)
             
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
@@ -124,8 +124,10 @@ class VideoRegression(nn.Module):
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
         if self.regModel in ('mamba', 'moemamba'):
-            self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
-            self.fc4 = KANLinear(self.d_model, 2)
+            # self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
+            # self.fc4 = KANLinear(self.d_model, 2)
+            self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
+            self.fc4 = nn.Linear(self.d_model, 2)
         
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):

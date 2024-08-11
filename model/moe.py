@@ -75,7 +75,11 @@ class SharedMoELayer(Module):
         self.d_model = d_model
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
-        self.shared_expert = _get_clones(expert, 1)[0]
+        self.shared_expert = nn.Sequential(
+            KANLinear(d_model, d_model * 2 + 1),
+            nn.Dropout(dropout),
+            KANLinear(d_model * 2 + 1, d_model)
+        )
 
         if not use_KAN:
             self.gate = nn.Linear(d_model, n_experts)
@@ -98,5 +102,5 @@ class SharedMoELayer(Module):
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
         # Sharing
-        out += self.shared_expert(x)
+        out += 1.0 / self.n_experts_per_token * self.shared_expert(x)
         return out

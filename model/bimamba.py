@@ -20,7 +20,7 @@ class BiMambaEncoderLayer(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024):
         super().__init__()
         self.config = config
-        self.mamba_forward = MambaB(config)
+        self.mamba_forward = Mamba(config)
         self.mamba_backward = Mamba(config)
         self.d_ff = dim_feedforward
 

@@ -105,7 +105,7 @@ class VideoRegression(nn.Module):
 #             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
 #             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, dropout=dropout, use_KAN=use_KAN, bias=True)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)
             
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)

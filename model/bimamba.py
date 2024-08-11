@@ -4,10 +4,23 @@ import torch.nn.functional as F
 from .mamba import Mamba, MambaConfig, RMSNorm
 
 class BiMambaEncoder(nn.Module):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2):
+        super().__init()
+
+        layers = []
+        for i in range(n_encoder_layers):
+            layers.append(BiMambaEncoderLayer(config, dim_feed_forward))
+
+    def forward(self, x):
+        for i in range(n_encoder_layers):
+            x = layers[i](x)
+        return x
+
+class BiMambaEncoderLayer(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024):
         super().__init__()
         self.config = config
-        self.mamba_forward = Mamba(config)
+        self.mamba_forward = MambaB(config)
         self.mamba_backward = Mamba(config)
         self.d_ff = dim_feedforward
 

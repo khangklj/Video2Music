@@ -126,7 +126,7 @@ class VideoRegression(nn.Module):
         
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
-        if self.regModel in ('mamba', 'moemamba'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+'):
             # self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
             # self.fc4 = KANLinear(self.d_model, 2)
             self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)

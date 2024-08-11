@@ -212,7 +212,7 @@ class MambaBlock(nn.Module):
         for n in range(config.d_inner):
             for k in range(config.d_state + 1):
                 if n > k:
-                    A[n, k] = torch.sqrt(2 * n + 1) * torch.sqrt(2 * k + 1)
+                    A[n, k] = (2 * n + 1)**0.5 * (2 * k + 1)**0.5
                 elif n == k:
                     A[n, k] = n + 1
                 

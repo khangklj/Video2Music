@@ -143,12 +143,25 @@ class MyMultiheadAttention(Module):
         # self.dropout = nn.Dropout(dropout)
 
         if not use_KAN:
-            self.W_q, self.W_k, self.W_v, self.out = _get_clones(nn.Linear(d_model, d_model), 4)
+            self.W_q, self.W_k, self.W_v, self.W_out = _get_clones(nn.Linear(d_model, d_model), 4)
         else:
-            self.W_q, self.W_k, self.W_v, self.out = _get_clones(KANLinear(d_model, d_model), 4)
+            self.W_q, self.W_k, self.W_v, self.W_out = _get_clones(KANLinear(d_model, d_model), 4)
 
         self.rope = deepcopy(RoPE) if RoPE is not None else None
     
+        self._reset_parameters(use_KAN)
+
+    def _reset_parameters(self, use_KAN):
+        if not use_KAN:
+            xavier_uniform_(self.W_q.weight)
+            xavier_uniform_(self.W_k.weight)
+            xavier_uniform_(self.W_v.weight)
+            xavier_uniform_(self.W_out.weight)
+            self.W_q.bias.data.fill_(0.0)
+            self.W_k.bias.data.fill_(0.0)
+            self.W_v.bias.data.fill_(0.0)
+            self.W_out.bias.data.fill_(0.0)
+
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)
 
@@ -180,7 +193,7 @@ class MyMultiheadAttention(Module):
 
         # Combine heads and apply the final linear layer
         attn_output = attn_output.contiguous().view(q.shape[2], q.shape[1], self.d_model)  # attn_output.shape = (seq_len, batch_size, d_model)
-        attn_output = self.out(attn_output)
+        attn_output = self.W_out(attn_output)
 
         return attn_output
 

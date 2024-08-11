@@ -6,14 +6,15 @@ from .mamba import Mamba, MambaConfig, RMSNorm
 class BiMambaEncoder(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2):
         super().__init__()
+        self.n_encoder_layers = n_encoder_layers
 
-        layers = []
+        self.layers = []
         for i in range(n_encoder_layers):
-            layers.append(BiMambaEncoderLayer(config, dim_feedforward))
+            self.layers.append(BiMambaEncoderLayer(config, dim_feedforward))
 
     def forward(self, x):
-        for i in range(n_encoder_layers):
-            x = layers[i](x)
+        for i in range(self.n_encoder_layers):
+            x = self.layers[i](x)
         return x
 
 class BiMambaEncoderLayer(nn.Module):

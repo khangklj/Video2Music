@@ -265,7 +265,7 @@ class VideoMusicTransformer_V2(nn.Module):
         else:
             norm = nn.LayerNorm(self.d_model)
 
-        use_KAN = True
+        use_KAN = False
         RoPE = MyRoPE(self.d_model, dropout=self.dropout, batch_first=False)
         self.n_experts = 6
         self.n_experts_per_token = 2

@@ -5,7 +5,7 @@ from .mamba import Mamba, MambaConfig, RMSNorm
 
 class BiMambaEncoder(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2):
-        super().__init()
+        super().__init__()
 
         layers = []
         for i in range(n_encoder_layers):

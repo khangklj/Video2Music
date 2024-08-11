@@ -126,7 +126,6 @@ class VideoRegression(nn.Module):
         if self.regModel in ('mamba', 'moemamba'):
             self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
             self.fc4 = KANLinear(self.d_model, 2)
-        
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###

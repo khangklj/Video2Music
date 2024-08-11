@@ -266,7 +266,8 @@ class VideoMusicTransformer_V2(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        RoPE = MyRoPE(self.d_model, dropout=self.dropout, batch_first=False)
+        # RoPE = MyRoPE(self.d_model, dropout=self.dropout, batch_first=False)
+        RoPE = None
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = KANLinear(self.d_model, self.d_model)

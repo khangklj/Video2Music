@@ -206,15 +206,15 @@ class MambaBlock(nn.Module):
         # todo : explain why removed
 
         # S4D real initialization
-        # A = torch.arange(1, config.d_state + 1, dtype=torch.float32).repeat(config.d_inner, 1)
+        A = torch.arange(1, config.d_state + 1, dtype=torch.float32).repeat(config.d_inner, 1)
         # HiPPO initialization
-        A = torch.zeros((config.d_inner, config.d_state), dtype=torch.float32)
-        for n in range(config.d_inner):
-            for k in range(config.d_state):
-                if n > k:
-                    A[n, k] = (2 * n + 1)**0.5 * (2 * k + 1)**0.5
-                elif n == k:
-                    A[n, k] = n + 1
+        # A = torch.zeros((config.d_inner, config.d_state), dtype=torch.float32)
+        # for n in range(config.d_inner):
+        #     for k in range(config.d_state):
+        #         if n > k:
+        #             A[n, k] = (2 * n + 1)**0.5 * (2 * k + 1)**0.5
+        #         elif n == k:
+        #             A[n, k] = n + 1
                 
         self.A_log = nn.Parameter(torch.log(A)) # why store A in log ? to keep A < 0 (cf -torch.exp(...)) ? for gradient stability ?
         self.A_log._no_weight_decay = True

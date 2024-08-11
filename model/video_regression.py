@@ -112,6 +112,9 @@ class VideoRegression(nn.Module):
             # self.model = Jamba(config)
 
             # self.model = MambaSSM(d_model=self.d_model, d_state=16, d_conv=4)
+        elif self.regModel == "mamba+":
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = Mamba(config)
         elif self.regModel == "moemamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
             expert = KANLinear(self.d_model, self.d_model)

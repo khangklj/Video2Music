@@ -141,6 +141,8 @@ class MyMultiheadAttention(Module):
         self.num_head = num_head
         self.head_dim = d_model // num_head
         # self.dropout = nn.Dropout(dropout)
+        self.batch_first = batch_first
+        self.use_KAN = use_KAN
 
         if not use_KAN:
             self.W_q, self.W_k, self.W_v, self.W_out = _get_clones(nn.Linear(d_model, d_model), 4)
@@ -163,6 +165,14 @@ class MyMultiheadAttention(Module):
             self.W_out.bias.data.fill_(0.0)
 
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
+        if not self.batch_first: # q.shape = (seq_len, batch_size, d_model)
+            return self._calcuate_attn(q, k, v, key_padding_mask, attn_mask)
+        else:
+            q, k, v = q.permute(1, 0, 2), k.permute(1, 0, 2), v.permute(1, 0, 2)
+            attn_out = self._calcuate_attn(q, k, v, key_padding_mask, attn_mask)
+            return attn_out.permute(1, 0, 2)
+    
+    def _calcuate_attn(self, q, k, v, key_padding_mask=None, attn_mask=None):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)
 
         if self.rope is not None:

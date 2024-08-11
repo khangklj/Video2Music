@@ -181,7 +181,7 @@ class MyMultiheadAttention(Module):
         v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim)
 
         if self.rope is not None:
-            q, k = self.rope(q), self.rope(k)
+            q, k = self.rope(q, seq_dim=0), self.rope(k, seq_dim=0)
 
         q = torch.permute(q, (2, 1, 0, 3)) # q.shape = (num_head, batch_size, seq_len, head_dim)
         k = torch.permute(k, (2, 1, 0, 3))

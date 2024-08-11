@@ -9,7 +9,7 @@ class BiMambaEncoder(nn.Module):
 
         layers = []
         for i in range(n_encoder_layers):
-            layers.append(BiMambaEncoderLayer(config, dim_feed_forward))
+            layers.append(BiMambaEncoderLayer(config, dim_feedforward))
 
     def forward(self, x):
         for i in range(n_encoder_layers):

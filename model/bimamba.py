@@ -5,7 +5,7 @@ from .mamba import Mamba, MambaConfig, RMSNorm
 
 class BiMambaEncoder(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024):
-        super().__init__
+        super().__init__()
         self.config = config
         self.mamba_forward = Mamba(config)
         self.mamba_backward = Mamba(config)

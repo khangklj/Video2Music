@@ -114,7 +114,7 @@ class VideoRegression(nn.Module):
             # self.model = MambaSSM(d_model=self.d_model, d_state=16, d_conv=4)
         elif self.regModel == "moemamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
-            expert = GLUExpert(self.d_model, self.d_model)
+            expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
             moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
             

@@ -129,33 +129,29 @@ def main( vm = "" , isPrintArgs = True ):
     train_loss_func = nn.MSELoss()
 
     ##### Lr Scheduler vs static lr #####
-    # if(args.lr is None):
-    #     if(args.continue_epoch is None):
-    #         init_step = 0
-    #     else:
-    #         init_step = args.continue_epoch * len(train_loader)
-    #     lr = LR_DEFAULT_START
-    #     lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)        
-    # else:
-    #     lr = args.lr        
+    if(args.lr is None):
+        if(args.continue_epoch is None):
+            init_step = 0
+        else:
+            init_step = args.continue_epoch * len(train_loader)
+        lr = LR_DEFAULT_START
+        lr_stepper = LrStepTracker(args.d_model, SCHEDULER_WARMUP_STEPS, init_step)        
+    else:
+        lr = args.lr        
 
     ##### Optimizer #####
     # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     
-    # if(args.lr is None):
-    #     lr_scheduler = LambdaLR(opt, lr_stepper.step)
-    # else:
-    #     lr_scheduler = None        
-
-    ##### Optimizer ####
-    lr = 0.0005
-    if args.regModel == 'mamba':
-        opt = AdamW(model.parameters(), lr=lr, weight_decay=0.005)
+    if(args.lr is None):
+        lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:
-        opt = Adam(model.parameters(), lr=lr) 
+        lr_scheduler = None        
 
-    lr_scheduler = None
+    # ##### Original ####
+    # lr = 1e-3
+    # opt = Adam(model.parameters(), lr=lr, weight_decay=1e-5)
+    # lr_scheduler = None 
     
     ##### Tracking best evaluation accuracy #####
     best_eval_rmse        = float("inf")

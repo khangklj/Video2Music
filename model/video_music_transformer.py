@@ -9,6 +9,7 @@ from .positional_encoding import PositionalEncoding
 from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
 from efficient_kan import KANLinear
 from .custom_transformer import *
+from .rope import Rotary
 from .moe import *
 from datetime import datetime
 import json
@@ -266,7 +267,7 @@ class VideoMusicTransformer_V2(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        RoPE = MyRoPE(self.d_model, dropout=self.dropout, batch_first=False)
+        RoPE = Rotary(self.d_model)
         # RoPE = None
         self.n_experts = 6
         self.n_experts_per_token = 2

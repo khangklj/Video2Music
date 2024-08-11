@@ -71,67 +71,67 @@ class MyRMSNorm(Module):
             return x
         pass
 
-# By ChatGPT and some modify
-class RotaryPositionalEmbedding(Module):
-    def __init__(self, dim):
-        super(RotaryPositionalEmbedding, self).__init__()
-        self.dim = dim
-        self.inv_freq = (1.0 / (10000.0 ** (torch.arange(0, dim, 2).float() / dim))).to(get_device())
-        self.inv_freq.requires_grad_(False)
+# # By ChatGPT and some modify
+# class RotaryPositionalEmbedding(Module):
+#     def __init__(self, dim):
+#         super(RotaryPositionalEmbedding, self).__init__()
+#         self.dim = dim
+#         self.inv_freq = (1.0 / (10000.0 ** (torch.arange(0, dim, 2).float() / dim))).to(get_device())
+#         self.inv_freq.requires_grad_(False)
 
-    def get_angles(self, pos_seq):
-        angles = pos_seq[:, None] * self.inv_freq[None, :]
-        return torch.cat([angles, angles], dim=-1)
+#     def get_angles(self, pos_seq):
+#         angles = pos_seq[:, None] * self.inv_freq[None, :]
+#         return torch.cat([angles, angles], dim=-1)
 
-    def forward(self, q, k): # q.shape = (seq_len, batch_size, d_model)
-        seq_len, batch_size, d_model = q.shape
+#     def forward(self, q, k): # q.shape = (seq_len, batch_size, d_model)
+#         seq_len, batch_size, d_model = q.shape
 
-        q = q.permute(1, 0, 2) # q.shape = (batch_size, seq_len, d_model)
-        k = k.permute(1, 0, 2)
+#         q = q.permute(1, 0, 2) # q.shape = (batch_size, seq_len, d_model)
+#         k = k.permute(1, 0, 2)
 
-        pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device, requires_grad=False)
-        angles = self.get_angles(pos_seq)
+#         pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device, requires_grad=False)
+#         angles = self.get_angles(pos_seq)
 
-        cos = angles.cos()
-        sin = angles.sin()
+#         cos = angles.cos()
+#         sin = angles.sin()
 
-        # The query and key are rotated using the angles
-        q_rot = (q * cos) + (self.rotate_half(q) * sin)
-        k_rot = (k * cos) + (self.rotate_half(k) * sin)
+#         # The query and key are rotated using the angles
+#         q_rot = (q * cos) + (self.rotate_half(q) * sin)
+#         k_rot = (k * cos) + (self.rotate_half(k) * sin)
 
-        # del cos, sin, pos_seq
-        # torch.cuda.empty_cache()
+#         # del cos, sin, pos_seq
+#         # torch.cuda.empty_cache()
 
-        q_rot = q_rot.permute(1, 0, 2)
-        k_rot = k_rot.permute(1, 0, 2)
+#         q_rot = q_rot.permute(1, 0, 2)
+#         k_rot = k_rot.permute(1, 0, 2)
 
-        return q_rot, k_rot
+#         return q_rot, k_rot
 
-    def rotate_half(self, x):
-        x1, x2 = x[..., ::2], x[..., 1::2]
-        x_rotated = torch.cat((-x2, x1), dim=-1)
-        return x_rotated
+#     def rotate_half(self, x):
+#         x1, x2 = x[..., ::2], x[..., 1::2]
+#         x_rotated = torch.cat((-x2, x1), dim=-1)
+#         return x_rotated
     
-# By our and need batch_first option
-class MyRoPE(Module):
-    def __init__(self, d_model, dropout=0.0, batch_first=False):
-        super(MyRoPE, self).__init__()
-        self.batch_first = batch_first
-        self.rope = RotaryPositionalEmbedding(d_model).to(get_device())
+# # By our and need batch_first option
+# class MyRoPE(Module):
+#     def __init__(self, d_model, dropout=0.0, batch_first=False):
+#         super(MyRoPE, self).__init__()
+#         self.batch_first = batch_first
+#         self.rope = RotaryPositionalEmbedding(d_model).to(get_device())
 
-    def forward(self, queries, keys):
-        if self.batch_first:
-            new_queries, new_keys = self.rope(queries, keys)
-        else:
-            queries = queries.permute(1, 0, 2)
-            keys = keys.permute(1, 0, 2)
+#     def forward(self, queries, keys):
+#         if self.batch_first:
+#             new_queries, new_keys = self.rope(queries, keys)
+#         else:
+#             queries = queries.permute(1, 0, 2)
+#             keys = keys.permute(1, 0, 2)
 
-            new_queries, new_keys = self.rope(queries, keys)
+#             new_queries, new_keys = self.rope(queries, keys)
 
-            new_queries = new_queries.permute(1, 0, 2)
-            new_keys = new_keys.permute(1, 0, 2)
+#             new_queries = new_queries.permute(1, 0, 2)
+#             new_keys = new_keys.permute(1, 0, 2)
 
-        return new_queries, new_keys
+#         return new_queries, new_keys
 
 # By our and need batch_first, use_KAN, RoPE option       
 class MyMultiheadAttention(Module):
@@ -176,7 +176,7 @@ class MyMultiheadAttention(Module):
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)
 
         if self.rope is not None:
-            q, k = self.rope(q, k)
+            q, k = self.rope(q), self.rope(k)
 
         # Reshape Q, K, V for multi-head attention # (seq_len, batch_size, num_head, head_dim)
         q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim)

@@ -50,7 +50,7 @@ class BiMambaEncoderLayer(nn.Module):
         output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backward
 
         # Combine output
-        # output = output_forward + output_backward
-        output = torch.cat((output_forward, output_backward), dim=-1)
+        output = output_forward + output_backward
+        # output = torch.cat((output_forward, output_backward), dim=-1)
 
         return output

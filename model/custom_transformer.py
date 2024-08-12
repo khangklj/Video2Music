@@ -678,7 +678,7 @@ def custom_multi_head_attention_forward(
     #
     q = q.view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
     if static_k is None:
-        print(k.shape)
+        print(k.shape, num_heads)
         k = k.view(k.shape[0], bsz * num_heads, head_dim).transpose(0, 1)
     else:
         # TODO finish disentangling control flow so we don't do in-projections when statics are passed

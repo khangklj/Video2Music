@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .mamba import Mamba, MambaConfig, RMSNorm
+from .mamba import Mamba, MambaConfig, RMSNorm, MambaBlock
 
 class BiMambaEncoder(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2):
@@ -56,18 +56,25 @@ class BiMambaEncoderLayer(nn.Module):
         output = output_forward + output_backward
 
         return output
-        
+
 class BiMambaEncoderLayer_V1(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.1):
         super().__init__()
         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
         self.config = config
-        self.mamba_forward = Mamba(config)
-        self.mamba_backward = Mamba(config)
+        # Use MambaBlock instead Mamba
+        self.mamba_forward = MambaBlock(config)
+        self.mamba_backward = MambaBlock(config)
         self.d_ff = dim_feedforward
-        self.dropout = nn.Dropout(dropout)
         
-        self.norm = nn.LayerNorm(config.d_model)
+        self.dropout1 = nn.Dropout(dropout)
+        self.dropout2 = nn.Dropout(dropout)
+        self.dropout3 = nn.Dropout(dropout)
+        
+        self.norm1 = nn.LayerNorm(config.d_model)
+        self.norm2 = nn.LayerNorm(config.d_model)
+        self.norm3 = nn.LayerNorm(config.d_model)
+        
         self.feed_forward = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),
             nn.ReLU(),
@@ -75,13 +82,23 @@ class BiMambaEncoderLayer_V1(nn.Module):
         )
         
     def forward(self, x):
+        _x = x
+        # Flip
         x_flip = torch.flip(x, dims=[1])
 
         # Forward
-        mamba_out_forward = self.mamba_forward(x)
+        mamba_out_forward = self.mamba_forward(x)        
+        # Add & Norm
+        mamba_out_forward = self.dropout1(mamba_out_forward)
+        mamaba_out_forward = self.norm1(mamba_out_forward + _x)
         
         # Backward
         mamba_out_backward = self.mamba_backward(x_flip)
+        # Flip again
+        mamba_out_backward = torch.flip(mamba_out_backward, dims=[1])
+        # Add & Norm
+        mamba_out_backward = self.dropout2(mamba_out_backward)
+        mamba_out_backward = self.norm2(mamba_out_backward + _x)
         
         # Combine output
         output = mamba_out_forward + mamba_out_backward
@@ -89,8 +106,47 @@ class BiMambaEncoderLayer_V1(nn.Module):
         # Feed forward network
         _output = output
         output = self.feed_forward(output)
-
-        # Add & Norm        
-        output = self.norm(output + _output)
+        
+        # Add & Norm
+        output = self.dropout3(output)
+        output = self.norm3(output + _output)
         
         return output
+        
+# class BiMambaEncoderLayer_V1(nn.Module):
+#     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.1):
+#         super().__init__()
+#         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
+#         self.config = config
+#         self.mamba_forward = Mamba(config)
+#         self.mamba_backward = Mamba(config)
+#         self.d_ff = dim_feedforward
+#         self.dropout = nn.Dropout(dropout)
+        
+#         self.norm = nn.LayerNorm(config.d_model)
+#         self.feed_forward = nn.Sequential(
+#             nn.Linear(config.d_model, dim_feedforward),
+#             nn.ReLU(),
+#             nn.Linear(dim_feedforward, config.d_model)
+#         )
+        
+#     def forward(self, x):
+#         x_flip = torch.flip(x, dims=[1])
+
+#         # Forward
+#         mamba_out_forward = self.mamba_forward(x)
+        
+#         # Backward
+#         mamba_out_backward = self.mamba_backward(x_flip)
+        
+#         # Combine output
+#         output = mamba_out_forward + mamba_out_backward
+
+#         # Feed forward network
+#         _output = output
+#         output = self.feed_forward(output)
+
+#         # Add & Norm        
+#         output = self.norm(output + _output)
+        
+#         return output

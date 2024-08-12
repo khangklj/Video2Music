@@ -113,42 +113,4 @@ class BiMambaEncoderLayer_V1(nn.Module):
         # Add & Norm
         x = self.norm3(x + _x)
 
-        return x
-        
-# class BiMambaEncoderLayer_V1(nn.Module):
-#     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.1):
-#         super().__init__()
-#         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
-#         self.config = config
-#         self.mamba_forward = Mamba(config)
-#         self.mamba_backward = Mamba(config)
-#         self.d_ff = dim_feedforward
-#         self.dropout = nn.Dropout(dropout)
-        
-#         self.norm = nn.LayerNorm(config.d_model)
-#         self.feed_forward = nn.Sequential(
-#             nn.Linear(config.d_model, dim_feedforward),
-#             nn.ReLU(),
-#             nn.Linear(dim_feedforward, config.d_model)
-#         )
-        
-#     def forward(self, x):
-#         x_flip = torch.flip(x, dims=[1])
-
-#         # Forward
-#         mamba_out_forward = self.mamba_forward(x)
-        
-#         # Backward
-#         mamba_out_backward = self.mamba_backward(x_flip)
-        
-#         # Combine output
-#         output = mamba_out_forward + mamba_out_backward
-
-#         # Feed forward network
-#         _output = output
-#         output = self.feed_forward(output)
-
-#         # Add & Norm        
-#         output = self.norm(output + _output)
-        
-#         return output
+        return x        

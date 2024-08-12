@@ -111,9 +111,26 @@ class MyMultiheadAttention(Module):
             attn_out = self._calcuate_attn(q, k, v, key_padding_mask, attn_mask)
             return attn_out.permute(1, 0, 2)
     
-    def _calcuate_attn(self, q, k, v, key_padding_mask=None, attn_mask=None):
+    def _calcuate_attn(self, q, k, v, **kwargs):
         tgt_seq_len, batch_size, d_model = q.shape
         src_seq_len = k.shape[0]
+
+        key_padding_mask = F._canonical_mask(
+            mask=key_padding_mask,
+            mask_name="key_padding_mask",
+            other_type=F._none_or_dtype(attn_mask),
+            other_name="attn_mask",
+            target_type=q.dtype
+        )
+
+        attn_mask = F._canonical_mask(
+            mask=attn_mask,
+            mask_name="attn_mask",
+            other_type=None,
+            other_name="",
+            target_type=q.dtype,
+            check_other=False,
+        )
 
         # merge key padding and attention masks
         if key_padding_mask is not None:

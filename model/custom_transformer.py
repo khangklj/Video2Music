@@ -16,7 +16,7 @@ from torch.nn.modules.linear import NonDynamicallyQuantizableLinear
 from torch.nn.init import constant_, xavier_normal_, xavier_uniform_
 from torch.nn.parameter import Parameter
 from torch.nn import Module
-from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _is_make_fx_tracing, merge_masks
+from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _is_make_fx_tracing
 
 from torch.nn.functional import linear, softmax, dropout
 

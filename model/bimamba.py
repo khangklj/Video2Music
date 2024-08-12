@@ -71,9 +71,13 @@ class BiMambaEncoderLayer_V1(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
         
-        self.norm1 = nn.LayerNorm(config.d_model)
-        self.norm2 = nn.LayerNorm(config.d_model)
-        self.norm3 = nn.LayerNorm(config.d_model)
+        # self.norm1 = nn.LayerNorm(config.d_model)
+        # self.norm2 = nn.LayerNorm(config.d_model)
+        # self.norm3 = nn.LayerNorm(config.d_model)
+
+        self.norm1 = nn.RMSNorm(config.d_model)
+        self.norm2 = nn.RMSNorm(config.d_model)
+        self.norm3 = nn.RMSNorm(config.d_model)
         
         self.feed_forward = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),

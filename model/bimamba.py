@@ -58,7 +58,7 @@ class BiMambaEncoderLayer(nn.Module):
         return output
 
 class BiMambaEncoderLayer_V1(nn.Module):
-    def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.1):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
         super().__init__()
         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
         self.config = config

@@ -634,8 +634,10 @@ def custom_multi_head_attention_forward(
 
     # RoPE here - OUR MODIFY
     if RoPE is not None:
+        print(q.shape, k.shape)
         q = RoPE.forward(q)
         k = RoPE.forward(k)
+        print(q.shape, k.shape)
 
     # prep attention mask
 
@@ -678,7 +680,7 @@ def custom_multi_head_attention_forward(
     #
     q = q.view(tgt_len, bsz * num_heads, head_dim).transpose(0, 1)
     if static_k is None:
-        k = k.view(k.shape[1], bsz * num_heads, head_dim).transpose(0, 1)
+        k = k.view(k.shape[0], bsz * num_heads, head_dim).transpose(0, 1)
     else:
         # TODO finish disentangling control flow so we don't do in-projections when statics are passed
         assert (

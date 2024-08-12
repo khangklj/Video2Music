@@ -296,7 +296,7 @@ def eval_model(model, dataloader,
 
                     sum_acc += sum_acc_tmp                    
                     # ====
-                    
+
                     if cor >= 0 :
                         n_test_cor +=1
                         sum_cor += cor
@@ -312,6 +312,7 @@ def eval_model(model, dataloader,
                     tgt_attr = tgt_attr.flatten()
                     
                     tgt_emotion = tgt_emotion.squeeze()
+                    tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1)
 
                     loss_chord = eval_loss_func.forward(y, tgt)
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)

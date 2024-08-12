@@ -12,7 +12,7 @@ class BiMambaEncoder(nn.Module):
         for i in range(n_encoder_layers):
             if config.use_version == 0:
                 self.layers.append(BiMambaEncoderLayer(config, dim_feedforward))
-            else if config.use_version == 1:
+            elif config.use_version == 1:
                 self.layers.append(BiMambaEncoderLayer_V1(config, dim_feedforward))
 
     def forward(self, x):

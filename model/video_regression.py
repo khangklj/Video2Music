@@ -139,7 +139,7 @@ class VideoRegression(nn.Module):
             self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
             self.fc4 = nn.Linear(self.d_model, 2)
 
-        if self.regModel in ('bimamba'):
+        if self.regModel in ('bimamba', 'bimamba+'):
             self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
             self.fc4 = nn.Linear(self.d_model, 2)
 

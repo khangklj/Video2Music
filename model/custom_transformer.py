@@ -538,6 +538,7 @@ def custom_multi_head_attention_forward(
             key_padding_mask = key_padding_mask.unsqueeze(0)
 
     # set up shape vars
+    print(query.shape)
     tgt_len, bsz, embed_dim = query.shape
     src_len, _, _ = key.shape
 

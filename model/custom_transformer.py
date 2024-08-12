@@ -112,18 +112,19 @@ class MyMultiheadAttention(Module):
             return attn_out.permute(1, 0, 2)
     
     def _calcuate_attn(self, q, k, v, key_padding_mask=None, attn_mask=None):
-        seq_len, batch_size, d_model = q.shape
+        tgt_seq_len, batch_size, d_model = q.shape
+        src_seq_len = k.shape[0]
 
         # merge key padding and attention masks
         if key_padding_mask is not None:
             assert key_padding_mask.shape == (
                 batch_size,
-                seq_len,
-            ), f"expecting key_padding_mask shape of {(batch_size, seq_len)}, but got {key_padding_mask.shape}"
+                src_seq_len,
+            ), f"expecting key_padding_mask shape of {(batch_size, src_seq_len)}, but got {key_padding_mask.shape}"
             key_padding_mask = (
-                key_padding_mask.view(batch_size, 1, 1, seq_len)
+                key_padding_mask.view(batch_size, 1, 1, src_seq_len)
                 .expand(-1, self.num_head, -1, -1)
-                .reshape(batch_size * self.num_head, 1, seq_len)
+                .reshape(batch_size * self.num_head, 1, src_seq_len)
             )
             if attn_mask is None:
                 attn_mask = key_padding_mask
@@ -136,19 +137,19 @@ class MyMultiheadAttention(Module):
             q, k = self.rope(q, seq_dim=0), self.rope(k, seq_dim=0)
 
         # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
-        q = q.view(batch_size, self.num_head, seq_len, self.head_dim)
-        k = k.view(batch_size, self.num_head, seq_len, self.head_dim)
-        v = v.view(batch_size, self.num_head, seq_len, self.head_dim)
+        q = q.view(batch_size, self.num_head, tgt_seq_len, self.head_dim)
+        k = k.view(batch_size, self.num_head, src_seq_len, self.head_dim)
+        v = v.view(batch_size, self.num_head, src_seq_len, self.head_dim)
 
         attn_output = torch._C._nn.scaled_dot_product_attention(
             q, k, v, attn_mask, self.dropout, is_causal=False
         )
         attn_output = (
-            attn_output.permute(2, 0, 1, 3).contiguous().view(batch_size * seq_len, d_model)
+            attn_output.permute(2, 0, 1, 3).contiguous().view(batch_size * tgt_seq_len, d_model)
         )
 
         attn_output = self.W_out(attn_output)
-        attn_output = attn_output.view(seq_len, batch_size, d_model)
+        attn_output = attn_output.view(tgt_seq_len, batch_size, d_model)
 
         return attn_output
 

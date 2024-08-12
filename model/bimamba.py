@@ -85,7 +85,9 @@ class BiMambaEncoderLayer_V1(nn.Module):
         )
         
     def forward(self, x):
+        # Flip
         x_flip = torch.flip(x, dims=[1])
+        
         _x = x
         
         # Forward
@@ -96,6 +98,8 @@ class BiMambaEncoderLayer_V1(nn.Module):
 
         # Backward
         x_b = self.mamba_backward(x_flip)
+        # Flip
+        x_b = torch.flip(x_b, dims=[1])
         # Add & Norm
         x_b = self.dropout2(x_b)
         x_b = self.norm2(x_b + _x)

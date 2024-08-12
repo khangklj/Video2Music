@@ -54,8 +54,7 @@ class VideoMusicTransformer_V1(nn.Module):
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
-        # att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
-        att = MultiheadAttention(self.d_model, self.nhead, self.dropout)
+        att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
         moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
 
         # Encoder
@@ -269,12 +268,11 @@ class VideoMusicTransformer_V2(nn.Module):
 
         use_KAN = False
         RoPE = Rotary(self.d_model)
-        # RoPE = None
         self.n_experts = 6
         self.n_experts_per_token = 2
         # expert = KANLinear(self.d_model, self.d_model)
         expert = GLUExpert(self.d_model, self.d_ff)
-        att = MyMultiheadAttention(self.d_model, self.nhead, self.dropout, use_KAN=False, RoPE=RoPE)
+        att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout, use_KAN)
 
         # Encoder

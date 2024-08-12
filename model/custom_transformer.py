@@ -7,6 +7,7 @@ from torch.nn.modules.transformer import _get_clones
 from torch.nn.init import *
 from copy import deepcopy
 from utilities.device import get_device
+import copy
 
 import warnings
 from typing import Optional, Tuple
@@ -15,6 +16,7 @@ from torch.nn.modules.linear import NonDynamicallyQuantizableLinear
 from torch.nn.init import constant_, xavier_normal_, xavier_uniform_
 from torch.nn.parameter import Parameter
 from torch.nn import Module
+from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _is_make_fx_tracing, merge_masks
 
 from torch.nn.functional import linear, softmax, dropout
 
@@ -178,33 +180,16 @@ class MyRMSNorm(Module):
 
 #         return attn_output
 
-# From Pytorch 
-def _check_arg_device(x: Optional[torch.Tensor]) -> bool:
-    if x is not None:
-        return x.device.type in ["cpu", "cuda", torch.utils.backend_registration._privateuse1_backend_name]
-    return True
-
-# From Pytorch
-def _arg_requires_grad(x: Optional[torch.Tensor]) -> bool:
-    if x is not None:
-        return x.requires_grad
-    return False
-
-# From Pytorch
-def _is_make_fx_tracing():
-    if not torch.jit.is_scripting():
-        torch_dispatch_mode_stack = torch.utils._python_dispatch._get_current_dispatch_mode_stack()
-        return any(type(x) == torch.fx.experimental.proxy_tensor.ProxyTorchDispatchMode for x in torch_dispatch_mode_stack)
-    else:
-        return False
-
-class MultiheadAttention(Module):
+# From pytorch and modify RoPE
+class CustomMultiheadAttention(Module):
     __constants__ = ['batch_first']
     bias_k: Optional[torch.Tensor]
     bias_v: Optional[torch.Tensor]
 
     def __init__(self, embed_dim, num_heads, dropout=0., bias=True, add_bias_kv=False, add_zero_attn=False,
-                 kdim=None, vdim=None, batch_first=False, device=None, dtype=None) -> None:
+                 kdim=None, vdim=None, batch_first=False, device=None, dtype=None,
+                 RoPE=None # OUR MODIFY
+                 ) -> None:
         if embed_dim <= 0 or num_heads <= 0:
             raise ValueError(
                 f"embed_dim and num_heads must be greater than 0,"
@@ -221,6 +206,9 @@ class MultiheadAttention(Module):
         self.dropout = dropout
         self.batch_first = batch_first
         self.head_dim = embed_dim // num_heads
+
+        self.RoPE = copy.deepcopy(RoPE) # OUR MODIFY
+
         assert self.head_dim * num_heads == self.embed_dim, "embed_dim must be divisible by num_heads"
 
         if not self._qkv_same_embed_dim:
@@ -402,7 +390,7 @@ class MultiheadAttention(Module):
                 query, key, value = (x.transpose(1, 0) for x in (query, key, value))
 
         if not self._qkv_same_embed_dim:
-            attn_output, attn_output_weights = F.multi_head_attention_forward(
+            attn_output, attn_output_weights = custom_multi_head_attention_forward(
                 query, key, value, self.embed_dim, self.num_heads,
                 self.in_proj_weight, self.in_proj_bias,
                 self.bias_k, self.bias_v, self.add_zero_attn,
@@ -414,9 +402,10 @@ class MultiheadAttention(Module):
                 q_proj_weight=self.q_proj_weight, k_proj_weight=self.k_proj_weight,
                 v_proj_weight=self.v_proj_weight,
                 average_attn_weights=average_attn_weights,
-                is_causal=is_causal)
+                is_causal=is_causal,
+                RoPE=self.RoPE)
         else:
-            attn_output, attn_output_weights = F.multi_head_attention_forward(
+            attn_output, attn_output_weights = custom_multi_head_attention_forward(
                 query, key, value, self.embed_dim, self.num_heads,
                 self.in_proj_weight, self.in_proj_bias,
                 self.bias_k, self.bias_v, self.add_zero_attn,
@@ -426,29 +415,16 @@ class MultiheadAttention(Module):
                 need_weights=need_weights,
                 attn_mask=attn_mask,
                 average_attn_weights=average_attn_weights,
-                is_causal=is_causal)
+                is_causal=is_causal,
+                RoPE=self.RoPE)
         if self.batch_first and is_batched:
             return attn_output.transpose(1, 0), attn_output_weights
         else:
             return attn_output, attn_output_weights
 
-# From pytorch
-def merge_masks(self, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor],
+    # From pytorch
+    def merge_masks(self, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor],
                     query: Tensor) -> Tuple[Optional[Tensor], Optional[int]]:
-        r"""Determine mask type and combine masks if necessary.
-
-        If only one mask is provided, that mask
-        and the corresponding mask type will be returned. If both masks are provided, they will be both
-        expanded to shape ``(batch_size, num_heads, seq_len, seq_len)``, combined with logical ``or``
-        and mask type 2 will be returned
-        Args:
-            attn_mask: attention mask of shape ``(seq_len, seq_len)``, mask type 0
-            key_padding_mask: padding mask of shape ``(batch_size, seq_len)``, mask type 1
-            query: query embeddings of shape ``(batch_size, seq_len, embed_dim)``
-        Returns:
-            merged_mask: merged mask
-            mask_type: merged mask type (0, 1, or 2)
-        """
         mask_type: Optional[int] = None
         merged_mask: Optional[Tensor] = None
 
@@ -475,8 +451,8 @@ def merge_masks(self, attn_mask: Optional[Tensor], key_padding_mask: Optional[Te
         # no attn_mask and no key_padding_mask, returns None, None
         return merged_mask, mask_type
 
-# From pytorch
-def multi_head_attention_forward(
+# From pytorch and some modify
+def custom_multi_head_attention_forward(
     query: Tensor,
     key: Tensor,
     value: Tensor,
@@ -502,6 +478,7 @@ def multi_head_attention_forward(
     static_v= None,
     average_attn_weights= True,
     is_causal= False,
+    RoPE= None # OUR MODIFY
 ):
     tens_ops = (
         query,
@@ -516,7 +493,7 @@ def multi_head_attention_forward(
     )
     if F.has_torch_function(tens_ops):
         return F.handle_torch_function(
-            multi_head_attention_forward,
+            custom_multi_head_attention_forward,
             tens_ops,
             query,
             key,
@@ -655,8 +632,10 @@ def multi_head_attention_forward(
             b_v,
         )
 
-    # RoPE here
-
+    # RoPE here - OUR MODIFY
+    if RoPE is not None:
+        q = RoPE.forward(q)
+        k = RoPE.forward(k)
 
     # prep attention mask
 

@@ -58,13 +58,14 @@ class BiMambaEncoderLayer(nn.Module):
         return output
         
 class BiMambaEncoderLayer_V1(nn.Module):
-    def __init__(self, config: MambaConfig, dim_feedforward=1024):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.1):
         super().__init__()
         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
         self.config = config
         self.mamba_forward = Mamba(config)
         self.mamba_backward = Mamba(config)
         self.d_ff = dim_feedforward
+        self.dropout = nn.Dropout(dropout)
         
         self.norm = nn.LayerNorm(config.d_model)
         self.feed_forward = nn.Sequential(
@@ -84,7 +85,12 @@ class BiMambaEncoderLayer_V1(nn.Module):
         
         # Combine output
         output = mamba_out_forward + mamba_out_backward
-        output = self.norm(output)
-        output = self.feed_forward(output) + output
+
+        # Feed forward network
+        _output = output
+        output = self.feed_forward(output)
+
+        # Add & Norm        
+        output = self.norm(output + _output)
         
         return output

@@ -105,13 +105,13 @@ class MyMultiheadAttention(Module):
 
     def forward(self, q, k, v, key_padding_mask=None, attn_mask=None, **kwargs):
         if not self.batch_first: # q.shape = (seq_len, batch_size, d_model)
-            return self._calcuate_attn(q, k, v, key_padding_mask, attn_mask)
+            return self._calcuate_attn(q, k, v)
         else:
             q, k, v = q.permute(1, 0, 2), k.permute(1, 0, 2), v.permute(1, 0, 2)
-            attn_out = self._calcuate_attn(q, k, v, key_padding_mask, attn_mask)
+            attn_out = self._calcuate_attn(q, k, v)
             return attn_out.permute(1, 0, 2)
     
-    def _calcuate_attn(self, q, k, v, **kwargs):
+    def _calcuate_attn(self, q, k, v):
         tgt_seq_len, batch_size, d_model = q.shape
         src_seq_len = k.shape[0]
 

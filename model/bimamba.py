@@ -5,16 +5,16 @@ from .mamba import Mamba, MambaConfig, MambaBlock
 from .custom_transformer import RMSNorm
 
 class BiMambaEncoder(nn.Module):
-    def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2, dropout=0.2):
         super().__init__()
         self.n_encoder_layers = n_encoder_layers
 
         self.layers = nn.ModuleList()
         for i in range(n_encoder_layers):
             if config.use_version == 0:
-                self.layers.append(BiMambaEncoderLayer(config, dim_feedforward))
+                self.layers.append(BiMambaEncoderLayer(config, dim_feedforward, dropout))
             elif config.use_version == 1:
-                self.layers.append(BiMambaEncoderLayer_V1(config, dim_feedforward))
+                self.layers.append(BiMambaEncoderLayer_V1(config, dim_feedforward, dropout))
 
     def forward(self, x):
         for i in range(self.n_encoder_layers):

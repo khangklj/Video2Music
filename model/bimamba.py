@@ -25,8 +25,9 @@ class BiMambaEncoderLayer(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
         super().__init__()
         self.config = config
-        self.mamba_forward = Mamba(config)
-        self.mamba_backward = Mamba(config)
+        # Use MambaBlock instead of Mamba
+        self.mamba_forward = MambaBlock(config)
+        self.mamba_backward = MambaBlock(config)
         self.d_ff = dim_feedforward
 
         # Norm and FF_layer
@@ -95,7 +96,7 @@ class BiMambaEncoderLayer_V1(nn.Module):
         super().__init__()
         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
         self.config = config
-        # Use MambaBlock instead Mamba
+        # Use MambaBlock instead of Mamba
         self.mamba_forward = MambaBlock(config)
         self.mamba_backward = MambaBlock(config)
         self.d_ff = dim_feedforward

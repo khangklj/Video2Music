@@ -123,7 +123,7 @@ class VideoRegression(nn.Module):
             self.model = MoEMamba(moe_layer, config)
         elif self.regModel == "bimamba":
             config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=2)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=3)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)

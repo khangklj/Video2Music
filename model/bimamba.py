@@ -37,6 +37,7 @@ class BiMambaEncoderLayer(nn.Module):
         self.feed_forward = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),
             nn.ReLU(),
+            nn.Dropout(dropout),
             nn.Linear(dim_feedforward, config.d_model)
         )
 
@@ -72,51 +73,43 @@ class BiMambaEncoderLayer_V1(nn.Module):
         self.dropout2 = nn.Dropout(dropout)
         self.dropout3 = nn.Dropout(dropout)
         
-        # self.norm1 = nn.LayerNorm(config.d_model)
-        # self.norm2 = nn.LayerNorm(config.d_model)
-        # self.norm3 = nn.LayerNorm(config.d_model)
-
-        self.norm1 = RMSNorm(config.d_model)
-        self.norm2 = RMSNorm(config.d_model)
-        self.norm3 = RMSNorm(config.d_model)
+        self.norm1 = nn.LayerNorm(config.d_model)
+        self.norm2 = nn.LayerNorm(config.d_model)
+        self.norm3 = nn.LayerNorm(config.d_model)
         
         self.feed_forward = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),
             nn.ReLU(),
+            nn.Dropout(dropout),
             nn.Linear(dim_feedforward, config.d_model)
         )
         
     def forward(self, x):
-        _x = x
-        # Flip
         x_flip = torch.flip(x, dims=[1])
-
+        _x = x
+        
         # Forward
-        mamba_out_forward = self.mamba_forward(x)        
+        x_f = self.mamba_forward(x)
         # Add & Norm
-        mamba_out_forward = self.dropout1(mamba_out_forward)
-        mamaba_out_forward = self.norm1(mamba_out_forward + _x)
-        
-        # Backward
-        mamba_out_backward = self.mamba_backward(x_flip)
-        # Flip again
-        mamba_out_backward = torch.flip(mamba_out_backward, dims=[1])
-        # Add & Norm
-        mamba_out_backward = self.dropout2(mamba_out_backward)
-        mamba_out_backward = self.norm2(mamba_out_backward + _x)
-        
-        # Combine output
-        output = mamba_out_forward + mamba_out_backward
+        x_f = self.dropout1(x_f)
+        x_f = self.norm1(x_f + _x)
 
-        # Feed forward network
-        _output = output
-        output = self.feed_forward(output)
-        
+        # Backward
+        x_b = self.mamba_backward(x_flip)
         # Add & Norm
-        output = self.dropout3(output)
-        output = self.norm3(output + _output)
-        
-        return output
+        x_b = self.dropout2(x_b)
+        x_b = self.norm2(x_b + _x)
+
+        # Combine output
+        x = x_f + x_b
+
+        # FFN
+        _x = x
+        x = self.feed_forward(x)
+        # Add & Norm
+        x = self.norm3(x + _x)
+
+        return x
         
 # class BiMambaEncoderLayer_V1(nn.Module):
 #     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.1):

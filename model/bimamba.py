@@ -62,7 +62,7 @@ class BiMambaEncoderLayer(nn.Module):
         # Forward
         x_f = self.mamba_forward(x)
         # Add & Norm
-        x_f = self.dropout1(x_f)
+        x_f = self.dropout(x_f)
         x_f = self.norm1(x_f + _x_f)
         # FFN
         _x_f =  x_f

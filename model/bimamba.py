@@ -140,6 +140,7 @@ class BiMambaEncoderLayer_V1(nn.Module):
         _x = x
         x = self.ffn(x)
         # Add & Norm
+        x = self.dropout(x)
         x = self.norm3(x + _x)
 
-        return x        
+        return x

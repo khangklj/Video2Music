@@ -71,76 +71,15 @@ class MyRMSNorm(Module):
             return x
         pass
 
-# # By ChatGPT and some modify
-# class RotaryPositionalEmbedding(Module):
-#     def __init__(self, dim):
-#         super(RotaryPositionalEmbedding, self).__init__()
-#         self.dim = dim
-#         self.inv_freq = (1.0 / (10000.0 ** (torch.arange(0, dim, 2).float() / dim))).to(get_device())
-#         self.inv_freq.requires_grad_(False)
-
-#     def get_angles(self, pos_seq):
-#         angles = pos_seq[:, None] * self.inv_freq[None, :]
-#         return torch.cat([angles, angles], dim=-1)
-
-#     def forward(self, q, k): # q.shape = (seq_len, batch_size, d_model)
-#         seq_len, batch_size, d_model = q.shape
-
-#         q = q.permute(1, 0, 2) # q.shape = (batch_size, seq_len, d_model)
-#         k = k.permute(1, 0, 2)
-
-#         pos_seq = torch.arange(seq_len, dtype=torch.float32, device=q.device, requires_grad=False)
-#         angles = self.get_angles(pos_seq)
-
-#         cos = angles.cos()
-#         sin = angles.sin()
-
-#         # The query and key are rotated using the angles
-#         q_rot = (q * cos) + (self.rotate_half(q) * sin)
-#         k_rot = (k * cos) + (self.rotate_half(k) * sin)
-
-#         # del cos, sin, pos_seq
-#         # torch.cuda.empty_cache()
-
-#         q_rot = q_rot.permute(1, 0, 2)
-#         k_rot = k_rot.permute(1, 0, 2)
-
-#         return q_rot, k_rot
-
-#     def rotate_half(self, x):
-#         x1, x2 = x[..., ::2], x[..., 1::2]
-#         x_rotated = torch.cat((-x2, x1), dim=-1)
-#         return x_rotated
-    
-# # By our and need batch_first option
-# class MyRoPE(Module):
-#     def __init__(self, d_model, dropout=0.0, batch_first=False):
-#         super(MyRoPE, self).__init__()
-#         self.batch_first = batch_first
-#         self.rope = RotaryPositionalEmbedding(d_model).to(get_device())
-
-#     def forward(self, queries, keys):
-#         if self.batch_first:
-#             new_queries, new_keys = self.rope(queries, keys)
-#         else:
-#             queries = queries.permute(1, 0, 2)
-#             keys = keys.permute(1, 0, 2)
-
-#             new_queries, new_keys = self.rope(queries, keys)
-
-#             new_queries = new_queries.permute(1, 0, 2)
-#             new_keys = new_keys.permute(1, 0, 2)
-
-#         return new_queries, new_keys
-
-# By our and need batch_first, use_KAN, RoPE option       
+# Base on https://github.com/pytorch/pytorch/blob/main/torch/nn/functional.py - def multi_head_attention_forward
+# And need batch_first, use_KAN, RoPE option       
 class MyMultiheadAttention(Module):
     def __init__(self, d_model, num_head, dropout=0.0, batch_first=False, use_KAN=False, RoPE=None):
         super(MyMultiheadAttention, self).__init__()
         self.d_model = d_model
         self.num_head = num_head
         self.head_dim = d_model // num_head
-        # self.dropout = nn.Dropout(dropout)
+        self.dropout = dropout
         self.batch_first = batch_first
         self.use_KAN = use_KAN
 
@@ -173,37 +112,43 @@ class MyMultiheadAttention(Module):
             return attn_out.permute(1, 0, 2)
     
     def _calcuate_attn(self, q, k, v, key_padding_mask=None, attn_mask=None):
+        seq_len, batch_size, d_model = q.shape
+
+        # merge key padding and attention masks
+        if key_padding_mask is not None:
+            assert key_padding_mask.shape == (
+                batch_size,
+                seq_len,
+            ), f"expecting key_padding_mask shape of {(batch_size, seq_len)}, but got {key_padding_mask.shape}"
+            key_padding_mask = (
+                key_padding_mask.view(batch_size, 1, 1, seq_len)
+                .expand(-1, self.num_head, -1, -1)
+                .reshape(batch_size * self.num_head, 1, seq_len)
+            )
+            if attn_mask is None:
+                attn_mask = key_padding_mask
+            else:
+                attn_mask = attn_mask + key_padding_mask
+
         q, k, v = self.W_q(q), self.W_k(k), self.W_v(v) # q.shape = (seq_len, batch_size, d_model)
 
         if self.rope is not None:
             q, k = self.rope(q, seq_dim=0), self.rope(k, seq_dim=0)
 
-        # Reshape Q, K, V for multi-head attention # (seq_len, batch_size, num_head, head_dim)
-        q = q.view(q.size(0), q.size(1), self.num_head, self.head_dim)
-        k = k.view(k.size(0), k.size(1), self.num_head, self.head_dim)
-        v = v.view(v.size(0), v.size(1), self.num_head, self.head_dim)
+        # Reshape Q, K, V for multi-head attention # (batch_size, num_head, seq_len, head_dim)
+        q = q.view(batch_size, self.num_head, seq_len, self.head_dim)
+        k = k.view(batch_size, self.num_head, seq_len, self.head_dim)
+        v = v.view(batch_size, self.num_head, seq_len, self.head_dim)
 
-        q = torch.permute(q, (2, 1, 0, 3)) # q.shape = (num_head, batch_size, seq_len, head_dim)
-        k = torch.permute(k, (2, 1, 0, 3))
-        v = torch.permute(v, (2, 1, 0, 3))
+        attn_output = torch._C._nn.scaled_dot_product_attention(
+            q, k, v, attn_mask, self.dropout, is_causal=False
+        )
+        attn_output = (
+            attn_output.permute(2, 0, 1, 3).contiguous().view(batch_size * seq_len, d_model)
+        )
 
-        attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
-
-        # Apply attention mask, if provided
-        if attn_mask is not None:
-            attn_scores += attn_mask
-
-        # Apply key padding mask, if provided
-        if key_padding_mask is not None:
-            attn_scores = attn_scores.masked_fill(key_padding_mask.unsqueeze(1).unsqueeze(2), float('-inf'))
-
-        attn_weights = F.softmax(attn_scores, dim=-1)
-        # attn_weights = self.dropout(attn_weights)
-        attn_output = torch.matmul(attn_weights, v)  # attn_output.shape = (num_head, batch_size, seq_len, head_dim)
-
-        # Combine heads and apply the final linear layer
-        attn_output = attn_output.contiguous().view(q.shape[2], q.shape[1], self.d_model)  # attn_output.shape = (seq_len, batch_size, d_model)
         attn_output = self.W_out(attn_output)
+        attn_output = attn_output.view(seq_len, batch_size, d_model)
 
         return attn_output
 

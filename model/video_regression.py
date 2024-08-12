@@ -122,6 +122,9 @@ class VideoRegression(nn.Module):
             moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
         elif self.regModel == "bimamba":
+            config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=0)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=3)
+        elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=1)
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=3)
             
@@ -206,7 +209,7 @@ class VideoRegression(nn.Module):
             # out, _ = self.model(vf_concat)  
             
             out = self.fc4(out)
-        elif self.regModel in ('bimamba'):
+        elif self.regModel in ('bimamba', 'bimamba+'):
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)
             

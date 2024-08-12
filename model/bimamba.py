@@ -22,7 +22,7 @@ class BiMambaEncoder(nn.Module):
         return x
 
 class BiMambaEncoderLayer(nn.Module):
-    def __init__(self, config: MambaConfig, dim_feedforward=1024):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
         super().__init__()
         self.config = config
         self.mamba_forward = Mamba(config)
@@ -34,7 +34,19 @@ class BiMambaEncoderLayer(nn.Module):
         # self.norm2 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
         self.norm1 = nn.LayerNorm(config.d_model)
         self.norm2 = nn.LayerNorm(config.d_model)
-        self.feed_forward = nn.Sequential(
+        self.norm3 = nn.LayerNorm(config.d_model)
+        self.norm4 = nn.LayerNorm(config.d_model)
+
+        self.dropout = nn.Dropout(dropout)
+
+        self.ffn1 = nn.Sequential(
+            nn.Linear(config.d_model, dim_feedforward),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(dim_feedforward, config.d_model)
+        )
+
+        self.ffn2 = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),
             nn.ReLU(),
             nn.Dropout(dropout),
@@ -44,20 +56,39 @@ class BiMambaEncoderLayer(nn.Module):
     def forward(self, x):        
         x_flip = torch.flip(x, dims=[1])
 
+        _x_f = x
+        _x_b = x
+
         # Forward
-        mamba_out_forward = self.mamba_forward(x)
-        mamba_out_forward = self.norm1(mamba_out_forward)
-        output_forward = self.feed_forward(mamba_out_forward) + mamba_out_forward
+        x_f = self.mamba_forward(x)
+        # Add & Norm
+        x_f = self.dropout1(x_f)
+        x_f = self.norm1(x_f + _x_f)
+        # FFN
+        _x_f =  x_f
+        x_f = self.ffn1(x_f)
+        # Add & Norm
+        x_f = self.dropout(x_f)
+        x_f = self.norm2(x_f + _x_f)
 
         # Backward
-        mamba_out_backward = self.mamba_backward(x_flip)
-        mamba_out_bacward = self.norm2(mamba_out_backward)
-        output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backward
+        x_b = self.mamba_backward(x_flip)
+        # Flip
+        x_b = torch.flip(x_b, dims=[1])
+        # Add & Norm
+        x_b = self.dropout2(x_b)
+        x_b = self.norm3(x_b + _x_b)
+        # FFN
+        _x_b = x_b
+        x_b = self.ffn2(x_f)
+        # Add & Norm
+        x_b = self.dropout2(x_b)
+        x_b = self.norm4(x_b + _x_b)
 
-        # Combine output
-        output = output_forward + output_backward
-
-        return output
+        # Combine the output
+        x = x_f + x_b
+        
+        return x
 
 class BiMambaEncoderLayer_V1(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
@@ -69,15 +100,13 @@ class BiMambaEncoderLayer_V1(nn.Module):
         self.mamba_backward = MambaBlock(config)
         self.d_ff = dim_feedforward
         
-        self.dropout1 = nn.Dropout(dropout)
-        self.dropout2 = nn.Dropout(dropout)
-        self.dropout3 = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(dropout)
         
         self.norm1 = nn.LayerNorm(config.d_model)
         self.norm2 = nn.LayerNorm(config.d_model)
         self.norm3 = nn.LayerNorm(config.d_model)
         
-        self.feed_forward = nn.Sequential(
+        self.ffn = nn.Sequential(
             nn.Linear(config.d_model, dim_feedforward),
             nn.ReLU(),
             nn.Dropout(dropout),
@@ -93,7 +122,7 @@ class BiMambaEncoderLayer_V1(nn.Module):
         # Forward
         x_f = self.mamba_forward(x)
         # Add & Norm
-        x_f = self.dropout1(x_f)
+        x_f = self.dropout(x_f)
         x_f = self.norm1(x_f + _x)
 
         # Backward
@@ -101,7 +130,7 @@ class BiMambaEncoderLayer_V1(nn.Module):
         # Flip
         x_b = torch.flip(x_b, dims=[1])
         # Add & Norm
-        x_b = self.dropout2(x_b)
+        x_b = self.dropout(x_b)
         x_b = self.norm2(x_b + _x)
 
         # Combine output
@@ -109,7 +138,7 @@ class BiMambaEncoderLayer_V1(nn.Module):
 
         # FFN
         _x = x
-        x = self.feed_forward(x)
+        x = self.ffn(x)
         # Add & Norm
         x = self.norm3(x + _x)
 

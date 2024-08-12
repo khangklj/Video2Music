@@ -44,11 +44,13 @@ class BiMambaEncoderLayer(nn.Module):
 
         # Forward
         mamba_out_forward = self.mamba_forward(x)
-        output_forward = self.feed_forward(self.norm1(mamba_out_forward)) + mamba_out_forward
+        mamba_out_forward = self.norm1(mamba_out_forward)
+        output_forward = self.feed_forward(mamba_out_forward) + mamba_out_forward
 
         # Backward
         mamba_out_backward = self.mamba_backward(x_flip)
-        output_backward = self.feed_forward(self.norm2(mamba_out_backward)) + mamba_out_backward
+        mamba_out_bacward = self.norm2(mamba_out_backward)
+        output_backward = self.feed_forward(mamba_out_backward) + mamba_out_backward
 
         # Combine output
         output = output_forward + output_backward
@@ -82,6 +84,7 @@ class BiMambaEncoderLayer_V1(nn.Module):
         
         # Combine output
         output = mamba_out_forward + mamba_out_backward
-        output = self.feed_forward(self.norm(output)) + output
+        output = self.norm(output)
+        output = self.feed_forward(output) + output
         
         return output

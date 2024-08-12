@@ -253,12 +253,15 @@ class VideoMusicTransformer_V2(nn.Module):
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
         self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
         
+        projection = nn.Linear
+        # projection = KANLinear
+
         self.total_vf_dim = total_vf_dim
-        self.Linear_vis     = KANLinear(self.total_vf_dim, self.d_model)
-        self.Linear_chord     = KANLinear(self.d_model+1, self.d_model)
+        self.Linear_vis     = projection(self.total_vf_dim, self.d_model)
+        self.Linear_chord     = projection(self.d_model+1, self.d_model)
 
         # Add condition (minor or major)
-        self.condition_linear = KANLinear(1, self.d_model)
+        self.condition_linear = projection(1, self.d_model)
         
         # Transformer
         if rms_norm:
@@ -291,10 +294,10 @@ class VideoMusicTransformer_V2(nn.Module):
         )   
     
         if IS_SEPERATED:
-            self.Wout_root       = KANLinear(self.d_model, CHORD_ROOT_SIZE)
-            self.Wout_attr       = KANLinear(self.d_model, CHORD_ATTR_SIZE)
+            self.Wout_root       = projection(self.d_model, CHORD_ROOT_SIZE)
+            self.Wout_attr       = projection(self.d_model, CHORD_ATTR_SIZE)
         else:
-            self.Wout       = KANLinear(self.d_model, CHORD_SIZE)
+            self.Wout       = projection(self.d_model, CHORD_SIZE)
 
         self.softmax    = nn.Softmax(dim=-1)
 

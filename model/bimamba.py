@@ -76,13 +76,13 @@ class BiMambaEncoderLayer(nn.Module):
         # Flip
         x_b = torch.flip(x_b, dims=[1])
         # Add & Norm
-        x_b = self.dropout2(x_b)
+        x_b = self.dropout(x_b)
         x_b = self.norm3(x_b + _x_b)
         # FFN
         _x_b = x_b
         x_b = self.ffn2(x_f)
         # Add & Norm
-        x_b = self.dropout2(x_b)
+        x_b = self.dropout(x_b)
         x_b = self.norm4(x_b + _x_b)
 
         # Combine the output

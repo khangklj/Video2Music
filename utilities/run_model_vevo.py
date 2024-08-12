@@ -312,7 +312,6 @@ def eval_model(model, dataloader,
                     tgt_attr = tgt_attr.flatten()
                     
                     tgt_emotion = tgt_emotion.squeeze()
-                    # tgt_emotion = tgt_emotion.reshape(*y.shape)
                     
                     loss_chord = eval_loss_func.forward(y, tgt)
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)

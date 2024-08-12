@@ -82,6 +82,6 @@ class BiMambaEncoderLayer_V1(nn.Module):
         
         # Combine output
         output = mamba_out_forward + mamba_out_backward
-        output = self.feed_forward(self.norm(output))) + output
+        output = self.feed_forward(self.norm(output)) + output
         
         return output

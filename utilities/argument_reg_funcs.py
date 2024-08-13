@@ -231,3 +231,29 @@ def parse_generate_args():
     parser.add_argument("-test_id", type=str, default=None, help="Dimension of the feedforward layer")
 
     return parser.parse_known_args()
+
+# write_model_params
+def write_model_params(args, output_file):
+    o_stream = open(output_file, "w")
+
+    o_stream.write("lr: " + str(args.lr) + "\n")
+    o_stream.write("n_epochs: " + str(args.epochs) + "\n")
+    o_stream.write("batch_size: " + str(args.batch_size) + "\n")
+
+    o_stream.write("max_sequence_midi: " + str(args.max_sequence_midi) + "\n")
+    o_stream.write("max_sequence_video: " + str(args.max_sequence_video) + "\n")
+    o_stream.write("max_sequence_chord: " + str(args.max_sequence_chord) + "\n")
+    
+    o_stream.write("n_layers: " + str(args.n_layers) + "\n")
+    o_stream.write("d_model: " + str(args.d_model) + "\n")
+    o_stream.write("dim_feedforward: " + str(args.dim_feedforward) + "\n")
+    o_stream.write("dropout: " + str(args.dropout) + "\n")
+    o_stream.write("use_KAN: " + str(args.use_KAN) + "\n")
+    o_stream.write("regModel: " + str(args.regModel) + "\n")
+
+    o_stream.write("is_video: " + str(args.is_video) + "\n")
+    o_stream.write("vis_models: " + str(args.vis_models) + "\n")
+    o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
+    o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
+
+    o_stream.close()

@@ -42,6 +42,7 @@ class MambaConfig:
     d_conv: int = 4
     dropout: int = 0.0 # OUR MODIFY
     use_KAN: bool = False # OUR MODIFY
+    use_version: int = 0 # OUR MODIFY [0: origin mamba, 1: mamba+]
 
     dt_min: float = 0.001
     dt_max: float = 0.1
@@ -280,8 +281,10 @@ class MambaBlock(nn.Module):
 
         # z branch
         z = F.silu(z)
-
-        output = y * self.dropout(z)
+        if self.config.use_version == 1:
+            output = y * z + x * (1 - F.sigmoid(z))
+        else:
+            output = y * self.dropout(z)
         output = self.out_proj(output) # (B, L, D)
 
         return output
@@ -484,4 +487,3 @@ class RMSNorm(nn.Module):
             return output * self.weight
         else:
             return output
-    

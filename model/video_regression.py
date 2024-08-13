@@ -15,6 +15,7 @@ import torch.nn.functional as F
 from efficient_kan import KANLinear
 
 from .mamba import Mamba, MoEMamba, MambaConfig
+from .bimamba import BiMambaEncoder
 # from mamba_ssm import Mamba as MambaSSM
 
 
@@ -105,27 +106,44 @@ class VideoRegression(nn.Module):
 #             # self.model = GRU(self.total_vf_dim, self.d_model, self.nlayers, bidirectional=True)
 #             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)
             
             # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
             # self.model = Jamba(config)
 
             # self.model = MambaSSM(d_model=self.d_model, d_state=16, d_conv=4)
+        elif self.regModel == "mamba+":
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = Mamba(config)
         elif self.regModel == "moemamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
             expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
             moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
+        elif self.regModel == "bimamba":
+            config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=0)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=3)
+        elif self.regModel == "bimamba+":
+            config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=1)
+            # current best: n_encoder_layer = 4
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=4)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)
         
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
-        if self.regModel in ('mamba', 'moemamba'):
-            self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
-            self.fc4 = KANLinear(self.d_model, 2)
+        projection = nn.Linear
+        # projection = KANLinear
+        
+        if self.regModel in ('mamba', 'moemamba', 'mamba+'):
+            self.fc3 = projection(self.total_vf_dim, self.d_model)
+            self.fc4 = projection(self.d_model, 2)
+
+        if self.regModel in ('bimamba', 'bimamba+'):
+            self.fc3 = projection(self.total_vf_dim, self.d_model)
+            self.fc4 = projection(self.d_model * 2, 2)
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -181,7 +199,7 @@ class VideoRegression(nn.Module):
 
 #             vf_concat = vf_concat.permute(1,0,2)
 #             out = self.model(vf_concat)
-        elif self.regModel in ("mamba", "moemamba"):
+        elif self.regModel in ("mamba", "moemamba", "mamba+"):
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)
             
@@ -192,5 +210,13 @@ class VideoRegression(nn.Module):
             # For Jamba:
             # out, _ = self.model(vf_concat)  
             
+            out = self.fc4(out)
+        elif self.regModel in ('bimamba', 'bimamba+'):
+            vf_concat = vf_concat.permute(1,0,2)
+            vf_concat = self.fc3(vf_concat)
+            
+            out = self.model(vf_concat)
+            out = self.dropout(out)
+
             out = self.fc4(out)
         return out

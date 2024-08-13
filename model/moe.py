@@ -40,9 +40,52 @@ class GLUExpert(Module):
         x_ff = self.linear2(x_ff)
         return x_ff
 
+class TopKScheduler(Module):
+    def __init__(self, n_experts=8, min_n_experts_per_token=2, update_step=16):
+        super(TopKScheduler, self).__init__()
+        self.n_experts = n_experts
+        self.min_n_experts_per_token = min_n_experts_per_token
+        self.k = n_experts
+
+        self.update_step = update_step
+        self.counting_step = 0
+
+    def step(self):
+        self.counting_step += 1
+        if self.counting_step % self.update_step == 0:
+            self.k = max(self.min_n_experts_per_token, self.k - 1)
+
+    def getK(self):
+        return self.k
+    
+class TemperatureScheduler(Module):
+    def __init__(self, temperature_min=0.5, temperature_max=1.0, temperature_step=1, update_step=16, beta=0.9, is_increase=True):
+        super(TemperatureScheduler, self).__init__()
+        self.temperature_min = temperature_min
+        self.temperature_max = temperature_max
+        self.temperature_step = temperature_step
+        self.beta = beta
+
+        self.is_increase = is_increase
+        if is_increase:
+            self.t = temperature_min
+        else:
+            self.t = temperature_max
+
+        self.update_steps = update_step
+        self.counting_step = 0
+
+    def step(self):
+        self.counting_step += 1
+        if self.counting_step % self.update_steps == 0:
+            self.t = self.beta * self.t + (1 - self.beta) * self.temperature_step * (1 if self.is_increase else -1)
+
+    def getT(self):
+        return self.t
+
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
-    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None):
         super(MoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
@@ -51,10 +94,29 @@ class MoELayer(Module):
         self.experts = _get_clones(expert, n_experts)
         self.gate = nn.Linear(d_model, n_experts)
 
-    def forward(self, x):
-        gate_logits = self.gate(x)
+        # If has topk scheduler then no need n_experts and n_experts_per_token
+        if topk_scheduler is not None:
+            self.topks_scheduler = topk_scheduler
+        
+        if temperature_scheduler is not None:
+            self.temperature_scheduler = temperature_scheduler
 
-        weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
+    def forward(self, x):
+        if self.temperature_scheduler is not None:
+            self.temperature_scheduler.step()
+            t = self.temperature_scheduler.getT()
+        else:
+            t = 1.0
+
+        if self.topks_scheduler is not None:
+            self.topks_scheduler.step()
+            k = self.topks_scheduler.getK()
+        else:
+            k = self.n_experts_per_token
+            
+        gate_logits = self.gate(x) / t
+
+        weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
@@ -68,13 +130,20 @@ class MoELayer(Module):
         return out
     
 class SharedMoELayer(Module):
-    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, use_KAN=False):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
         super(SharedMoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
+
+        # If has topk scheduler then no need n_experts and n_experts_per_token
+        if topk_scheduler is not None:
+            self.topks_scheduler = topk_scheduler
+        
+        if temperature_scheduler is not None:
+            self.temperature_scheduler = temperature_scheduler
 
         if not use_KAN:
             self.gate = nn.Linear(d_model, n_experts)
@@ -90,9 +159,21 @@ class SharedMoELayer(Module):
             self.shared_expert = KANLinear(d_model, d_model)
 
     def forward(self, x):
-        gate_logits = self.gate(x)
+        if self.temperature_scheduler is not None:
+            self.temperature_scheduler.step()
+            t = self.temperature_scheduler.getT()
+        else:
+            t = 1.0
 
-        weights, selected_experts = torch.topk(gate_logits, self.n_experts_per_token)
+        if self.topks_scheduler is not None:
+            self.topks_scheduler.step()
+            k = self.topks_scheduler.getK()
+        else:
+            k = self.n_experts_per_token
+            
+        gate_logits = self.gate(x) / t
+
+        weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):

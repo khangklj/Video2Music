@@ -96,23 +96,23 @@ class MoELayer(Module):
 
         # If has topk scheduler then no need n_experts and n_experts_per_token
         if topk_scheduler is not None:
-            self.topks_scheduler = topk_scheduler
+            self.topk_scheduler = topk_scheduler
         
         if temperature_scheduler is not None:
             self.temperature_scheduler = temperature_scheduler
 
     def forward(self, x):
-        if self.temperature_scheduler is not None:
+        if hasattr(self, 'topk_scheduler'):
+            self.topk_scheduler.step()
+            k = self.temperature_scheduler.getK()
+        else:
+            k = self.n_experts_per_token
+
+        if hasattr(self, 'temperature_scheduler'):
             self.temperature_scheduler.step()
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-
-        if self.topks_scheduler is not None:
-            self.topks_scheduler.step()
-            k = self.topks_scheduler.getK()
-        else:
-            k = self.n_experts_per_token
             
         gate_logits = self.gate(x) / t
 
@@ -140,7 +140,7 @@ class SharedMoELayer(Module):
 
         # If has topk scheduler then no need n_experts and n_experts_per_token
         if topk_scheduler is not None:
-            self.topks_scheduler = topk_scheduler
+            self.topk_scheduler = topk_scheduler
         
         if temperature_scheduler is not None:
             self.temperature_scheduler = temperature_scheduler
@@ -159,17 +159,17 @@ class SharedMoELayer(Module):
             self.shared_expert = KANLinear(d_model, d_model)
 
     def forward(self, x):
-        if self.temperature_scheduler is not None:
+        if hasattr(self, 'topk_scheduler'):
+            self.topk_scheduler.step()
+            k = self.temperature_scheduler.getK()
+        else:
+            k = self.n_experts_per_token
+
+        if hasattr(self, 'temperature_scheduler'):
             self.temperature_scheduler.step()
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-
-        if self.topks_scheduler is not None:
-            self.topks_scheduler.step()
-            k = self.topks_scheduler.getK()
-        else:
-            k = self.n_experts_per_token
             
         gate_logits = self.gate(x) / t
 

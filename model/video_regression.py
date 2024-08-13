@@ -126,8 +126,8 @@ class VideoRegression(nn.Module):
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=3)
         elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=1)
-            # current best: n_encoder_layer = 3
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=2)
+            # current best: n_encoder_layer = 4
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=4)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)

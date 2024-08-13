@@ -133,10 +133,8 @@ class VideoRegression(nn.Module):
         # projection = KANLinear
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+'):
-            # self.fc3 = projection(self.total_vf_dim, self.d_model)
-            # self.fc4 = projection(self.d_model, 2)
-            self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
-            self.fc4 = nn.Linear(self.d_model, 2)
+            self.fc3 = projection(self.total_vf_dim, self.d_model)
+            self.fc4 = projection(self.d_model, 2)            
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###

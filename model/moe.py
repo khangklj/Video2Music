@@ -104,7 +104,7 @@ class MoELayer(Module):
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
-            k = self.temperature_scheduler.getK()
+            k = self.topk_scheduler.getK()
         else:
             k = self.n_experts_per_token
 

@@ -102,13 +102,13 @@ class MoELayer(Module):
             self.temperature_scheduler = temperature_scheduler
 
     def forward(self, x):
-        if hasattr(self, 'topk_scheduler'):
+        if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
             k = self.temperature_scheduler.getK()
         else:
             k = self.n_experts_per_token
 
-        if hasattr(self, 'temperature_scheduler'):
+        if hasattr(self, 'temperature_scheduler') and self.training:
             self.temperature_scheduler.step()
             t = self.temperature_scheduler.getT()
         else:
@@ -159,13 +159,13 @@ class SharedMoELayer(Module):
             self.shared_expert = KANLinear(d_model, d_model)
 
     def forward(self, x):
-        if hasattr(self, 'topk_scheduler'):
+        if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
             k = self.temperature_scheduler.getK()
         else:
             k = self.n_experts_per_token
 
-        if hasattr(self, 'temperature_scheduler'):
+        if hasattr(self, 'temperature_scheduler') and self.training:
             self.temperature_scheduler.step()
             t = self.temperature_scheduler.getT()
         else:

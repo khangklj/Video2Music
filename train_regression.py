@@ -145,7 +145,8 @@ def main( vm = "" , isPrintArgs = True ):
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:
-        lr_scheduler = None        
+        lr_scheduler = None
+                
 
     # ##### Original ####
     # lr = 1e-3

@@ -169,69 +169,6 @@ def print_eval_args(args):
     print(SEPERATOR)
     print("")
 
-# parse_generate_args
-def parse_generate_args():
-    parser = argparse.ArgumentParser()
-    outputpath = "./output_vevo/"+version
-    if IS_VIDEO:
-        modelpath = "./saved_models/AMT/best_loss_weights.pickle"
-        modelpathReg = "./saved_models/AMT/best_rmse_weights.pickle"
-        # modelpath = "./saved_models/"+version+ "/"+VIS_MODELS_PATH+"/results/best_acc_weights.pickle"
-        # modelpathReg = "./saved_models/"+version+ "/"+VIS_MODELS_PATH+"/results_regression_bigru/best_rmse_weights.pickle"
-    else:
-        modelpath = "./saved_models/"+version+ "/no_video/results/best_loss_weights.pickle"
-        modelpathReg = None
-
-    parser.add_argument("-dataset_dir", type=str, default="./dataset/", help="Folder of VEVO dataset")
-    
-    parser.add_argument("-input_dir_music", type=str, default="./dataset/vevo_chord/" + MUSIC_TYPE, help="Folder of video CNN feature files")
-    parser.add_argument("-input_dir_video", type=str, default="./dataset/vevo_vis", help="Folder of video CNN feature files")
-
-    parser.add_argument("-output_dir", type=str, default= outputpath, help="Folder to write generated midi to")
-
-    parser.add_argument("-primer_file", type=str, default=None, help="File path or integer index to the evaluation dataset. Default is to select a random index.")
-    parser.add_argument("--force_cpu", type=bool, default=False, help="Forces model to run on a cpu even when gpu is available")
-
-    parser.add_argument("-target_seq_length_midi", type=int, default=1024, help="Target length you'd like the midi to be")
-    parser.add_argument("-target_seq_length_chord", type=int, default=300, help="Target length you'd like the midi to be")
-    
-    parser.add_argument("-num_prime_midi", type=int, default=256, help="Amount of messages to prime the generator with")
-    parser.add_argument("-num_prime_chord", type=int, default=30, help="Amount of messages to prime the generator with")    
-    parser.add_argument("-model_weights", type=str, default=modelpath, help="Pickled model weights file saved with torch.save and model.state_dict()")
-    parser.add_argument("-modelReg_weights", type=str, default=modelpathReg, help="Pickled model weights file saved with torch.save and model.state_dict()")
-
-    parser.add_argument("-beam", type=int, default=0, help="Beam search k. 0 for random probability sample and 1 for greedy")
-
-    parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
-    parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
-    parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum chord sequence to consider")
-
-    parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
-    parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
-    parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-
-
-    parser.add_argument('-regModel', type=str, default='bimamba', help="Version number. None is original loudness and note density Regression model")
-
-    # regModel version name:
-    # lstm
-    # bilstm
-    # gru
-    # bigru
-    # bigru_v1
-
-    parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-
-    if IS_VIDEO:
-        parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
-    else:
-        parser.add_argument("-vis_models", type=str, default="", help="...")
-
-    parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-test_id", type=str, default=None, help="Dimension of the feedforward layer")
-
-    return parser.parse_known_args()
-
 # write_model_params
 def write_model_params(args, output_file):
     o_stream = open(output_file, "w")

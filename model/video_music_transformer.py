@@ -15,7 +15,7 @@ from datetime import datetime
 import json
 
 class VideoMusicTransformer_V1(nn.Module):
-    def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
+    def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
         super(VideoMusicTransformer_V1, self).__init__()
@@ -55,7 +55,10 @@ class VideoMusicTransformer_V1(nn.Module):
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
-        moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
+        if version_name == '1.1':
+            moelayer = MoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
+        else:
+            moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
 
         # Encoder
         encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
@@ -234,7 +237,7 @@ class VideoMusicTransformer_V1(nn.Module):
         return gen_seq[:, :cur_i]
 
 class VideoMusicTransformer_V2(nn.Module):
-    def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
+    def __init__(self, version_name='2.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
         super(VideoMusicTransformer_V2, self).__init__()
@@ -273,10 +276,23 @@ class VideoMusicTransformer_V2(nn.Module):
         RoPE = Rotary(self.d_model)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        # expert = KANLinear(self.d_model, self.d_model)
         expert = GLUExpert(self.d_model, self.d_ff)
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
-        moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout, use_KAN)
+        
+        # version_name = '2.1'
+        topk_scheduler = None
+        temperature_scheduler = None
+
+        if version_name in ('2.2', '2.3'):
+            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        
+        if version_name == '2.3':
+            temperature_scheduler = TemperatureScheduler(temperature_min=0.5, temperature_max=1.0, temperature_step=1.0, is_increase=True)
+
+        moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                  n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                  topk_scheduler=topk_scheduler, temperature_scheduler=temperature_scheduler,
+                                  use_KAN=use_KAN)
 
         # Encoder
         encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
@@ -319,10 +335,8 @@ class VideoMusicTransformer_V2(nn.Module):
             tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
             tmp_list.append(tmp)
         feature_key_padded = torch.cat(tmp_list, dim=0)
-        # feature_key_padded = torch.full((x.shape[0], x.shape[1], 1), feature_key.item())
 
         feature_key_padded = feature_key_padded.to(get_device())
-        # print(x.shape, feature_key_padded.shape, feature_key.shape)
         x = torch.cat([x, feature_key_padded], dim=-1)
 
         xf = self.Linear_chord(x)

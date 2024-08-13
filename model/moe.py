@@ -59,7 +59,7 @@ class TopKScheduler(Module):
         return self.k
     
 class TemperatureScheduler(Module):
-    def __init__(self, temperature_min=0.5, temperature_max=1.0, temperature_step=1, update_step=16, beta=0.9, is_increase=True):
+    def __init__(self, temperature_min=0.5, temperature_max=1.0, temperature_step=1.0, beta=0.9, is_increase=True):
         super(TemperatureScheduler, self).__init__()
         self.temperature_min = temperature_min
         self.temperature_max = temperature_max
@@ -72,13 +72,13 @@ class TemperatureScheduler(Module):
         else:
             self.t = temperature_max
 
-        self.update_steps = update_step
-        self.counting_step = 0
-
     def step(self):
-        self.counting_step += 1
-        if self.counting_step % self.update_steps == 0:
-            self.t = self.beta * self.t + (1 - self.beta) * self.temperature_step * (1 if self.is_increase else -1)
+        if self.is_increase:
+            self.t = self.beta * self.t + (1 - self.beta) * self.temperature_step
+            self.t = min(self.t, self.temperature_max)
+        else:
+            self.t = self.beta * self.t - (1 - self.beta) * self.temperature_step
+            self.t = max(self.t, self.temperature_min)
 
     def getT(self):
         return self.t

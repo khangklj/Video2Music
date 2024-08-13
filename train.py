@@ -181,7 +181,7 @@ def main( vm = "" , isPrintArgs = True ):
     ##### Optimizer #####
     if args.music_gen_version == None:
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    elif args.music_gen_version in (1, 2):
+    elif args.music_gen_version[:2] in ('1.', '2.'):
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
         
     if(args.lr is None):

@@ -118,8 +118,8 @@ class VideoRegression(nn.Module):
             self.model = Mamba(config)
         elif self.regModel == "moemamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
-            expert = KANLinear(self.d_model, self.d_model)
-            moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
+            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
         elif self.regModel == "bimamba":
             config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=0)
@@ -134,15 +134,16 @@ class VideoRegression(nn.Module):
         
         self.fc2 = nn.Linear(self.total_vf_dim, 2)
         
+        projection = nn.Linear
+        # projection = KANLinear
+        
         if self.regModel in ('mamba', 'moemamba', 'mamba+'):
-            # self.fc3 = KANLinear(self.total_vf_dim, self.d_model)
-            # self.fc4 = KANLinear(self.d_model, 2)
-            self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
-            self.fc4 = nn.Linear(self.d_model, 2)
+            self.fc3 = projection(self.total_vf_dim, self.d_model)
+            self.fc4 = projection(self.d_model, 2)
 
         if self.regModel in ('bimamba', 'bimamba+'):
-            self.fc3 = nn.Linear(self.total_vf_dim, self.d_model)
-            self.fc4 = nn.Linear(self.d_model, 2)
+            self.fc3 = projection(self.total_vf_dim, self.d_model)
+            self.fc4 = projection(self.d_model * 2, 2)
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###

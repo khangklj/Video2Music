@@ -107,12 +107,7 @@ class VideoRegression(nn.Module):
 #             self.model = myRNN(self.total_vf_dim, self.d_model, 2, 'gru', self.nlayers, bidirectional=True)
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
-            self.model = Mamba(config)
-            
-            # config = JambaLMConfig(d_model=self.d_model, n_layers=2, mlp_size=self.d_model)
-            # self.model = Jamba(config)
-
-            # self.model = MambaSSM(d_model=self.d_model, d_state=16, d_conv=4)
+            self.model = Mamba(config)           
         elif self.regModel == "mamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True, use_version=1)
             self.model = Mamba(config)
@@ -122,12 +117,12 @@ class VideoRegression(nn.Module):
             moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
         elif self.regModel == "bimamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=0)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=3)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=0)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers)
         elif self.regModel == "bimamba+":
-            config = MambaConfig(d_model=self.d_model, n_layers=1, use_KAN=use_KAN, bias=True, use_version=1)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
             # current best: n_encoder_layer = 4
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=4)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers)
             
         self.bifc = nn.Linear(self.d_model * 2, 2)
         self.fc = nn.Linear(self.d_model, 2)

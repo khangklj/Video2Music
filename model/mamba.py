@@ -284,7 +284,7 @@ class MambaBlock(nn.Module):
         if self.config.use_version == 1:
             output = y * z + x * (1 - F.sigmoid(z))
         else:
-            output = y * self.dropout(z)
+            output = y * z
         output = self.out_proj(output) # (B, L, D)
 
         return output

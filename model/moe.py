@@ -104,7 +104,7 @@ class MoELayer(Module):
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
-            k = self.temperature_scheduler.getK()
+            k = self.topk_scheduler.getK()
         else:
             k = self.n_experts_per_token
 
@@ -153,6 +153,8 @@ class SharedMoELayer(Module):
                 nn.SiLU(),
                 nn.Linear(d_model * 2 + 1, d_model)
             )
+
+            # self.shared_expert = nn.Linear(d_model, d_model)
         else:
             self.gate = KANLinear(d_model, n_experts)
             
@@ -161,7 +163,7 @@ class SharedMoELayer(Module):
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
-            k = self.temperature_scheduler.getK()
+            k = self.topk_scheduler.getK()
         else:
             k = self.n_experts_per_token
 
@@ -171,10 +173,10 @@ class SharedMoELayer(Module):
         else:
             t = 1.0
             
-        gate_logits = self.gate(x) / t
+        gate_logits = self.gate(x)
 
         weights, selected_experts = torch.topk(gate_logits, k)
-        weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
+        weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
@@ -186,5 +188,5 @@ class SharedMoELayer(Module):
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
         # Sharing
-        out += 1.0 / self.n_experts_per_token * self.shared_expert(x)
+        out += 1.0 / k * self.shared_expert(x)
         return out

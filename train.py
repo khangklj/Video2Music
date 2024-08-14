@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 from torch.optim import Adam, AdamW
+from lion_pytorch import Lion
 
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 
@@ -127,14 +128,12 @@ def main( vm = "" , isPrintArgs = True ):
                         max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, 
                         rpr=args.rpr).to(get_device())
     elif args.music_gen_version.startswith('1.'):
-        print('Training using version 1')
         model = VideoMusicTransformer_V1(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
                     rms_norm=args.rms_norm).to(get_device())
-    elif args.music_gen_version.startswith('2.'):
-        print('Training using version 2')
+    elif args.music_gen_version.startswith('2.') or args.music_gen_version == '3.1':
         model = VideoMusicTransformer_V2(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
@@ -183,6 +182,8 @@ def main( vm = "" , isPrintArgs = True ):
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.music_gen_version[:2] in ('1.', '2.'):
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    elif args.music_gen_version[:2] == '3.':
+        opt = Lion(model.parameters(), lr=lr, weight_decay=1e-2)
         
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)

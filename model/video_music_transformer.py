@@ -283,7 +283,7 @@ class VideoMusicTransformer_V2(nn.Module):
         topk_scheduler = None
         temperature_scheduler = None
 
-        if version_name in ('2.2', '2.3'):
+        if version_name in ('2.2', '2.3', '3.1'):
             topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
         if version_name == '2.3':

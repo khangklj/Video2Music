@@ -121,6 +121,7 @@ class SBRN(Module):
     def train(self, x, k=2):
         self.opt.zero_grad()
         _, selected_experts = self._routing(x, k)
+        
         count = torch.zeros((1, self.n_experts))
         for i in range(self.n_experts):
             count[0, i] += (selected_experts == i).sum().item()

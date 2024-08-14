@@ -23,24 +23,21 @@ def parse_train_args():
     parser.add_argument("-continue_weights", type=str, default=None, help="Model weights to continue training based on")
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
-    parser.add_argument("-ce_smoothing", type=float, default=0.1, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
-    parser.add_argument("-batch_size", type=int, default=20, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=50, help="Number of epochs to use")
+    parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
+    parser.add_argument("-epochs", type=int, default=100, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum video sequence to consider")
 
-    parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
-    parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
-    parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
-    parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
+    parser.add_argument("-n_layers", type=int, default=4, help="Number of layers to use")
+    parser.add_argument("-d_model", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
+    parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
+    parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
-    parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=str, default='2.3', help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='bimamba+', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='mamba', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm
@@ -56,13 +53,12 @@ def parse_train_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
 def print_train_args(args):
     print(SEPERATOR)
     
-    print("dataset_dir:", args.dataset_dir )
+    print("dataset_dir:", args.dataset_dir)
     
     print("input_dir_music:", args.input_dir_music)
     print("input_dir_video:", args.input_dir_video)
@@ -80,25 +76,21 @@ def print_train_args(args):
     print("continue_epoch:", args.continue_epoch)
     print("")
     print("lr:", args.lr)
-    print("ce_smoothing:", args.ce_smoothing)
     print("batch_size:", args.batch_size)
     print("epochs:", args.epochs)
     print("")
-    print("rpr:", args.rpr)
 
     print("max_sequence_midi:", args.max_sequence_midi)
     print("max_sequence_video:", args.max_sequence_video)
     print("max_sequence_chord:", args.max_sequence_chord)
     
     print("n_layers:", args.n_layers)
-    print("num_heads:", args.num_heads)
-    print("d_model:", args.d_model)
-    print("")
+    print("d_model:", args.d_model)    
     print("dim_feedforward:", args.dim_feedforward)
     print("dropout:", args.dropout)
-    print("rms_norm:", args.rms_norm)
+    print("use_KAN: ", args.use_KAN)
+    print("")
     print("is_video:", args.is_video)
-    print("music_gen_version:", args.music_gen_version)
     print("regModel:", args.regModel)
 
     print(SEPERATOR)
@@ -128,13 +120,12 @@ def parse_eval_args():
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum video sequence to consider")
 
-    parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
-    parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
-    parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
-    parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-    parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
-    parser.add_argument('-music_gen_version', type=str, default='2.3', help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='bimamba+', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument("-n_layers", type=int, default=4, help="Number of layers to use")
+    parser.add_argument("-d_model", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
+    parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
+    parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
+
+    parser.add_argument('-regModel', type=str, default='mamba', help="Version number. None is original loudness and note density Regression model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:
@@ -150,7 +141,6 @@ def parse_eval_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
 def print_eval_args(args):
@@ -164,19 +154,16 @@ def print_eval_args(args):
     print("")
     print("batch_size:", args.batch_size)
     print("")
-    print("rpr:", args.rpr)
     
     print("max_sequence_midi:", args.max_sequence_midi)
     print("max_sequence_video:", args.max_sequence_video)
     print("max_sequence_chord:", args.max_sequence_chord)
     
     print("n_layers:", args.n_layers)
-    print("num_heads:", args.num_heads)
     print("d_model:", args.d_model)
+    print("use_KAN: ", args.use_KAN)
     print("")
-    print("rms_norm:", args.rms_norm)
     print("dim_feedforward:", args.dim_feedforward)    
-    print("music_gen_version:", args.music_gen_version)
     print("regModel:", args.regModel)
 
     print(SEPERATOR)
@@ -186,10 +173,8 @@ def print_eval_args(args):
 def write_model_params(args, output_file):
     o_stream = open(output_file, "w")
 
-    o_stream.write("rpr: " + str(args.rpr) + "\n")
     o_stream.write("lr: " + str(args.lr) + "\n")
     o_stream.write("n_epochs: " + str(args.epochs) + "\n")
-    o_stream.write("ce_smoothing: " + str(args.ce_smoothing) + "\n")
     o_stream.write("batch_size: " + str(args.batch_size) + "\n")
 
     o_stream.write("max_sequence_midi: " + str(args.max_sequence_midi) + "\n")
@@ -197,12 +182,10 @@ def write_model_params(args, output_file):
     o_stream.write("max_sequence_chord: " + str(args.max_sequence_chord) + "\n")
     
     o_stream.write("n_layers: " + str(args.n_layers) + "\n")
-    o_stream.write("num_heads: " + str(args.num_heads) + "\n")
     o_stream.write("d_model: " + str(args.d_model) + "\n")
     o_stream.write("dim_feedforward: " + str(args.dim_feedforward) + "\n")
     o_stream.write("dropout: " + str(args.dropout) + "\n")
-    o_stream.write("rms_norm: " + str(args.rms_norm) + "\n")
-    o_stream.write("music_gen_version: " + str(args.music_gen_version) + "\n")
+    o_stream.write("use_KAN: " + str(args.use_KAN) + "\n")
     o_stream.write("regModel: " + str(args.regModel) + "\n")
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")

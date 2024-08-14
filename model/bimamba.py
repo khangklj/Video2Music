@@ -1,8 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .mamba import Mamba, MambaConfig, MambaBlock
-from .custom_transformer import RMSNorm
+from .mamba import MambaConfig, MambaBlock
 
 class BiMambaEncoder(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2, dropout=0.2):
@@ -21,6 +20,7 @@ class BiMambaEncoder(nn.Module):
             x = self.layers[i](x)
         return x
 
+# Based on paper: Bi-Mamba4TS: Bidirectional Mamba for Time Series Forecasting
 class BiMambaEncoderLayer(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
         super().__init__()
@@ -31,8 +31,6 @@ class BiMambaEncoderLayer(nn.Module):
         self.d_ff = dim_feedforward
 
         # Norm and FF_layer
-        # self.norm1 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
-        # self.norm2 = RMSNorm(config.d_model, config.rms_norm_eps, config.mup)
         self.norm1 = nn.LayerNorm(config.d_model)
         self.norm2 = nn.LayerNorm(config.d_model)
         self.norm3 = nn.LayerNorm(config.d_model)
@@ -91,6 +89,7 @@ class BiMambaEncoderLayer(nn.Module):
         
         return x
 
+# Based on paper: Bi-Mamba+: Bidirectional Mamba for Time Series Forecasting
 class BiMambaEncoderLayer_V1(nn.Module):
     def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
         super().__init__()

@@ -13,7 +13,7 @@ from model.video_regression import VideoRegression
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
 from utilities.lr_scheduling import LrStepTracker, get_lr
-from utilities.argument_funcs import parse_train_args, print_train_args, write_model_params
+from utilities.argument_reg_funcs import parse_train_args, print_train_args, write_model_params
 
 from utilities.run_model_regression import train_epoch, eval_model
 
@@ -25,7 +25,6 @@ version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 
-num_epochs = 100
 VIS_MODELS_ARR = [
     "2d/clip_l14p"
 ]
@@ -33,7 +32,6 @@ VIS_MODELS_ARR = [
 # main
 def main( vm = "" , isPrintArgs = True ):
     args = parse_train_args()[0]
-    args.epochs = num_epochs
 
     if vm != "":
         args.vis_models = vm
@@ -78,7 +76,7 @@ def main( vm = "" , isPrintArgs = True ):
         tensorboad_dir = os.path.join(args.output_dir, version, "tensorboard_regression")
         tensorboard_summary = SummaryWriter(log_dir=tensorboad_dir)
         
-    train_dataset, _, val_dataset = create_vevo_datasets(
+    train_dataset, val_dataset, _ = create_vevo_datasets(
         dataset_root = "./dataset/", 
         max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 
@@ -102,15 +100,8 @@ def main( vm = "" , isPrintArgs = True ):
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
-
-    n_layers = 2
-    d_model = 64
-    d_hidden = 256
-    use_KAN = False
-    dropout = 0.2
-    max_sequence_video = args.max_sequence_video
-    regModel = args.regModel
-    model = VideoRegression(n_layers=n_layers, d_model=d_model, d_hidden=d_hidden, dropout=dropout, use_KAN=use_KAN, max_sequence_video=max_sequence_video, total_vf_dim=total_vf_dim, regModel=regModel).to(get_device())
+    
+    model = VideoRegression(n_layers=args.n_layers, d_model=args.d_model, d_hidden=args.dim_feedforward, dropout=args.dropout, use_KAN=args.use_KAN, max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel=args.regModel).to(get_device())
     
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
@@ -139,13 +130,13 @@ def main( vm = "" , isPrintArgs = True ):
         lr = args.lr        
 
     ##### Optimizer #####
-    # opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:
-        lr_scheduler = None        
+        lr_scheduler = None
+                
 
     # ##### Original ####
     # lr = 1e-3

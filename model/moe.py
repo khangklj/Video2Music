@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from torch.optim import Adam, AdamW
+from lion_pytorch import Lion
 
 from torch.nn import functional as F
 from torch.nn.parameter import Parameter
@@ -13,6 +15,8 @@ from torch.nn.functional import linear, softmax, dropout
 from torch.nn import MultiheadAttention
 from utilities.device import get_device
 from efficient_kan import KANLinear
+import copy
+from utilities.argument_funcs import parse_train_args
 
 class KANExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
@@ -82,6 +86,49 @@ class TemperatureScheduler(Module):
 
     def getT(self):
         return self.t
+
+class ShannonEntropy(Module):
+    def __init__(self, eps=1e-10):
+        super(ShannonEntropy, self).__init__()
+        self.eps = eps
+
+    def forward(self, x: Tensor): # x.shape = (batch_size, n)
+        x /= x.sum(dim=1) # get probability
+        x += self.eps # prevent log(0)
+        entropy = -torch.sum(x * torch.log(x), dim=1)
+        return entropy.mean()
+
+# Self-Balance Routing Network
+class SBRN(Module):
+    def __init__(self, router, n_experts=8, n_experts_per_token=2):
+        super(SBRN, self).__init__()
+        self.n_experts = n_experts
+        self.n_experts_per_token = n_experts_per_token
+        self.router = copy.deepcopy(router)
+        self.optim = AdamW(self.router.parameters())
+        self.loss_func = ShannonEntropy()
+
+    def _routing(self, x, k=2):
+        gate_logits = self.router(x)
+        weights, selected_experts = torch.topk(gate_logits, k)
+        return weights, selected_experts
+
+    def forward(self, x, k=2, t=1.0):
+        weights, selected_experts = self._routing(x, k)
+        weights = F.softmax(weights / t, dim=1)
+        return weights, selected_experts
+    
+    def train(self, x, k=2):
+        self.opt.zero_grad()
+        _, selected_experts = self._routing(x, k)
+        count = torch.zeros((1, self.n_experts))
+        for i in range(self.n_experts):
+            count[0, i] += (selected_experts == i).sum().item()
+
+        loss = self.loss_func(count)
+        loss.backward()
+        self.opt.step()
+
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
@@ -153,8 +200,6 @@ class SharedMoELayer(Module):
                 nn.SiLU(),
                 nn.Linear(d_model * 2 + 1, d_model)
             )
-
-            # self.shared_expert = nn.Linear(d_model, d_model)
         else:
             self.gate = KANLinear(d_model, n_experts)
             

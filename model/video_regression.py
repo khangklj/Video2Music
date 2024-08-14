@@ -77,11 +77,14 @@ class VideoRegression(nn.Module):
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
         elif self.regModel == "bigru":
-            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
+            # ORIGIN
+            # self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
+            # MODIFY
+            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True, dropout=dropout)
         elif self.regModel == "lstm":
             self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers)
         elif self.regModel == "gru":
-            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers)
+            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers)          
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)           

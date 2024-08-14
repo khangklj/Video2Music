@@ -39,16 +39,7 @@ def parse_train_args():
 
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=str, default=None, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='bigru', help="Version name. None is original loudness and note density Regression model")
-
-    # regModel version name:
-    # lstm
-    # bilstm
-    # gru
-    # bigru
-    # mamba
-    # moemamba
+    parser.add_argument('-music_gen_version', type=str, default='3.1', help="Version number. None is original musgic generation AMT model")
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -99,7 +90,6 @@ def print_train_args(args):
     print("rms_norm:", args.rms_norm)
     print("is_video:", args.is_video)
     print("music_gen_version:", args.music_gen_version)
-    print("regModel:", args.regModel)
 
     print(SEPERATOR)
     print("")
@@ -133,16 +123,8 @@ def parse_eval_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
-    parser.add_argument('-music_gen_version', type=str, default=None, help="Version number. None is original musgic generation AMT model")
-    parser.add_argument('-regModel', type=str, default='bigru', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-music_gen_version', type=str, default='3.1', help="Version number. None is original musgic generation AMT model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    
-    # regModel version name:
-    # lstm
-    # bilstm
-    # gru
-    # bigru
-    # mamba
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -177,7 +159,6 @@ def print_eval_args(args):
     print("rms_norm:", args.rms_norm)
     print("dim_feedforward:", args.dim_feedforward)    
     print("music_gen_version:", args.music_gen_version)
-    print("regModel:", args.regModel)
 
     print(SEPERATOR)
     print("")
@@ -203,7 +184,6 @@ def write_model_params(args, output_file):
     o_stream.write("dropout: " + str(args.dropout) + "\n")
     o_stream.write("rms_norm: " + str(args.rms_norm) + "\n")
     o_stream.write("music_gen_version: " + str(args.music_gen_version) + "\n")
-    o_stream.write("regModel: " + str(args.regModel) + "\n")
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")

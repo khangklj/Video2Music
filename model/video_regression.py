@@ -77,11 +77,14 @@ class VideoRegression(nn.Module):
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
         elif self.regModel == "bigru":
-            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
+            # ORIGIN
+            # self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
+            # MODIFY
+            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True, dropout=dropout)
         elif self.regModel == "lstm":
             self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers)
         elif self.regModel == "gru":
-            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers)
+            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers)          
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)           
@@ -99,11 +102,12 @@ class VideoRegression(nn.Module):
         elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers)
+    
+        if self.regModel in ('gru', 'lstm'):
+            self.fc = nn.Linear(self.d_model, 2)
             
-        self.bifc = nn.Linear(self.d_model * 2, 2)
-        self.fc = nn.Linear(self.d_model, 2)
-        
-        self.fc2 = nn.Linear(self.total_vf_dim, 2)
+        if self.regModel in ('bigru', 'bilstm'):
+            self.bifc = nn.Linear(self.d_model * 2, 2)
         
         projection = nn.Linear
         # projection = KANLinear

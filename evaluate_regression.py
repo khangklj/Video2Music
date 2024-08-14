@@ -80,7 +80,8 @@ def main( vm = "", isPrintArgs = True):
     model = VideoRegression(n_layers=args.n_layers, d_model=args.d_model, d_hidden=args.dim_feedforward, use_KAN=args.use_KAN, max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel=args.regModel).to(get_device())
     
     # Load weights
-    state_dict = torch.load(args.model_weights)
+    # state_dict = torch.load(args.model_weights)
+    state_dict = torch.load(args.model_weights, map_location='cuda:0')
     model.load_state_dict(state_dict)
 
     loss = nn.MSELoss()

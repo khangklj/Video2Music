@@ -37,7 +37,7 @@ class MambaConfig:
     d_model: int # D
     n_layers: int
     dt_rank: Union[int, str] = 'auto'
-    d_state: int = 16 # N in paper/comments
+    d_state: int = 64 # N in paper/comments
     expand_factor: int = 2 # E in paper/comments
     d_conv: int = 4
     dropout: int = 0.0 # OUR MODIFY

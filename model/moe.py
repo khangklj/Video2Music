@@ -129,7 +129,6 @@ class SBRN(Module):
         loss.backward()
         self.opt.step()
 
-
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
     def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None):

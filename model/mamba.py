@@ -208,7 +208,7 @@ class MambaBlock(nn.Module):
 
         # S4D real initialization
         # A = torch.arange(1, config.d_state + 1, dtype=torch.float32).repeat(config.d_inner, 1)
-        HiPPO initialization
+        # HiPPO initialization
         A = torch.zeros((config.d_inner, config.d_state), dtype=torch.float32)
         for n in range(config.d_inner):
             for k in range(config.d_state):

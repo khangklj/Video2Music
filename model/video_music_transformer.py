@@ -287,7 +287,7 @@ class VideoMusicTransformer_V2(nn.Module):
             topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
         if version_name == '2.3':
-            temperature_scheduler = TemperatureScheduler(temperature_min=0.5, temperature_max=1.0, temperature_step=1.0, is_increase=True)
+            temperature_scheduler = TemperatureScheduler()
 
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

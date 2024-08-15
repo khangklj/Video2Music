@@ -63,7 +63,7 @@ class TopKScheduler(Module):
         return self.k
     
 class TemperatureScheduler(Module):
-    def __init__(self, temperature_min=0.8, temperature_max=1.0, temperature_step=0.01):
+    def __init__(self, temperature_min=0.8, temperature_max=1.0, temperature_step=0.001):
         super(TemperatureScheduler, self).__init__()
         self.temperature_min = temperature_min
         self.temperature_max = temperature_max

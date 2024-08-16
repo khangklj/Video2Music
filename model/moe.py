@@ -270,8 +270,9 @@ class SelfBalanceSharedMoELayer(Module):
         else:
             t = 1.0
             
-        print(type(x))
-        self.gate.train(x, k)
+        if self.training:
+            self.gate.train(x, k)
+            
         weights, selected_experts = self.gate(x, k, t)
 
         out = torch.zeros_like(x)

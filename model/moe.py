@@ -99,6 +99,7 @@ class SBRN(Module):
         self.loss_func = ShannonEntropy()
 
     def _routing(self, x, k=2):
+        print(type(x))
         gate_logits = self.router(x)
         weights, selected_experts = torch.topk(gate_logits, k)
         return weights, selected_experts
@@ -269,8 +270,7 @@ class SelfBalanceSharedMoELayer(Module):
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-            
-        print(type(x), x.shape)
+
         self.gate.train(x, k)
         weights, selected_experts = self.gate(x, k, t)
 

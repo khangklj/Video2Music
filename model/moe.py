@@ -100,7 +100,7 @@ class SBRN(Module):
 
     def _routing(self, x, k=2):
         gate_logits = self.router(x)
-        weights, selected_experts = torch.topk(gate_logits, k).to(get_device())
+        weights, selected_experts = torch.topk(gate_logits, k)
         return weights, selected_experts
 
     def forward(self, x, k=2, t=1.0):

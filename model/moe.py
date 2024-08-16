@@ -105,7 +105,7 @@ class SBRN(Module):
 
     def forward(self, x, k=2, t=1.0):
         weights, selected_experts = self._routing(x, k)
-        weights = F.softmax(weights / t, dim=1)
+        weights = F.softmax(weights / t, dim=1, dtype=torch.float).to(get_device())
         return weights, selected_experts
     
     def train(self, x, k=2):
@@ -212,6 +212,67 @@ class SharedMoELayer(Module):
 
         weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
+        out = torch.zeros_like(x)
+        for i, expert in enumerate(self.experts):
+            token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
+            
+            if token_idx.shape[0] == 0:
+                continue
+
+            weight = weights[token_idx, batch_idx, topk_idx]
+            out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
+
+        # Sharing
+        out += 1.0 / k * self.shared_expert(x)
+        return out
+
+class SelfBalanceSharedMoELayer(Module):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
+        super(SharedMoELayer, self).__init__()
+        self.n_experts = n_experts
+        self.n_experts_per_token = n_experts_per_token
+        self.d_model = d_model
+        self.dropout = nn.Dropout(dropout)
+        self.experts = _get_clones(expert, n_experts)
+
+        # If has topk scheduler then no need n_experts and n_experts_per_token
+        if topk_scheduler is not None:
+            self.topk_scheduler = topk_scheduler
+        
+        if temperature_scheduler is not None:
+            self.temperature_scheduler = temperature_scheduler
+
+        if not use_KAN:
+            router = nn.Linear(d_model, n_experts)
+
+            self.shared_expert = nn.Sequential(
+                nn.Linear(d_model, d_model * 2 + 1),
+                nn.SiLU(),
+                nn.Linear(d_model * 2 + 1, d_model)
+            )
+        else:
+            router = KANLinear(d_model, n_experts)
+            
+            self.shared_expert = KANLinear(d_model, d_model)
+
+        self.gate = SBRN(router, n_experts, n_experts_per_token)
+
+    def forward(self, x):
+        if hasattr(self, 'topk_scheduler') and self.training:
+            self.topk_scheduler.step()
+            k = self.topk_scheduler.getK()
+        else:
+            k = self.n_experts_per_token
+
+        if hasattr(self, 'temperature_scheduler'):
+            self.temperature_scheduler.step()
+            t = self.temperature_scheduler.getT()
+        else:
+            t = 1.0
+            
+        self.gate.train(x, k)
+        weights, selected_experts = self.gate(x, k, t)
+
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)

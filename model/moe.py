@@ -108,7 +108,7 @@ class SBRN(Module):
         weights = F.softmax(weights / t, dim=1, dtype=torch.float).to(get_device())
         return weights, selected_experts
     
-    def train(self, x, k=2):
+    def step(self, x, k=2):
         _, selected_experts = self._routing(x, k)
         
         count = torch.zeros((1, self.n_experts))
@@ -271,8 +271,8 @@ class SelfBalanceSharedMoELayer(Module):
             t = 1.0
             
         if self.training:
-            self.gate.train(x, k)
-            
+            self.gate.step(x, k)
+
         weights, selected_experts = self.gate(x, k, t)
 
         out = torch.zeros_like(x)

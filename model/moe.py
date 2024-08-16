@@ -270,6 +270,7 @@ class SelfBalanceSharedMoELayer(Module):
         else:
             t = 1.0
             
+        print(type(x), x.shape)
         self.gate.train(x, k)
         weights, selected_experts = self.gate(x, k, t)
 

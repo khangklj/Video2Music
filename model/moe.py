@@ -99,7 +99,6 @@ class SBRN(Module):
         self.loss_func = ShannonEntropy()
 
     def _routing(self, x, k=2):
-        print(type(x))
         gate_logits = self.router(x)
         weights, selected_experts = torch.topk(gate_logits, k)
         return weights, selected_experts
@@ -110,13 +109,14 @@ class SBRN(Module):
         return weights, selected_experts
     
     def train(self, x, k=2):
-        self.optim.zero_grad()
+        print(type(x))
         _, selected_experts = self._routing(x, k)
         
         count = torch.zeros((1, self.n_experts))
         for i in range(self.n_experts):
             count[0, i] += (selected_experts == i).sum().item()
 
+        self.optim.zero_grad()
         loss = self.loss_func(count)
         loss.backward()
         self.optim.step()

@@ -109,7 +109,7 @@ class SBRN(Module):
         return weights, selected_experts
     
     def train(self, x, k=2):
-        self.opt.zero_grad()
+        self.optim.zero_grad()
         _, selected_experts = self._routing(x, k)
         
         count = torch.zeros((1, self.n_experts))
@@ -118,7 +118,7 @@ class SBRN(Module):
 
         loss = self.loss_func(count)
         loss.backward()
-        self.opt.step()
+        self.optim.step()
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):

@@ -109,7 +109,6 @@ class SBRN(Module):
         return weights, selected_experts
     
     def train(self, x, k=2):
-        print(type(x))
         _, selected_experts = self._routing(x, k)
         
         count = torch.zeros((1, self.n_experts))
@@ -270,7 +269,8 @@ class SelfBalanceSharedMoELayer(Module):
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-
+            
+        print(type(x))
         self.gate.train(x, k)
         weights, selected_experts = self.gate(x, k, t)
 

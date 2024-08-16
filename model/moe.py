@@ -116,7 +116,7 @@ class SBRN(Module):
             count[0, i] += (selected_experts == i).sum().item()
 
         self.optim.zero_grad()
-        loss = self.loss_func(count)
+        loss = torch.autograd.Variable(self.loss_func(count), requires_grad=True)
         loss.backward()
         self.optim.step()
 

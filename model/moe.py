@@ -228,7 +228,7 @@ class SharedMoELayer(Module):
 
 class SelfBalanceSharedMoELayer(Module):
     def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
-        super(SharedMoELayer, self).__init__()
+        super(SelfBalanceSharedMoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model

@@ -63,7 +63,7 @@ class TopKScheduler(Module):
         return self.k
     
 class TemperatureScheduler(Module):
-    def __init__(self, temperature_min=0.8, temperature_max=1.0, temperature_step=0.001):
+    def __init__(self, temperature_min=0.8, temperature_max=1.2, temperature_step=0.001):
         super(TemperatureScheduler, self).__init__()
         self.temperature_min = temperature_min
         self.temperature_max = temperature_max
@@ -202,7 +202,7 @@ class SharedMoELayer(Module):
         else:
             k = self.n_experts_per_token
 
-        if hasattr(self, 'temperature_scheduler') and self.training:
+        if hasattr(self, 'temperature_scheduler'):
             self.temperature_scheduler.step()
             t = self.temperature_scheduler.getT()
         else:

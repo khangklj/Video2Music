@@ -148,7 +148,7 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-save_conf_matrix", type=bool, default=False, help="Whether or not to save confusion matrix as .npy in Video2Music/log folder")
-    args = parser.parse_known_args()
+    args = parser.parse_known_args()[0]
     if len(VIS_MODELS_ARR) != 0 :
         for vm in VIS_MODELS_ARR:
             main(vm, False, isSavedConfusionMatrix=args.save_conf_matrix)

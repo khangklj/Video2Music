@@ -121,6 +121,7 @@ def print_generate_args(args):
     print("max_sequence_video:", args.max_sequence_video)
     print("max_sequence_chord:", args.max_sequence_chord)
     
+    
     print("")
     print("CHORD GENERATION MODEL")
     print("music_gen_version: ", args.music_gen_version)
@@ -134,7 +135,6 @@ def print_generate_args(args):
     print("REGRESSION MODEL")
     print("regModel: ", args.regModel)
     print("n_layers_reg:", args.n_layers_reg)
-    print("num_heads_reg:", args.num_heads_reg)
     print("d_model_reg:", args.d_model_reg)
     print("dim_feedforward_reg:", args.dim_feedforward_reg)
     print("use_KAN_reg: ", args.use_KAN_reg)

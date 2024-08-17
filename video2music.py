@@ -35,7 +35,7 @@ from gradio import Markdown
 
 from pytube import YouTube
 
-from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
+from utilities.argument_generate_funcs import parse_generate_args, print_generate_args
 from utilities.device import get_device, use_cuda
 
 all_key_names = ['C major', 'G major', 'D major', 'A major',

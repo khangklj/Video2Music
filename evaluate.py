@@ -18,6 +18,7 @@ import numpy as np
 import json
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
+import argparse
 
 version = VERSION
 split_ver = SPLIT_VER
@@ -34,7 +35,7 @@ fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
 # main
-def main( vm = "", isPrintArgs = True):
+def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
     args = parse_eval_args()[0]
 
     if isPrintArgs:
@@ -128,7 +129,7 @@ def main( vm = "", isPrintArgs = True):
 
     eval_metric_dict = eval_model(model, test_loader, 
                                 eval_loss_func, eval_loss_emotion_func,
-                                isVideo= args.is_video, isGenConfusionMatrix=True)
+                                isVideo= args.is_video, isGenConfusionMatrix=True, isSavedConfusionMatrix=isSavedConfusionMatrix)
         
     eval_total_loss = eval_metric_dict["avg_total_loss"]
     eval_loss_chord = eval_metric_dict["avg_loss_chord"]
@@ -145,10 +146,13 @@ def main( vm = "", isPrintArgs = True):
     logging.info(f"Avg test h5: {eval_h5:.4f}")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-save_conf_matrix", type=bool, default=False, help="Whether or not to save confusion matrix as .npy in Video2Music/log folder")
+    args = parser.parse_known_args()
     if len(VIS_MODELS_ARR) != 0 :
         for vm in VIS_MODELS_ARR:
-            main(vm, False)
+            main(vm, False, isSavedConfusionMatrix=args.save_conf_matrix)
     else:
-        main()
+        main(isSavedConfusionMatrix=args.save_conf_matrix)
 
 

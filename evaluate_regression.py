@@ -81,7 +81,7 @@ def main( vm = "", isPrintArgs = True):
     
     # Load weights
     state_dict = torch.load(args.model_weights)
-    model.load_state_dict(state_dict)
+    model.load_state_dict(state_dict, map_location=get_device())
 
     loss = nn.MSELoss()
 

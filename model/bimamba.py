@@ -1,10 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from copy import deepcopy
+
 from .mamba import MambaConfig, MambaBlock
+from .moe import MoELayer, SharedMoELayer
 
 class BiMambaEncoder(nn.Module):
-    def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2, dropout=0.2):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, n_encoder_layers=2, dropout=0.2, moe_layer=None):
         super().__init__()
         self.n_encoder_layers = n_encoder_layers
 
@@ -13,7 +16,7 @@ class BiMambaEncoder(nn.Module):
             if config.use_version == 0:
                 self.layers.append(BiMambaEncoderLayer(config, dim_feedforward, dropout))
             elif config.use_version == 1:
-                self.layers.append(BiMambaEncoderLayer_V1(config, dim_feedforward, dropout))
+                self.layers.append(BiMambaEncoderLayer_V1(config, dim_feedforward, dropout, moe_layer=moe_layer))
 
     def forward(self, x):
         for i in range(self.n_encoder_layers):
@@ -91,7 +94,7 @@ class BiMambaEncoderLayer(nn.Module):
 
 # Based on paper: Bi-Mamba+: Bidirectional Mamba for Time Series Forecasting
 class BiMambaEncoderLayer_V1(nn.Module):
-    def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2):
+    def __init__(self, config: MambaConfig, dim_feedforward=1024, dropout=0.2, moe_layer=None):
         super().__init__()
         assert config.use_version == 1, "use_version should be 1 to use Mamba+"
         self.config = config
@@ -106,12 +109,15 @@ class BiMambaEncoderLayer_V1(nn.Module):
         self.norm2 = nn.LayerNorm(config.d_model)
         self.norm3 = nn.LayerNorm(config.d_model)
         
-        self.ffn = nn.Sequential(
-            nn.Linear(config.d_model, dim_feedforward),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(dim_feedforward, config.d_model)
-        )
+        if moe_layer == None:
+            self.ffn = nn.Sequential(
+                nn.Linear(config.d_model, dim_feedforward),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(dim_feedforward, config.d_model)
+            )
+        else:
+            self.ffn = deepcopy(moe_layer)
         
     def forward(self, x):
         # Flip

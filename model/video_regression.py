@@ -102,6 +102,16 @@ class VideoRegression(nn.Module):
         elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
+        elif self.regModel == "moe_bimamba+":
+            expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
+            moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
+        elif self.regModel == "sharedmoe_bimamaba+":
+            expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
+            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)

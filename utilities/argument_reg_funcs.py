@@ -37,15 +37,18 @@ def parse_train_args():
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-regModel', type=str, default='bimamba+', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm
     # bilstm
     # gru
     # bigru
-    # mamba
+    # mamba, mamba+
+    # bimamba, bimamba+
     # moemamba
+    # moe_bimamba+
+    # shared_bimamba+
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -125,7 +128,7 @@ def parse_eval_args():
     parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
-    parser.add_argument('-regModel', type=str, default='bimamba+', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version number. None is original loudness and note density Regression model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:
@@ -133,7 +136,11 @@ def parse_eval_args():
     # bilstm
     # gru
     # bigru
-    # mamba
+    # mamba, mamba+
+    # bimamba, bimamba+
+    # moemamba
+    # moe_bimamba+
+    # shared_bimamba+
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")

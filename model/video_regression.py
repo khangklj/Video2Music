@@ -122,7 +122,7 @@ class VideoRegression(nn.Module):
         projection = nn.Linear
         # projection = KANLinear
         
-        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)            
 
@@ -161,7 +161,7 @@ class VideoRegression(nn.Module):
 
             out = self.dropout(out)           
             out = self.fc4(out)
-        elif self.regModel in ('bimamba', 'bimamba+'):
+        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)
             

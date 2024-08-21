@@ -98,10 +98,10 @@ class VideoRegression(nn.Module):
             self.model = MoEMamba(moe_layer, config)
         elif self.regModel == "bimamba":
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=0)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
         elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)

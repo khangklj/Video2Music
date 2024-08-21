@@ -17,7 +17,7 @@ from scenedetect.scene_manager import save_images
 from utilities.constants import *
 from utilities.chord_to_midi import *
 
-from model.video_music_transformer import VideoMusicTransformer
+from model.video_music_transformer import VideoMusicTransformer, VideoMusicTransformer_V1, VideoMusicTransformer_V2
 from model.video_regression import VideoRegression
 
 import json
@@ -35,7 +35,7 @@ from gradio import Markdown
 
 from pytube import YouTube
 
-from utilities.argument_funcs import parse_generate_args, print_generate_args, write_model_params
+from utilities.argument_generate_funcs import parse_generate_args, print_generate_args
 from utilities.device import get_device, use_cuda
 
 all_key_names = ['C major', 'G major', 'D major', 'A major',
@@ -368,20 +368,14 @@ class Video2music:
         if self.isPrintArgs:
           print_generate_args(args)
 
-        self.device = device
+        self.device = device       
         
-        # self.model.device = device
-        # self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        # f"{path}/beats/microsoft-deberta-v3-large.pt"
+        self.model_weights = args.model_weights
+        self.modelReg_weights = args.modelReg_weights
 
-        # self.model_weights = f"{path}/saved_models/AMT/best_loss_weights.pickle"
-        # self.modelReg_weights = f"{path}/saved_models/AMT/best_rmse_weights.pickle"
-
-        self.model_weights = "saved_models/AMT/best_loss_weights.pickle"
-        self.modelReg_weights = "saved_models/AMT/best_rmse_weights.pickle"
-
-        self.total_vf_dim = 776
         # 768 (sem) + 1 (mo) + 1 (scene) + 6 (emo)
+        self.total_vf_dim = 776        
+
         self.max_seq_video = 300
         self.max_seq_chord = 300
       
@@ -390,21 +384,27 @@ class Video2music:
         #             max_sequence_midi=2048, max_sequence_video=300, 
         #             max_sequence_chord=300, total_vf_dim=self.total_vf_dim, rpr=RPR).to(device)
 
-        if args.music_gen_version == None:            
+        if args.music_gen_version == None:        
             self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                            d_model=args.d_model, dim_feedforward=args.dim_feedforward, 
-                            max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                            max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, rpr=args.rpr).to(get_device())
-        else:
-            if args.music_gen_version == 1:
-                self.model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                            d_model=args.d_model, dim_feedforward=args.dim_feedforward,
-                            max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                            max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, rpr=False, 
-                            version=1).to(get_device())
-              
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim, 
+                        rpr=args.rpr).to(get_device())    
+        elif args.music_gen_version.startswith('1.'):
+            self.model = VideoMusicTransformer_V1(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim,
+                        rms_norm=args.rms_norm).to(get_device())
+        elif args.music_gen_version.startswith('2.'):
+            self.model = VideoMusicTransformer_V2(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim,
+                        rms_norm=args.rms_norm).to(get_device())              
         self.model.load_state_dict(torch.load(self.model_weights, map_location=get_device()))
-        self.modelReg = VideoRegression(max_sequence_video=300, total_vf_dim=self.total_vf_dim, regModel= args.regModel).to(get_device())
+
+        self.modelReg = VideoRegression(n_layers=args.n_layers_reg, d_model=args.d_model_reg, d_hidden=args.dim_feedforward_reg, use_KAN=args.use_KAN_reg, max_sequence_video=args.max_sequence_video, total_vf_dim=self.total_vf_dim, regModel=args.regModel).to(get_device())        
         self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
 
         self.model.eval()

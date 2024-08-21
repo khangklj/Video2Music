@@ -37,7 +37,7 @@ def parse_train_args():
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-regModel', type=str, default='bigru', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='bimamba+', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm

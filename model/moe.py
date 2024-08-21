@@ -95,7 +95,7 @@ class SBRN(Module):
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.router = copy.deepcopy(router)
-        self.optim = AdamW(self.router.parameters())
+        self.optim = AdamW(self.router.parameters(), lr=0.01, maximize=True)
         self.loss_func = ShannonEntropy()
 
     def _routing(self, x, k=2):
@@ -118,10 +118,9 @@ class SBRN(Module):
     
     def step(self, x, k=2):
         count = self.count_experts(x, k)
-        count /= count.sum()
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(count), requires_grad=True)
+        loss = torch.autograd.Variable(self.loss_func(count), requires_grad=True)
         loss.backward()
         self.optim.step()
 
@@ -262,7 +261,7 @@ class SelfBalanceSharedMoELayer(Module):
 
         self.gate = SBRN(router, n_experts, n_experts_per_token)
         self.register_buffer('count', torch.zeros((1, self.n_experts)))
-        self.flag = False # Flag == True => Training
+        self.flag = True # Flag == True => Training
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:

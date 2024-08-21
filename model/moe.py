@@ -261,7 +261,7 @@ class SelfBalanceSharedMoELayer(Module):
 
         self.gate = SBRN(router, n_experts, n_experts_per_token)
         self.register_buffer('count', torch.zeros((1, self.n_experts)))
-        self.flag = True # Flag == True => Training
+        self.state = 'training'
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
@@ -276,17 +276,16 @@ class SelfBalanceSharedMoELayer(Module):
         else:
             t = 1.0
 
-        if self.flag == True and self.training == False:
-            self.flag = self.training
-            # print('Expert count:', self.count[0], end='\t')
-            print('Expert distribution:', self.count.mean().item(), self.count.std().item())
-            self.count = torch.zeros((1, self.n_experts)).to(get_device())
-        else:
-            self.flag = self.training
-            self.count += self.gate.count_experts(x, k)
-
         if self.training:
             self.gate.step(x, k)
+            if self.state == 'evaluating':
+                self.state = 'training'
+                # print('Expert count:', self.count[0], end='\t')
+                print('Expert distribution:', self.count.mean().item(), self.count.std().item())
+                self.count = torch.zeros((1, self.n_experts)).to(get_device())
+        else:
+            self.count += self.gate.count_experts(x, k)  
+            self.state = 'evaluating'              
             
         weights, selected_experts = self.gate(x, k, t)
 

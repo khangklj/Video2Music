@@ -95,7 +95,7 @@ class SBRN(Module):
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.router = copy.deepcopy(router)
-        self.optim = AdamW(self.router.parameters(), lr=0.01, weight_decay=0.01)
+        self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01)
         self.loss_func = ShannonEntropy()
 
     def _routing(self, x, k=2):
@@ -248,17 +248,10 @@ class SelfBalanceSharedMoELayer(Module):
 
         if not use_KAN:
             router = nn.Linear(d_model, n_experts)
-
-            self.shared_expert = nn.Sequential(
-                nn.Linear(d_model, d_model * 2 + 1),
-                nn.SiLU(),
-                nn.Linear(d_model * 2 + 1, d_model)
-            )
         else:
             router = KANLinear(d_model, n_experts)
-            
-            self.shared_expert = KANLinear(d_model, d_model)
 
+        self.shared_expert = _get_clones(expert, 1)[0]
         self.gate = SBRN(router, n_experts, n_experts_per_token)
         self.register_buffer('count', torch.zeros((1, self.n_experts)))
         self.state = 'training'
@@ -278,6 +271,9 @@ class SelfBalanceSharedMoELayer(Module):
 
         if self.training:
             self.gate.step(x, k)
+            self.gate.step(x, k)
+            self.gate.step(x, k)
+            
             if self.state == 'evaluating':
                 self.state = 'training'
                 # print('Expert count:', self.count[0], end='\t')

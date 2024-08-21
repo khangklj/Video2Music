@@ -175,7 +175,7 @@ def train_epoch(cur_epoch, model, dataloader,
 
 def eval_model(model, dataloader, 
                eval_loss_func, eval_loss_emotion_func,
-               isVideo = True, isGenConfusionMatrix=False):
+               isVideo = True, isGenConfusionMatrix=False, isSavedConfusionMatrix=False):
     model.eval()
     avg_acc     = -1
     avg_cor     = -1
@@ -475,6 +475,11 @@ def eval_model(model, dataloader,
         plt.savefig("confusion_matrix.png")
         plt.show()
 
+        # Save chord conf_matrix
+        if isSavedConfusionMatrix:
+            with open('./log/chord.npy', 'wb') as f:
+                np.save(f, conf_matrix)
+
         # Confusion matrix (CHORD ROOT)        
         chordRootList = np.arange(1, 13)
         conf_matrix = confusion_matrix(true_root_labels, pred_root_labels, labels= chordRootList )
@@ -500,6 +505,11 @@ def eval_model(model, dataloader,
         plt.savefig("confusion_matrix_root.png")
         plt.show()
 
+        # Save chord_root conf_matrix
+        if isSavedConfusionMatrix:
+            with open('./log/chord_root.npy', 'wb') as f:
+                np.save(f, conf_matrix)        
+
         # Confusion matrix (CHORD ATTR)
         chordAttrList = np.arange(1, 14)
         conf_matrix = confusion_matrix(true_attr_labels, pred_attr_labels, labels= chordAttrList )
@@ -524,6 +534,11 @@ def eval_model(model, dataloader,
         plt.tight_layout()
         plt.savefig("confusion_matrix_quality.png")
         plt.show()
+
+        # Save chord_attr conf_matrix
+        if isSavedConfusionMatrix:
+            with open('./log/chord_attr.npy', 'wb') as f:
+                np.save(f, conf_matrix)
 
     return { "avg_total_loss" : avg_total_loss, 
              "avg_loss_chord" : avg_loss_chord, 

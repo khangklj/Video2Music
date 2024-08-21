@@ -102,6 +102,16 @@ class VideoRegression(nn.Module):
         elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
+        elif self.regModel == "moe_bimamba+":
+            expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
+            moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
+        elif self.regModel == "sharedmoe_bimamba+":
+            expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
+            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)
@@ -112,7 +122,7 @@ class VideoRegression(nn.Module):
         projection = nn.Linear
         # projection = KANLinear
         
-        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)            
 
@@ -151,7 +161,7 @@ class VideoRegression(nn.Module):
 
             out = self.dropout(out)           
             out = self.fc4(out)
-        elif self.regModel in ('bimamba', 'bimamba+'):
+        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
             vf_concat = vf_concat.permute(1,0,2)
             vf_concat = self.fc3(vf_concat)
             

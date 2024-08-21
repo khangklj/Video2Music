@@ -261,7 +261,7 @@ class SelfBalanceSharedMoELayer(Module):
 
         self.gate = SBRN(router, n_experts, n_experts_per_token)
         self.register_buffer('count', torch.zeros((1, self.n_experts)))
-        self.register_buffer('flag', self.training) # Flag == True => Training
+        self.flag = self.training # Flag == True => Training
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:

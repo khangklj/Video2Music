@@ -281,6 +281,7 @@ class SelfBalanceSharedMoELayer(Module):
             print('Expert count:', self.count)
             self.count = torch.zeros((1, self.n_experts)).to(get_device())
         else:
+            self.flag = self.training
             self.count += self.gate.count_experts(x, k)
 
         if self.training:

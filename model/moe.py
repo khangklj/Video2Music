@@ -108,12 +108,16 @@ class SBRN(Module):
         weights = F.softmax(weights / t, dim=1, dtype=torch.float).to(get_device())
         return weights, selected_experts
     
-    def step(self, x, k=2):
+    def count_experts(self, x, k=2):
         _, selected_experts = self._routing(x, k)
         
         count = torch.zeros((1, self.n_experts)).to(get_device())
         for i in range(self.n_experts):
             count[0, i] += (selected_experts == i).sum().item()
+        return count
+    
+    def step(self, x, k=2):
+        count = self.count_experts(x, k)
 
         self.optim.zero_grad()
         loss = torch.autograd.Variable(self.loss_func(count), requires_grad=True)
@@ -256,6 +260,8 @@ class SelfBalanceSharedMoELayer(Module):
             self.shared_expert = KANLinear(d_model, d_model)
 
         self.gate = SBRN(router, n_experts, n_experts_per_token)
+        self.register_buffer('count', torch.zeros((1, self.n_experts)))
+        self.register_buffer('flag', self.training) # Flag == True => Training
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
@@ -269,9 +275,15 @@ class SelfBalanceSharedMoELayer(Module):
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-            
+
+        if self.flag != self.training:
+            print(self.count)
+            self.count = torch.zeros((1, self.n_experts)).to(get_device())
+
         if self.training:
             self.gate.step(x, k)
+        else:
+            self.count += self.gate.count_experts(x, k)
 
         weights, selected_experts = self.gate(x, k, t)
 

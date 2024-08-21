@@ -281,7 +281,7 @@ class SelfBalanceSharedMoELayer(Module):
             if self.state == 'evaluating':
                 self.state = 'training'
                 # print('Expert count:', self.count[0], end='\t')
-                print(self.count.std().item(), end='\t')
+                print("{:.2f}".format(self.count.std().item()), end='\t')
                 self.count = torch.zeros((1, self.n_experts)).to(get_device())
                 print()
         else:

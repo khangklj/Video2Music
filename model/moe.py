@@ -97,7 +97,7 @@ class SBRN(Module):
         self.router = copy.deepcopy(router)
         self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01)
         self.loss_func = ShannonEntropy()
-        self.count = torch.zeros((1, self.n_experts)).to(get_device())
+        self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
 
     def _routing(self, x, k=2):
         gate_logits = self.router(x)
@@ -110,7 +110,7 @@ class SBRN(Module):
         return weights, selected_experts
     
     def reset_count(self):
-        self.count = torch.zeros((1, self.n_experts)).to(get_device())
+        self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
 
     def count_experts(self, x, k=2):
         _, selected_experts = self._routing(x, k)
@@ -277,12 +277,10 @@ class SelfBalanceSharedMoELayer(Module):
 
         if self.training and self.state == 'evaluating':
             self.state = 'training'
-            # print(self.gate.count.min().item(), self.gate.count.max().item())
             self.gate.reset_count()
             
         if not self.training and self.state == 'training':
             self.state = 'evaluating'
-            # print(self.gate.count.min().item(), self.gate.count.max().item())
             print(self.gate.count[0])
             self.gate.reset_count()
         

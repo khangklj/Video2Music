@@ -127,6 +127,8 @@ class SBRN(Module):
         loss.backward()
         self.optim.step()
 
+        del tmp
+
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
     def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None):
@@ -272,13 +274,14 @@ class SelfBalanceSharedMoELayer(Module):
             t = 1.0
 
         if self.training:
+            self.gate.reset_count()
             self.gate.step(x, k)
         else:
             self.gate.count_experts(x, k)
 
         if self.training and self.state == 'evaluating':
             self.state = 'training'
-            print(self.gate.count[0])
+            print(self.gate.count.min().item(), self.gate.count.max().item())
             self.gate.reset_count()
             
         if not self.training and self.state == 'training':

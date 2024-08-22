@@ -120,9 +120,10 @@ class SBRN(Module):
     
     def step(self, x, k=2):
         self.count_experts(x, k)
+        tmp = copy.deepcopy(self.count)
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(self.count), requires_grad=True)
+        loss = torch.autograd.Variable(1.0 / self.loss_func(tmp), requires_grad=True)
         loss.backward()
         self.optim.step()
 

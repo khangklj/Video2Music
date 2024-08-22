@@ -95,8 +95,9 @@ class SBRN(Module):
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.router = copy.deepcopy(router)
-        self.optim = AdamW(self.router.parameters(), lr=0.01, weight_decay=0.01)
+        self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01)
         self.loss_func = ShannonEntropy()
+        self.count = torch.zeros((1, self.n_experts)).to(get_device())
 
     def _routing(self, x, k=2):
         gate_logits = self.router(x)
@@ -108,19 +109,20 @@ class SBRN(Module):
         weights = F.softmax(weights / t, dim=1, dtype=torch.float).to(get_device())
         return weights, selected_experts
     
+    def reset_count(self):
+        self.count = torch.zeros((1, self.n_experts)).to(get_device())
+
     def count_experts(self, x, k=2):
         _, selected_experts = self._routing(x, k)
         
-        count = torch.zeros((1, self.n_experts)).to(get_device())
         for i in range(self.n_experts):
-            count[0, i] += (selected_experts == i).sum().item()
-        return count
+            self.count[0, i] += (selected_experts == i).sum().item()
     
     def step(self, x, k=2):
-        count = self.count_experts(x, k)
+        self.count_experts(x, k)
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(count), requires_grad=True)
+        loss = torch.autograd.Variable(1.0 / self.loss_func(self.count), requires_grad=True)
         loss.backward()
         self.optim.step()
 
@@ -270,17 +272,17 @@ class SelfBalanceSharedMoELayer(Module):
             t = 1.0
 
         if self.training:
-            self.gate.step(x, k)
-            self.gate.step(x, k)
-            self.gate.step(x, k)
+            for _ in range(1):
+                self.gate.step(x, k)
             
             if self.state == 'evaluating':
                 self.state = 'training'
                 # print('Expert count:', self.count[0], end='\t')
                 # print("{:.2f}".format(self.count.std().item()), end='\t')
                 print(self.count.min().item(), self.count.max().item())
-                self.count = torch.zeros((1, self.n_experts)).to(get_device())
+                self.gate.reset_count()
         else:
+            self.gate.reset_count()
             self.count += self.gate.count_experts(x, k)  
             self.state = 'evaluating'              
             

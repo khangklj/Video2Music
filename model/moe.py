@@ -269,11 +269,6 @@ class SelfBalanceSharedMoELayer(Module):
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-        
-        if self.training:
-            self.gate.step(x, k)
-        else:
-            self.gate.count_experts(x, k)
 
         if self.training and self.state == 'evaluating':
             self.state = 'training'
@@ -283,6 +278,11 @@ class SelfBalanceSharedMoELayer(Module):
             self.state = 'evaluating'
             print(self.gate.count[0])
             self.gate.reset_count()
+
+        if self.training:
+            self.gate.step(x, k)
+        else:
+            self.gate.count_experts(x, k)
         
         weights, selected_experts = self.gate(x, k, t)
 

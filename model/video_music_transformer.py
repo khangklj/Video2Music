@@ -510,11 +510,11 @@ class VideoMusicTransformer_V3(nn.Module):
 
         # Encoder
         encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
-        encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
+        encoder = TransformerEncoder(encoder_layer, 1, norm)
 
         # Decoder
         decoder_layer = TransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
-        decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
+        decoder = TransformerDecoder(decoder_layer, 1, norm)
 
         # Full model
         self.transformer = nn.Transformer(

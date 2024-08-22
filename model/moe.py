@@ -95,7 +95,7 @@ class SBRN(Module):
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.router = copy.deepcopy(router)
-        self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01)
+        self.optim = AdamW(self.router.parameters(), lr=0.01, weight_decay=0.01)
         self.loss_func = ShannonEntropy()
 
     def _routing(self, x, k=2):
@@ -120,7 +120,7 @@ class SBRN(Module):
         count = self.count_experts(x, k)
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(count) + count.std().item(), requires_grad=True)
+        loss = torch.autograd.Variable(1.0 / self.loss_func(count), requires_grad=True)
         loss.backward()
         self.optim.step()
 
@@ -277,8 +277,8 @@ class SelfBalanceSharedMoELayer(Module):
             if self.state == 'evaluating':
                 self.state = 'training'
                 # print('Expert count:', self.count[0], end='\t')
-                print("{:.2f}".format(self.count.std().item()), end='\t')
-                # print(f'\nMin: {self.count.min()}, Max: {self.count.max()}')
+                # print("{:.2f}".format(self.count.std().item()), end='\t')
+                print(self.count.min(), self.count.max())
                 self.count = torch.zeros((1, self.n_experts)).to(get_device())
         else:
             self.count += self.gate.count_experts(x, k)  

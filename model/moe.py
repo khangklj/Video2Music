@@ -278,12 +278,11 @@ class SelfBalanceSharedMoELayer(Module):
             self.gate.step(x, k)
         else:
             self.gate.count_experts(x, k)
-            print(self.gate.count[0])            
 
         if self.training and self.state == 'evaluating':
             self.state = 'training'
             # print(self.gate.count.min().item(), self.gate.count.max().item())
-            # print(self.gate.count[0])
+            print(self.gate.count[0])
             self.gate.reset_count()
             
         if not self.training and self.state == 'training':

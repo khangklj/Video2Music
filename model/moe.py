@@ -269,8 +269,6 @@ class SelfBalanceSharedMoELayer(Module):
             t = self.temperature_scheduler.getT()
         else:
             t = 1.0
-
-        self.gate.step(x, k)
         
         if self.training and self.state == 'evaluating':
             self.state = 'training'
@@ -282,7 +280,8 @@ class SelfBalanceSharedMoELayer(Module):
             # print(self.gate.count.min().item(), self.gate.count.max().item())
             print(self.gate.count[0])
             self.gate.reset_count()
-            
+        
+        self.gate.step(x, k)    
         weights, selected_experts = self.gate(x, k, t)
 
         out = torch.zeros_like(x)

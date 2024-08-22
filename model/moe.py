@@ -270,6 +270,11 @@ class SelfBalanceSharedMoELayer(Module):
         else:
             t = 1.0
         
+        if self.training:
+            self.gate.step(x, k)
+        else:
+            self.gate.count_experts(x, k)
+
         if self.training and self.state == 'evaluating':
             self.state = 'training'
             # print(self.gate.count.min().item(), self.gate.count.max().item())
@@ -281,7 +286,6 @@ class SelfBalanceSharedMoELayer(Module):
             print(self.gate.count[0])
             self.gate.reset_count()
         
-        self.gate.step(x, k)    
         weights, selected_experts = self.gate(x, k, t)
 
         out = torch.zeros_like(x)

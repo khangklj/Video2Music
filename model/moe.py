@@ -85,7 +85,7 @@ class ShannonEntropy(Module):
     def forward(self, x: Tensor): # x.shape = (batch_size, n)
         x /= x.sum(dim=1) # get probability
         x += self.eps # prevent log(0)
-        entropy = -torch.sum(x * (torch.log(x) / torch.log(torch.Tensor(6))), dim=1)
+        entropy = -torch.sum(x * (torch.log(x) / 1.79175946923), dim=1) # 1.79175946923 = ln(6)
         return entropy.mean()
 
 # Self-Balance Routing Network

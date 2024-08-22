@@ -120,7 +120,7 @@ class SBRN(Module):
         count = self.count_experts(x, k)
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(count), requires_grad=True)
+        loss = torch.autograd.Variable(1.0 / self.loss_func(count) + count.std().item(), requires_grad=True)
         loss.backward()
         self.optim.step()
 
@@ -278,6 +278,7 @@ class SelfBalanceSharedMoELayer(Module):
                 self.state = 'training'
                 # print('Expert count:', self.count[0], end='\t')
                 print("{:.2f}".format(self.count.std().item()), end='\t')
+                print(f'\nMin: {self.count.min()}, Max: {self.count.max()}')
                 self.count = torch.zeros((1, self.n_experts)).to(get_device())
         else:
             self.count += self.gate.count_experts(x, k)  

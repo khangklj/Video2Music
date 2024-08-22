@@ -274,7 +274,7 @@ class SelfBalanceSharedMoELayer(Module):
             t = 1.0
 
         if self.training:
-            self.gate.reset_count()
+            # self.gate.reset_count()
             self.gate.step(x, k)
         else:
             self.gate.count_experts(x, k)
@@ -288,6 +288,7 @@ class SelfBalanceSharedMoELayer(Module):
         if not self.training and self.state == 'training':
             self.state = 'evaluating'
             # print(self.gate.count.min().item(), self.gate.count.max().item())
+            # print(self.gate.count[0])
             self.gate.reset_count()
         
         weights, selected_experts = self.gate(x, k, t)

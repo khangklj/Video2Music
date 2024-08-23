@@ -123,10 +123,11 @@ class SBRN(Module):
         tmp = copy.deepcopy(self.count)
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(tmp), requires_grad=True)
+        loss = torch.autograd.Variable(1.0 / self.loss_func(self.count), requires_grad=True)
         loss.backward()
         self.optim.step()
 
+        self.count = tmp
         del tmp
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211

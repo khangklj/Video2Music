@@ -95,7 +95,7 @@ class SBRN(Module):
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.router = copy.deepcopy(router)
-        self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01)
+        self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01, maximize=True)
         self.loss_func = ShannonEntropy()
         self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
 
@@ -123,7 +123,7 @@ class SBRN(Module):
         tmp = copy.deepcopy(self.count)
 
         self.optim.zero_grad()
-        loss = torch.autograd.Variable(1.0 / self.loss_func(self.count), requires_grad=True)
+        loss = torch.autograd.Variable(self.loss_func(self.count), requires_grad=True)
         loss.backward()
         self.optim.step()
 

@@ -120,15 +120,12 @@ class SBRN(Module):
     
     def step(self, x, k=2):
         self.count_experts(x, k)
-        tmp = copy.deepcopy(self.count)
 
-        self.optim.zero_grad()
         loss = torch.autograd.Variable(self.loss_func(self.count), requires_grad=True)
         loss.backward()
         self.optim.step()
 
-        self.count = tmp
-        del tmp
+        self.optim.zero_grad()
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
@@ -277,14 +274,13 @@ class SelfBalanceSharedMoELayer(Module):
         if self.training:
             # self.gate.reset_count()
             self.gate.step(x, k)
-            print(self.gate.count.sum().item())
         else:
             self.gate.count_experts(x, k)
 
         if self.training and self.state == 'evaluating':
             self.state = 'training'
-            # print(round(self.gate.count.std().item()), end='\t')
-            # print(self.gate.count.min().item(), self.gate.count.max().item(), sep='\t', end='\t')
+            print(round(self.gate.count.std().item()), end='\t')
+            print(self.gate.count.min().item(), self.gate.count.max().item(), sep='\t', end='\t')
             # print(self.gate.count[0])
             self.gate.reset_count()
             

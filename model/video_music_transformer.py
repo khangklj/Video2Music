@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torchtune
 from torch.nn.modules.normalization import LayerNorm
 import random
 import numpy as np
@@ -489,7 +490,8 @@ class VideoMusicTransformer_V3(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = MyRMSNorm(self.d_model, batch_first=False)
+            # norm = MyRMSNorm(self.d_model, batch_first=False)
+            norm = torchtune.modules.RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 

@@ -503,17 +503,18 @@ class VideoMusicTransformer_V3(nn.Module):
         # version_name = '3.1'
         topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        moelayer = SelfBalanceSharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                  n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                  topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                  use_KAN=use_KAN)
+        moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                topk_scheduler=topk_scheduler, temperature_scheduler=None,
+                                use_KAN=use_KAN)
 
+        pre_norm = True
         # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
+        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
+        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model

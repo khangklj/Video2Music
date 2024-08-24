@@ -806,53 +806,75 @@ def custom_multi_head_attention_forward(
         return attn_output, None
 
 class TransformerEncoderLayer(Module):
-    def __init__(self, self_att_layer, ff_layer, norm=None, dropout=0.1):
+    def __init__(self, self_att_layer, ff_layer, pre_norm=False, norm=None, dropout=0.1):
         super(TransformerEncoderLayer, self).__init__()
         self.self_attn = deepcopy(self_att_layer)
         self.ff = deepcopy(ff_layer)
+        self.pre_norm = pre_norm
 
         self.norm1, self.norm2 = _get_clones(norm, 2)
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
-        src2 = self.self_attn(src, src, src, attn_mask=src_mask,
-                              key_padding_mask=src_key_padding_mask)[0]
-        src = src + src2
-        src = self.norm1(src)
-        src2 = self.ff(src)
-        src = src + src2
-        src = self.norm2(src)
+        if self.pre_norm == False:
+            src2 = self.self_attn(src, src, src, attn_mask=src_mask,
+                                key_padding_mask=src_key_padding_mask)[0]
+            src = src + src2
+            src = self.norm1(src)
+            src2 = self.ff(src)
+            src = src + src2
+            src = self.norm2(src)
+        else:
+            src2 = self.norm1(src)
+            src2 = self.self_attn(src, src, src, attn_mask=src_mask,
+                                key_padding_mask=src_key_padding_mask)[0]
+            src = src + src2
+
+            src2 = self.norm2(src)
+            src2 = self.ff(src)
+            src = src + src2
         return src
 
 class TransformerDecoderLayer(Module):
-    def __init__(self, self_att_layer, cross_att_layer, ff_layer, norm=None, dropout=0.1):
+    def __init__(self, self_att_layer, cross_att_layer, ff_layer, pre_norm=False, norm=None, dropout=0.1):
         super(TransformerDecoderLayer, self).__init__()
         
         self.self_attn = deepcopy(self_att_layer)
         self.cross_attn = deepcopy(cross_att_layer)
         self.ff = deepcopy(ff_layer)
+        self.pre_norm = pre_norm
         
         self.norm1, self.norm2, self.norm3 = _get_clones(norm, 3)
-        # self.dropout1 = Dropout(dropout)
-        # self.dropout2 = Dropout(dropout)
-        # self.dropout3 = Dropout(dropout)
         
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
                 tgt_key_padding_mask=None, memory_key_padding_mask=None):
-        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
-                              key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = tgt + tgt2
-        tgt = self.norm1(tgt)
+        if self.pre_norm == False:
+            tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
+                                key_padding_mask=tgt_key_padding_mask)[0]
+            tgt = tgt + tgt2
+            tgt = self.norm1(tgt)
 
-        tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=memory_mask,
-                                   key_padding_mask=memory_key_padding_mask)[0]
-        
-        tgt = tgt + tgt2
-        tgt = self.norm2(tgt)
+            tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=memory_mask,
+                                    key_padding_mask=memory_key_padding_mask)[0]
+            
+            tgt = tgt + tgt2
+            tgt = self.norm2(tgt)
 
-        tgt2 = self.ff(tgt)
-        tgt = tgt + tgt2
-        tgt = self.norm3(tgt)
+            tgt2 = self.ff(tgt)
+            tgt = tgt + tgt2
+            tgt = self.norm3(tgt)
+        else:
+            tgt2 = self.norm1(tgt)
+            tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
+                                    key_padding_mask=tgt_key_padding_mask)[0]
+            tgt = tgt + tgt2
+            tgt2 = self.norm2(tgt)
+            tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=memory_mask,
+                                    key_padding_mask=memory_key_padding_mask)[0]
+            tgt = tgt + tgt2
+            tgt2 = self.norm3(tgt)
+            tgt2 = self.ff(tgt2)
+            tgt = tgt + tgt2
         return tgt
 
 class TransformerEncoder(Module):

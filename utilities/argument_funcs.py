@@ -37,9 +37,9 @@ def parse_train_args():
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
 
-    parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
+    parser.add_argument('-rms_norm', type=bool, default=True, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=str, default='3.1', help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default='3.2', help="Version number. None is original musgic generation AMT model")
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -123,7 +123,7 @@ def parse_eval_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
-    parser.add_argument('-music_gen_version', type=str, default='3.1', help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default='3.2', help="Version number. None is original musgic generation AMT model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
     if IS_VIDEO:

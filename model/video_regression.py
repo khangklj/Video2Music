@@ -76,7 +76,7 @@ class VideoRegression(nn.Module):
         self.regModel = regModel
 
         # CONFIG NORM FIRST BIMAMBA+
-        norm_first = True
+        norm_first = False
 
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)

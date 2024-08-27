@@ -513,7 +513,7 @@ class VideoMusicTransformer_V3(nn.Module):
             
             encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
             decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
-        elif version_name == '3.2':
+        elif version_name in ('3.2', '3.3'):
             att = AngleMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
             expert = AngleGLUExpert(self.d_model, self.d_ff)
 
@@ -524,10 +524,11 @@ class VideoMusicTransformer_V3(nn.Module):
                                     topk_scheduler=topk_scheduler, temperature_scheduler=None,
                                     use_KAN=use_KAN)
             
+            if version_name == '3.3':
+                norm = nn.Identity()
+
             encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout)
             decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
-
-        
 
         # Encoder
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)

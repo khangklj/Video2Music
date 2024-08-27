@@ -46,7 +46,7 @@ class GLUExpert(Module):
     
 class AngleGLUExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
-        super(GLUExpert, self).__init__()
+        super(AngleGLUExpert, self).__init__()
         self.linear1 = Linear(d_model, d_ff)
         self.linear2 = Linear(d_ff, d_model // 2) # Modified from GLUExpert
         self.gate = Linear(d_model, d_ff)

@@ -40,7 +40,22 @@ class GLUExpert(Module):
     def forward(self, x):
         x_ff = self.linear1(x)
         x_gated = self.gate(x)
-        x_ff = x_ff * F.sigmoid(x_gated)
+        x_ff = x_ff * F.silu(x_gated)
+        x_ff = self.linear2(x_ff)
+        return x_ff
+    
+class AngleGLUExpert(Module):
+    def __init__(self, d_model, d_ff=2048, dropout=0.1):
+        super(GLUExpert, self).__init__()
+        self.linear1 = Linear(d_model, d_ff)
+        self.linear2 = Linear(d_ff, d_model // 2) # Modified from GLUExpert
+        self.gate = Linear(d_model, d_ff)
+        # self.dropout = Dropout(dropout)
+
+    def forward(self, x):
+        x_ff = self.linear1(x)
+        x_gated = self.gate(x)
+        x_ff = x_ff * F.silu(x_gated)
         x_ff = self.linear2(x_ff)
         return x_ff
 

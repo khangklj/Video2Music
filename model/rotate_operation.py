@@ -1,6 +1,18 @@
 # https://blog.eleuther.ai/rotary-embeddings/
 import torch
 
+# Rotary Skip Connection
+class RoSC(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x, angle, seq_dim=1):
+        emb = torch.cat((angle, angle), dim=-1).to(x.device)
+        emb_cos = emb.cos()[:, None, :]
+        emb_sin = emb.sin()[:, None, :]
+
+        return apply_rotary_pos_emb(x, emb_cos, emb_sin)
+
 class Rotary(torch.nn.Module):
     def __init__(self, dim, base=10000):
         super().__init__()

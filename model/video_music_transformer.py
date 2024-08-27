@@ -504,21 +504,30 @@ class VideoMusicTransformer_V3(nn.Module):
             att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
             expert = GLUExpert(self.d_model, self.d_ff)
             
+            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        
+            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
+                                    use_KAN=use_KAN)
+            
             encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
             decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
         elif version_name == '3.2':
             att = AngleMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
             expert = AngleGLUExpert(self.d_model, self.d_ff)
 
+            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        
+            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
+                                    use_KAN=use_KAN)
+            
             encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout)
             decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
 
-        topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                use_KAN=use_KAN)
 
         # Encoder
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)

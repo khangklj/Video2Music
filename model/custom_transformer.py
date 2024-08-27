@@ -1004,9 +1004,7 @@ class RoSCTransformerEncoderLayer(Module):
         src2 = self.norm1(src)
         src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                             key_padding_mask=src_key_padding_mask)[0]
-        print(src.shape, src2.shape)
         src = self.rosc(src, src2)
-        print(src.shape)
 
 
         src2 = self.norm2(src)

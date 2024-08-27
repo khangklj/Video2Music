@@ -224,11 +224,11 @@ class SharedMoELayer(Module):
         else:
             t = 1.0
             
-        print(x.shape)
+        # print(x.shape)
         gate_logits = self.gate(x)
 
         weights, selected_experts = torch.topk(gate_logits, k)
-        print(selected_experts.shape)
+        # print(selected_experts.shape)
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):

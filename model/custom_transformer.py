@@ -1027,7 +1027,10 @@ class RoSCTransformerDecoderLayer(Module):
         tgt2 = self.norm1(tgt)
         tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
                                 key_padding_mask=tgt_key_padding_mask)[0]
+        print(tgt2.shape)
         tgt = self.rosc(tgt, tgt2)
+        print(tgt.shape)
+        
         tgt2 = self.norm2(tgt)
         tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=memory_mask,
                                 key_padding_mask=memory_key_padding_mask)[0]

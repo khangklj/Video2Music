@@ -8,8 +8,8 @@ class RoSC(torch.nn.Module):
 
     def forward(self, x, angle):
         emb = torch.cat((angle, angle), dim=-1).to(x.device)
-        emb_cos = emb.cos()[None, :, :]
-        emb_sin = emb.sin()[None, :, :]
+        emb_cos = emb.cos()
+        emb_sin = emb.sin()
 
         return apply_rotary_pos_emb(x, emb_cos, emb_sin)
 

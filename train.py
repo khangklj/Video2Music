@@ -191,7 +191,7 @@ def main( vm = "" , isPrintArgs = True ):
     elif args.music_gen_version == '3.3':
         opt = Lion(model.parameters(), lr=0.001, betas=(0.95, 0.98), weight_decay=0.1)
         
-    if(args.lr is None):
+    if(args.lr is None and args.music_gen_version != '3.3'):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:
         lr_scheduler = None

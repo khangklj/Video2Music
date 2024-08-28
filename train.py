@@ -189,12 +189,10 @@ def main( vm = "" , isPrintArgs = True ):
     elif args.music_gen_version[:2] in ('1.', '2.', '3.') and args.music_gen_version != '3.3':
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.music_gen_version == '3.3':
-        opt = Lion(model.parameters(), lr=lr, betas=(0.95, 0.98), weight_decay=0.1)
+        opt = Lion(model.parameters(), lr=0.0005, betas=(0.95, 0.98), weight_decay=0.1)
         
-    if(args.lr is None and args.music_gen_version != '3.3'):
+    if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
-    elif(args.lr is None and args.music_gen_version == '3.3'):
-        lr_scheduler = CosineAnnealingLR(opt, T_max=25, eta_min=0.001)
     else:
         lr_scheduler = None
 

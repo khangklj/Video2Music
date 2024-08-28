@@ -524,8 +524,13 @@ class VideoMusicTransformer_V3(nn.Module):
                                     topk_scheduler=topk_scheduler, temperature_scheduler=None,
                                     use_KAN=use_KAN)
             
-            encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout)
-            decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
+            if version_name == '3.2':
+                angle_decay = False
+            elif version_name == '3.3':
+                angle_decay = True
+
+            encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout, angle_decay)
+            decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout, angle_decay)
 
         # Encoder
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)

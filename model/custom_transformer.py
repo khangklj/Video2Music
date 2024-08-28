@@ -939,12 +939,12 @@ class TransformerEncoderLayer(Module):
             src = self.norm2(src)
         else:
             src2 = self.norm1(src)
-            src2 = self.self_attn(src, src, src, attn_mask=src_mask,
+            src2 = self.self_attn(src2, src2, src2, attn_mask=src_mask,
                                 key_padding_mask=src_key_padding_mask)[0]
             src = src + src2
 
             src2 = self.norm2(src)
-            src2 = self.ff(src)
+            src2 = self.ff(src2)
             src = src + src2
         return src
 
@@ -978,65 +978,89 @@ class TransformerDecoderLayer(Module):
             tgt = self.norm3(tgt)
         else:
             tgt2 = self.norm1(tgt)
-            tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
+            tgt2 = self.self_attn(tgt2, tgt2, tgt2, attn_mask=tgt_mask,
                                     key_padding_mask=tgt_key_padding_mask)[0]
+            
             tgt = tgt + tgt2
             tgt2 = self.norm2(tgt)
-            tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=memory_mask,
+            tgt2 = self.cross_attn(tgt2, memory, memory, attn_mask=memory_mask,
                                     key_padding_mask=memory_key_padding_mask)[0]
             tgt = tgt + tgt2
+
             tgt2 = self.norm3(tgt)
             tgt2 = self.ff(tgt2)
             tgt = tgt + tgt2
         return tgt
 
 class RoSCTransformerEncoderLayer(Module):
-    def __init__(self, self_att_layer, ff_layer, norm=None, dropout=0.1):
+    def __init__(self, self_att_layer, ff_layer, norm=None, dropout=0.1, angle_decay=False):
         super(RoSCTransformerEncoderLayer, self).__init__()
         self.self_attn = deepcopy(self_att_layer)
         self.ff = deepcopy(ff_layer)
         self.rosc = RoSC()
+        self.angle_decay = angle_decay
 
         self.norm1, self.norm2 = _get_clones(norm, 2)
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
         src2 = self.norm1(src)
-        src2 = self.self_attn(src, src, src, attn_mask=src_mask,
+        angle = self.self_attn(src2, src2, src2, attn_mask=src_mask,
                             key_padding_mask=src_key_padding_mask)[0]
-        src = self.rosc(src, src2)
+        if self.training and self.angle_decay:
+            loss = 1.0/24 * angle.mean()
+            loss.backward()
 
+        src = self.rosc(src, angle)
 
         src2 = self.norm2(src)
-        src2 = self.ff(src)
+        angle = self.ff(src2)
+        if self.training and self.angle_decay:
+            loss = 1.0/24 * angle.mean()
+            loss.backward()
+
         src = self.rosc(src, src2)
         return src
 
 class RoSCTransformerDecoderLayer(Module):
-    def __init__(self, self_att_layer, cross_att_layer, ff_layer, norm=None, dropout=0.1):
+    def __init__(self, self_att_layer, cross_att_layer, ff_layer, norm=None, dropout=0.1, angle_decay=False):
         super(RoSCTransformerDecoderLayer, self).__init__()
         
         self.self_attn = deepcopy(self_att_layer)
         self.cross_attn = deepcopy(cross_att_layer)
         self.ff = deepcopy(ff_layer)
         self.rosc = RoSC()
+        self.angle_decay = angle_decay
         
         self.norm1, self.norm2, self.norm3 = _get_clones(norm, 3)
         
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
                 tgt_key_padding_mask=None, memory_key_padding_mask=None):
         tgt2 = self.norm1(tgt)
-        tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
+        angle = self.self_attn(tgt2, tgt2, tgt2, attn_mask=tgt_mask,
                                 key_padding_mask=tgt_key_padding_mask)[0]
-        tgt = self.rosc(tgt, tgt2)
+        if self.training and self.angle_decay:
+            loss = 1.0/24 * angle.mean()
+            loss.backward()
+            
+        tgt = self.rosc(tgt, angle)
 
         tgt2 = self.norm2(tgt)
-        tgt2 = self.cross_attn(tgt, memory, memory, attn_mask=memory_mask,
+        angle = self.cross_attn(tgt2, memory, memory, attn_mask=memory_mask,
                                 key_padding_mask=memory_key_padding_mask)[0]
-        tgt = self.rosc(tgt, tgt2)
+        if self.training and self.angle_decay:
+            loss = 1.0/24 * angle.mean()
+            loss.backward()
+
+        tgt = self.rosc(tgt, angle)
+        
         tgt2 = self.norm3(tgt)
-        tgt2 = self.ff(tgt2)
-        tgt = self.rosc(tgt, tgt2)
+        angle = self.ff(tgt2)
+        if self.training and self.angle_decay:
+            loss = 1.0/24 * angle.mean()
+            loss.backward()
+            
+        tgt = self.rosc(tgt, angle)
         return tgt
 
 class TransformerEncoder(Module):

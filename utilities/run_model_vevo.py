@@ -108,9 +108,13 @@ def train_epoch(cur_epoch, model, dataloader,
                 if (batch_num + 1) % 4 == 0:
                     opt.step()
                     opt.zero_grad()
+                    
+                    if (lr_scheduler is not None):
+                        lr_scheduler.step()
+                        lr_scheduler.step()
+                        lr_scheduler.step()
+                        lr_scheduler.step()
 
-                if(lr_scheduler is not None):
-                    lr_scheduler.step()
 
         else:
             # music transformer

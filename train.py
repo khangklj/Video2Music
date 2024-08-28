@@ -186,10 +186,10 @@ def main( vm = "" , isPrintArgs = True ):
     ##### Optimizer #####
     if args.music_gen_version == None:
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    elif args.music_gen_version[:2] in ('1.', '2.', '3.'):
+    elif args.music_gen_version[:2] in ('1.', '2.', '3.') and args.music_gen_version != '3.3':
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    # elif args.music_gen_version[:2] == '3.':
-    #     opt = Lion(model.parameters(), lr=lr, betas=(0.95, 0.98), weight_decay=0.1)
+    elif args.music_gen_version == '3.3':
+        opt = Lion(model.parameters(), lr=lr, betas=(0.95, 0.98), weight_decay=0.1)
         
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)

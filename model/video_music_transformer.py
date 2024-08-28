@@ -524,9 +524,6 @@ class VideoMusicTransformer_V3(nn.Module):
                                     topk_scheduler=topk_scheduler, temperature_scheduler=None,
                                     use_KAN=use_KAN)
             
-            if version_name == '3.3':
-                norm = nn.Identity()
-
             encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout)
             decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
 

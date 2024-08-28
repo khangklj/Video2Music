@@ -20,7 +20,6 @@ def train_epoch(cur_epoch, model, dataloader,
     model.train()
     for batch_num, batch in enumerate(dataloader):
         time_before = time.time()
-        opt.zero_grad()
 
         x   = batch["x"].to(get_device())
         tgt = batch["tgt"].to(get_device())
@@ -105,7 +104,11 @@ def train_epoch(cur_epoch, model, dataloader,
                 loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
                 total_loss.backward()
-                opt.step()
+                
+                if (batch_num + 1) % 4 == 0:
+                    opt.step()
+                    opt.zero_grad()
+
                 if(lr_scheduler is not None):
                     lr_scheduler.step()
 

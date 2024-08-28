@@ -1019,7 +1019,7 @@ class RoSCTransformerEncoderLayer(Module):
             loss = 1.0/24 * angle.mean()
             loss.backward()
 
-        src = self.rosc(src, src2)
+        src = self.rosc(src, angle)
         return src
 
 class RoSCTransformerDecoderLayer(Module):

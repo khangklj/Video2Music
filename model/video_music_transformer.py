@@ -296,6 +296,7 @@ class VideoMusicTransformer_V2(nn.Module):
                                   topk_scheduler=topk_scheduler, temperature_scheduler=temperature_scheduler,
                                   use_KAN=use_KAN)
 
+        print(norm)
         # Encoder
         encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)

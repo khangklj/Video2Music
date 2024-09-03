@@ -40,7 +40,22 @@ class GLUExpert(Module):
     def forward(self, x):
         x_ff = self.linear1(x)
         x_gated = self.gate(x)
-        x_ff = x_ff * F.sigmoid(x_gated)
+        x_ff = x_ff * F.silu(x_gated)
+        x_ff = self.linear2(x_ff)
+        return x_ff
+    
+class AngleGLUExpert(Module):
+    def __init__(self, d_model, d_ff=2048, dropout=0.1):
+        super(AngleGLUExpert, self).__init__()
+        self.linear1 = Linear(d_model, d_ff)
+        self.linear2 = Linear(d_ff, d_model // 2) # Modified from GLUExpert
+        self.gate = Linear(d_model, d_ff)
+        # self.dropout = Dropout(dropout)
+
+    def forward(self, x):
+        x_ff = self.linear1(x)
+        x_gated = self.gate(x)
+        x_ff = x_ff * F.silu(x_gated)
         x_ff = self.linear2(x_ff)
         return x_ff
 
@@ -191,16 +206,10 @@ class SharedMoELayer(Module):
 
         if not use_KAN:
             self.gate = nn.Linear(d_model, n_experts)
-
-            self.shared_expert = nn.Sequential(
-                nn.Linear(d_model, d_model * 2 + 1),
-                nn.SiLU(),
-                nn.Linear(d_model * 2 + 1, d_model)
-            )
         else:
             self.gate = KANLinear(d_model, n_experts)
-            
-            self.shared_expert = KANLinear(d_model, d_model)
+
+        self.shared_expert = _get_clones(expert, 1)[0]
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
@@ -215,11 +224,12 @@ class SharedMoELayer(Module):
         else:
             t = 1.0
             
+        # print(x.shape)
         gate_logits = self.gate(x)
 
         weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
-        out = torch.zeros_like(x)
+        out = torch.zeros((*x.shape[:-1], self.shared_expert.linear2.out_features), device=get_device())
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             

@@ -10,7 +10,7 @@ from .positional_encoding import PositionalEncoding
 from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
 from efficient_kan import KANLinear
 from .custom_transformer import *
-from .rope import Rotary
+from .rotate_operation import Rotary
 from .moe import *
 from datetime import datetime
 import json
@@ -47,8 +47,9 @@ class VideoMusicTransformer_V1(nn.Module):
         # Add condition (minor or major)
         self.condition_linear = nn.Linear(1, self.d_model)
         
-        if rms_norm == True:
-            norm = MyRMSNorm(self.d_model, batch_first=False)
+        # Transformer
+        if rms_norm:
+            norm = torchtune.modules.RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
@@ -269,7 +270,7 @@ class VideoMusicTransformer_V2(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = MyRMSNorm(self.d_model, batch_first=False)
+            norm = torchtune.modules.RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
@@ -490,33 +491,51 @@ class VideoMusicTransformer_V3(nn.Module):
         
         # Transformer
         if rms_norm:
-            # norm = MyRMSNorm(self.d_model, batch_first=False)
             norm = torchtune.modules.RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
+        pre_norm = True
         RoPE = Rotary(self.d_model)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff)
-        att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
+        if version_name == '3.1':
+            att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
+            expert = GLUExpert(self.d_model, self.d_ff)
+            
+            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        # version_name = '3.1'
-        topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
-        
-        moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                use_KAN=use_KAN)
+            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
+                                    use_KAN=use_KAN)
+            
+            encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
+            decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
+        elif version_name in ('3.2', '3.3'):
+            att = AngleMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
+            expert = AngleGLUExpert(self.d_model, self.d_ff)
 
-        pre_norm = True
+            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        
+            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
+                                    use_KAN=use_KAN)
+            
+            if version_name == '3.2':
+                angle_decay = False
+            elif version_name == '3.3':
+                angle_decay = True
+
+            encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout, angle_decay)
+            decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout, angle_decay)
+
         # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model

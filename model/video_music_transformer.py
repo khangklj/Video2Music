@@ -63,11 +63,11 @@ class VideoMusicTransformer_V1(nn.Module):
             moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
 
         # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
+        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
+        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model
@@ -297,11 +297,11 @@ class VideoMusicTransformer_V2(nn.Module):
                                   use_KAN=use_KAN)
 
         # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, norm, self.dropout)
+        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, norm, self.dropout)
+        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model

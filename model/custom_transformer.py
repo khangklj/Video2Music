@@ -763,6 +763,7 @@ def custom_multi_head_attention_forward(
 
     # RoPE here - OUR MODIFY
     if RoPE is not None:
+        print(q.shape)
         q = RoPE.forward(q)
         k = RoPE.forward(k)
 

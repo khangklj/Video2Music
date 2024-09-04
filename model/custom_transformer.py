@@ -763,8 +763,8 @@ def custom_multi_head_attention_forward(
 
     # RoPE here - OUR MODIFY
     if RoPE is not None:
-        q = RoPE.forward(q, seq_dim=0)
-        k = RoPE.forward(k, seq_dim=0)
+        q = RoPE.forward(q)
+        k = RoPE.forward(k)
 
     # prep attention mask
 

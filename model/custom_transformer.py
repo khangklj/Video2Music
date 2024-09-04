@@ -761,14 +761,6 @@ def custom_multi_head_attention_forward(
             b_v,
         )
 
-    # RoPE here - OUR MODIFY
-
-    q = q.view(bsz, tgt_len, num_heads, head_dim)
-    k = k.view(bsz, src_len, num_heads, head_dim)
-    if RoPE is not None:
-        q = RoPE.forward(q)
-        k = RoPE.forward(k)
-
     # prep attention mask
 
     if attn_mask is not None:
@@ -922,6 +914,15 @@ def custom_multi_head_attention_forward(
         q = q.view(bsz, num_heads, tgt_len, head_dim)
         k = k.view(bsz, num_heads, src_len, head_dim)
         v = v.view(bsz, num_heads, src_len, head_dim)
+
+        # RoPE here - OUR MODIFY
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        if RoPE is not None:
+            q = RoPE.forward(q)
+            k = RoPE.forward(k)
+        q = q.transpose(1, 2)
+        k = v.transpose(1, 2)
 
         attn_output = F.scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal

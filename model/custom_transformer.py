@@ -762,8 +762,10 @@ def custom_multi_head_attention_forward(
         )
 
     # RoPE here - OUR MODIFY
+
+    q = q.view(bsz, tgt_len, num_heads, head_dim)
+    k = k.view(bsz, src_len, num_heads, head_dim)
     if RoPE is not None:
-        print(q.shape)
         q = RoPE.forward(q)
         k = RoPE.forward(k)
 

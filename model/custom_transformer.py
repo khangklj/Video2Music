@@ -21,6 +21,22 @@ from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _
 
 from torch.nn.functional import linear, softmax, dropout
 
+# From torchtune
+class RMSNorm(nn.Module):
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.eps = eps
+        self.scale = nn.Parameter(torch.ones(dim))
+
+def forward(self, x: Tensor) -> Tensor:
+        # computation is in fp32
+        x_fp32 = x.float()
+        x_normed = (
+            x_fp32 * torch.rsqrt(x_fp32.pow(2).mean(-1, keepdim=True) + self.eps)
+        ).type_as(x)
+        return x_normed * self.scale
+
+
 # From pytorch and modify RoPE
 class CustomMultiheadAttention(Module):
     __constants__ = ['batch_first']

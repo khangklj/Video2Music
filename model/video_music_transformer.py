@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torchtune
 from torch.nn.modules.normalization import LayerNorm
 import random
 import numpy as np
@@ -10,7 +9,7 @@ from .positional_encoding import PositionalEncoding
 from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
 from efficient_kan import KANLinear
 from .custom_transformer import *
-from .rotate_operation import Rotary
+from .rotate_operation import *
 from .moe import *
 from datetime import datetime
 import json
@@ -49,7 +48,7 @@ class VideoMusicTransformer_V1(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = torchtune.modules.RMSNorm(self.d_model)
+            norm = RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
@@ -270,12 +269,12 @@ class VideoMusicTransformer_V2(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = torchtune.modules.RMSNorm(self.d_model)
+            norm = RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        RoPE = Rotary(self.d_model)
+        RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
         self.n_experts = 6
         self.n_experts_per_token = 2
         expert = GLUExpert(self.d_model, self.d_ff)
@@ -491,13 +490,13 @@ class VideoMusicTransformer_V3(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = torchtune.modules.RMSNorm(self.d_model)
+            norm = RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
         pre_norm = True
-        RoPE = Rotary(self.d_model)
+        RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
         self.n_experts = 6
         self.n_experts_per_token = 2
         if version_name == '3.1':

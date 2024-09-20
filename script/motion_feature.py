@@ -5,13 +5,14 @@ import numpy as np
 import torchvision.models as models
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
+from tqdm import tqdm
 
 def main():
     directory = "../dataset/vevo_chord/lab/all/"
     directory_vevo = "../dataset/vevo/"
     datadict = {}
 
-    for filename in sorted(os.listdir(directory)):
+    for filename in tqdm(sorted(os.listdir(directory))):
         print(filename)
         fname = filename.split(".")[0]
         videopath = os.path.join(directory_vevo, filename.replace("lab", "mp4"))

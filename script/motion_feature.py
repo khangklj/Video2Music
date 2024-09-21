@@ -103,7 +103,7 @@ def main():
                 diff = cv2.absdiff(frame, prev_frame)
                 diff_rgb = cv2.cvtColor(diff, cv2.COLOR_BGR2RGB)
 
-                diff_image = transform(Image.fromarray(diff_rgb)).unsqueeze(0)
+                diff_image = transform(Image.fromarray(diff_rgb)).unsqueeze(0).to(get_device())
                 with torch.no_grad():
                     motion_features = model(diff_image).squeeze()
 

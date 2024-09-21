@@ -99,7 +99,6 @@ def main():
             if not ret:
                 break
             curr_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
-            print(curr_time, end='\t')
             
             # Calculate the RGB difference between consecutive frames per second
             if prev_frame is not None and curr_time - prev_time >= 1:
@@ -121,6 +120,7 @@ def main():
         cv2.destroyAllWindows()
 
         features = np.stack(features, axis=0)
+        print(features.shape)
         np.save("../dataset/vevo_motion/option1/" + fname + ".npy", features)
 
 if __name__ == "__main__":

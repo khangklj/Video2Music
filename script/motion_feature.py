@@ -38,8 +38,17 @@ def main():
     directory_vevo = "../dataset/vevo/"
     datadict = {}
 
-    for filename in tqdm(sorted(os.listdir(directory_vevo))):
-        print(filename)
+    model = models.maxvit_t(weights=models.MaxVit_T_Weights.DEFAULT)   
+    model.classifier = torch.nn.Sequential(
+        torch.nn.AdaptiveAvgPool2d(1),
+        torch.nn.Flatten()
+    )
+    model = model.to(get_device())
+    model.eval()
+    transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
+
+    for filename in sorted(os.listdir(directory_vevo)):
+        print(filename, end='\t')
         fname = filename.split(".")[0]
         videopath = os.path.join(directory_vevo, filename.replace("lab", "mp4"))
         cap = cv2.VideoCapture(videopath)
@@ -83,13 +92,6 @@ def main():
         #         f.write(str(i) + " "+motiondict[i]+"\n")
 
         # === Our option 1 === #
-        model = models.maxvit_t(pretrained=True).to(get_device())   
-        model.classifier = torch.nn.Sequential(
-            torch.nn.AdaptiveAvgPool2d(1),
-            torch.nn.Flatten()
-        )
-        transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
-
         features = []
         while cap.isOpened():
             # Read the frame and get its time stamp
@@ -97,6 +99,7 @@ def main():
             if not ret:
                 break
             curr_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+            print(curr_time, end='\t')
             
             # Calculate the RGB difference between consecutive frames per second
             if prev_frame is not None and curr_time - prev_time >= 1:

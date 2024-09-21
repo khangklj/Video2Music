@@ -3,16 +3,42 @@ import math
 import cv2
 import numpy as np
 import torchvision.models as models
-from utilities.constants import *
-from utilities.device import get_device, use_cuda
 from tqdm import tqdm
+import torch
+from PIL import Image
+
+TORCH_CPU_DEVICE = torch.device("cpu")
+
+if(torch.cuda.device_count() > 0):
+    TORCH_CUDA_DEVICE = torch.device("cuda:0")
+else:
+    print("----- WARNING: CUDA devices not detected. This will cause the model to run very slow! -----")
+    print("")
+    TORCH_CUDA_DEVICE = None
+
+USE_CUDA = True
+
+# get_device
+def get_device():
+    """
+    ----------
+    Author: Damon Gwinn
+    ----------
+    Grabs the default device. Default device is CUDA if available and use_cuda is not False, CPU otherwise.
+    ----------
+    """
+
+    if((not USE_CUDA) or (TORCH_CUDA_DEVICE is None)):
+        return TORCH_CPU_DEVICE
+    else:
+        return TORCH_CUDA_DEVICE
 
 def main():
     directory = "../dataset/vevo_chord/lab/all/"
     directory_vevo = "../dataset/vevo/"
     datadict = {}
 
-    for filename in tqdm(sorted(os.listdir(directory))):
+    for filename in tqdm(sorted(os.listdir(directory_vevo))):
         print(filename)
         fname = filename.split(".")[0]
         videopath = os.path.join(directory_vevo, filename.replace("lab", "mp4"))
@@ -62,6 +88,7 @@ def main():
             torch.nn.AdaptiveAvgPool2d(1),
             torch.nn.Flatten()
         )
+        transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
 
         features = []
         while cap.isOpened():
@@ -76,7 +103,7 @@ def main():
                 diff = cv2.absdiff(frame, prev_frame)
                 diff_rgb = cv2.cvtColor(diff, cv2.COLOR_BGR2RGB)
 
-                diff_image = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms(diff_rgb)
+                diff_image = transform(Image.fromarray(diff_rgb)).unsqueeze(0)
                 with torch.no_grad():
                     motion_features = model(diff_image).squeeze()
 

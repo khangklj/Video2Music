@@ -155,7 +155,7 @@ def main():
                 for i in range(5):
                     motion_image += residual_frames[i] * 1/2**(4-i)
 
-                motion_image = preprocess(Image.fromarray(motion_image)).unsqueeze(0).to(get_device())
+                motion_image = preprocess(Image.fromarray(motion_image.astype(np.uint8))).unsqueeze(0).to(get_device())
                 with torch.no_grad():
                     motion_features = model.encode_image(motion_image).squeeze()
 

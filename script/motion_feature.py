@@ -47,7 +47,7 @@ def main():
     model.eval()
     transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
 
-    for filename in sorted(os.listdir(directory_vevo)):
+    for filename in tqdm(sorted(os.listdir(directory_vevo))):
         print(filename, end='\t')
         fname = filename.split(".")[0]
         videopath = os.path.join(directory_vevo, filename.replace("lab", "mp4"))

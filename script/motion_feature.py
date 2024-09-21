@@ -113,6 +113,8 @@ def main():
                 motion_features = motion_features.cpu().numpy()
                 features.append(motion_features)
 
+                prev_time = int(curr_time)
+
             # Update the variables
             prev_frame = frame.copy()
         # Release the video file and close all windows

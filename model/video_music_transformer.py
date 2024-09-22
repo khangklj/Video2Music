@@ -570,7 +570,12 @@ class VideoMusicTransformer_V3(nn.Module):
             vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
         
         vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        
+        try:
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        except:
+            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         vf = self.Linear_vis(vf_concat)
         

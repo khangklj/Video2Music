@@ -66,6 +66,7 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
         max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 
         vis_models = args.vis_models,
+        motion_type = args.motion_type,
         emo_model = args.emo_model, 
         split_ver = SPLIT_VER, 
         random_seq = True, 
@@ -78,7 +79,14 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
         for vf in test_dataset[0]["semanticList"]:
             total_vf_dim += vf.shape[1]
         total_vf_dim += 1 # Scene_offset
-        total_vf_dim += 1 # Motion
+        
+        # Motion
+        if args.motion_type == 0:
+            total_vf_dim += 1 
+        elif args.motion_type == 1:
+            total_vf_dim += 512
+        elif args.motion_type == 2:
+            total_vf_dim += 768
         
         # Emotion
         if args.emo_model.startswith("6c"):

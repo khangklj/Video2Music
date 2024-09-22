@@ -240,12 +240,18 @@ class VevoDataset(Dataset):
         elif self.motion_type == 1: # Option 1
             feature_motion = np.zeros((self.max_seq_chord, 512))
             loaded_motion = np.load(self.data_files_motion[idx])
-            feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+            if loaded_motion.shape[0] > self.max_seq_chord:
+                feature_motion = loaded_motion[:self.max_seq_chord, :]
+            else:
+                feature_motion[:loaded_motion.shape[0], :] = loaded_motion
 
         elif self.motion_type == 2: # Option 2
             feature_motion = np.zeros((self.max_seq_chord, 768))
             loaded_motion = np.load(self.data_files_motion[idx])
-            feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+            if loaded_motion.shape[0] > self.max_seq_chord:
+                feature_motion = loaded_motion[:self.max_seq_chord, :]
+            else:
+                feature_motion[:loaded_motion.shape[0], :] = loaded_motion
 
         feature_motion = torch.from_numpy(feature_motion)
         feature_motion = feature_motion.to(torch.float32)

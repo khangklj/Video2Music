@@ -21,7 +21,9 @@ class VevoDataset(Dataset):
 
         self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
-        self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "all")
+        # self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "all") # Original
+        self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "option1") # Option 1
+        # self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "option2") # Option 2
         self.vevo_scene_offset_root = os.path.join( dataset_root, "vevo_scene_offset", "all")
         self.vevo_meta_split_path = os.path.join( dataset_root, "vevo_meta", "split", split_ver, split + ".txt")
         
@@ -65,7 +67,9 @@ class VevoDataset(Dataset):
         for fid in self.id_list:
             fpath_chord = os.path.join( self.vevo_chord_root, fid + ".lab" )
             fpath_emotion = os.path.join( self.vevo_emotion_root, fid + ".lab" )
-            fpath_motion = os.path.join( self.vevo_motion_root, fid + ".lab" )
+            # fpath_motion = os.path.join( self.vevo_motion_root, fid + ".lab" ) # Original
+            # fpath_motion = os.path.join( self.vevo_motion_root, fid + ".npy" ) # Option 1
+            fpath_motion = os.path.join( self.vevo_motion_root, fid + ".npy" ) # Option 2
             fpath_scene_offset = os.path.join( self.vevo_scene_offset_root, fid + ".lab" )
 
             fpath_loudness = os.path.join( self.vevo_loudness_root, fid + ".lab" )
@@ -211,18 +215,29 @@ class VevoDataset(Dataset):
         feature_scene_offset = feature_scene_offset.to(torch.float32)
 
         #### ---- MOTION ----- ####
-        feature_motion = np.empty(self.max_seq_video)
-        feature_motion.fill(MOTION_PAD)
-        with open(self.data_files_motion[idx], encoding = 'utf-8') as f:
-            for line in f:
-                line = line.strip()
-                line_arr = line.split(" ")
-                time = line_arr[0]
-                time = int(time)
-                if time >= self.max_seq_chord:
-                    break
-                motion = line_arr[1]
-                feature_motion[time] = float(motion)
+        # Original
+        # feature_motion = np.empty(self.max_seq_video)
+        # feature_motion.fill(MOTION_PAD)
+        # with open(self.data_files_motion[idx], encoding = 'utf-8') as f:
+        #     for line in f:
+        #         line = line.strip()
+        #         line_arr = line.split(" ")
+        #         time = line_arr[0]
+        #         time = int(time)
+        #         if time >= self.max_seq_chord:
+        #             break
+        #         motion = line_arr[1]
+        #         feature_motion[time] = float(motion)
+
+        # Option 1
+        feature_motion = np.zeros((self.max_seq_chord, 512))
+        loaded_motion = np.load(self.data_files_motion[idx])
+        feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+
+        # Option 2
+        # feature_motion = np.zeros((self.max_seq_chord, 768))
+        # loaded_motion = np.load(self.data_files_motion[idx])
+        # feature_motion[:loaded_motion.shape[0], :] = loaded_motion
 
         feature_motion = torch.from_numpy(feature_motion)
         feature_motion = feature_motion.to(torch.float32)

@@ -47,6 +47,7 @@ def parse_train_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
+    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
@@ -89,6 +90,8 @@ def print_train_args(args):
     print("dropout:", args.dropout)
     print("rms_norm:", args.rms_norm)
     print("is_video:", args.is_video)
+    print("emo_model:", args.emo_model)
+    print("motion_type:", args.motion_type)
     print("music_gen_version:", args.music_gen_version)
 
     print(SEPERATOR)
@@ -132,6 +135,7 @@ def parse_eval_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
+    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
@@ -157,7 +161,9 @@ def print_eval_args(args):
     print("d_model:", args.d_model)
     print("")
     print("rms_norm:", args.rms_norm)
-    print("dim_feedforward:", args.dim_feedforward)    
+    print("dim_feedforward:", args.dim_feedforward)   
+    print("emo_model:", args.emo_model)
+    print("motion_type:", args.motion_type) 
     print("music_gen_version:", args.music_gen_version)
 
     print(SEPERATOR)
@@ -187,6 +193,8 @@ def write_model_params(args, output_file):
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")
+    o_stream.write("emo_model: " + str(args.emo_model) + "\n")
+    o_stream.write("motion_type: " + str(args.motion_type) + "\n")
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
 

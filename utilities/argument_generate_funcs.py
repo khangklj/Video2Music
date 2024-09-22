@@ -90,6 +90,7 @@ def parse_generate_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
+    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
 
     return parser.parse_known_args()
@@ -130,6 +131,9 @@ def print_generate_args(args):
     print("d_model:", args.d_model)
     print("dim_feedforward:", args.dim_feedforward)
     print("rms_norm: ", args.rms_norm)
+    print("vis_models: ", args.vis_models)
+    print("emo_model: ", args.emo_model)
+    print("motion_type: ", args.motion_type)
 
     print("")
     print("REGRESSION MODEL")

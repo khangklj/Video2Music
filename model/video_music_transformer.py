@@ -495,46 +495,33 @@ class VideoMusicTransformer_V3(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        pre_norm = True
         RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        if version_name == '3.1':
-            att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
-            expert = GLUExpert(self.d_model, self.d_ff)
-            
+        expert = GLUExpert(self.d_model, self.d_ff)
+        att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
+        
+        # version_name = '2.1'
+        topk_scheduler = None
+        temperature_scheduler = None
+
+        if version_name in ('2.2', '2.3'):
             topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                    use_KAN=use_KAN)
-            
-            encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
-            decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
-        elif version_name in ('3.2', '3.3'):
-            att = AngleMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
-            expert = AngleGLUExpert(self.d_model, self.d_ff)
+        if version_name == '2.3':
+            temperature_scheduler = TemperatureScheduler()
 
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
-        
-            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                    use_KAN=use_KAN)
-            
-            if version_name == '3.2':
-                angle_decay = False
-            elif version_name == '3.3':
-                angle_decay = True
-
-            encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout, angle_decay)
-            decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout, angle_decay)
+        moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                  n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                  topk_scheduler=topk_scheduler, temperature_scheduler=temperature_scheduler,
+                                  use_KAN=use_KAN)
 
         # Encoder
+        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
+        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model

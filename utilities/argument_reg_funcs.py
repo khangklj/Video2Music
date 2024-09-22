@@ -37,6 +37,7 @@ def parse_train_args():
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
+    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
@@ -94,6 +95,7 @@ def print_train_args(args):
     print("use_KAN: ", args.use_KAN)
     print("")
     print("is_video:", args.is_video)
+    print("motion_type:", args.motion_type)
     print("regModel:", args.regModel)
 
     print(SEPERATOR)
@@ -129,6 +131,7 @@ def parse_eval_args():
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:
@@ -172,6 +175,7 @@ def print_eval_args(args):
     print("")
     print("dim_feedforward:", args.dim_feedforward)    
     print("regModel:", args.regModel)
+    print("motion_type:", args.motion_type)
 
     print(SEPERATOR)
     print("")
@@ -197,6 +201,7 @@ def write_model_params(args, output_file):
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")
+    o_stream.write("motion_type: " + str(args.motion_type) + "\n")
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
 

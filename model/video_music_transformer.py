@@ -505,11 +505,11 @@ class VideoMusicTransformer_V3(nn.Module):
         topk_scheduler = None
         temperature_scheduler = None
 
-        if version_name in ('2.2', '2.3'):
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        # if version_name in ('2.2', '2.3'):
+        #     topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        if version_name == '2.3':
-            temperature_scheduler = TemperatureScheduler()
+        # if version_name == '2.3':
+        #     temperature_scheduler = TemperatureScheduler()
 
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

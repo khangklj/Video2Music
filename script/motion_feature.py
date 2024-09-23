@@ -55,6 +55,8 @@ def main():
     for filename in tqdm(sorted(os.listdir(directory_vevo))):
         print(filename)
         fname = filename.split(".")[0]
+        if int(fname) < 312:
+            continue
         videopath = os.path.join(directory_vevo, filename.replace("lab", "mp4"))
         cap = cv2.VideoCapture(videopath)
         fps = int(cap.get(cv2.CAP_PROP_FPS))

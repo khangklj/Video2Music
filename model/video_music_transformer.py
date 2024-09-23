@@ -478,8 +478,8 @@ class VideoMusicTransformer_V3(nn.Module):
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
         self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
         
-        projection = nn.Linear
-        # projection = KANLinear
+        # projection = nn.Linear
+        projection = KANLinear
 
         self.total_vf_dim = total_vf_dim
         self.Linear_vis     = projection(self.total_vf_dim, self.d_model)

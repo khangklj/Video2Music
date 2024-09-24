@@ -248,6 +248,7 @@ class VevoDataset(Dataset):
 
         elif self.motion_type == 2: # Option 2
             feature_motion = np.zeros((self.max_seq_chord, 768))
+            print(idx, end='\t')
             loaded_motion = np.load(self.data_files_motion[idx])
             if loaded_motion.shape[0] > self.max_seq_chord:
                 feature_motion = loaded_motion[:self.max_seq_chord, :]

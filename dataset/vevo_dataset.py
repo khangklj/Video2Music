@@ -237,6 +237,7 @@ class VevoDataset(Dataset):
                         break
                     motion = line_arr[1]
                     feature_motion[time] = float(motion)
+                    
         elif self.motion_type == 1: # Option 1
             feature_motion = np.zeros((self.max_seq_chord, 512))
             loaded_motion = np.load(self.data_files_motion[idx])

@@ -57,8 +57,8 @@ def main():
         fname = filename.split(".")[0]
         # if int(fname) < 591:
         #     continue
-        if int(fname) > 301:
-            break
+        # if int(fname) > 301:
+        #     break
         videopath = os.path.join(directory_vevo, filename.replace("lab", "mp4"))
         cap = cv2.VideoCapture(videopath)
         fps = int(cap.get(cv2.CAP_PROP_FPS))

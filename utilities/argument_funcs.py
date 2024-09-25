@@ -24,7 +24,7 @@ def parse_train_args():
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=0.1, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
-    parser.add_argument("-batch_size", type=int, default=20, help="Batch size to use")
+    parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
     parser.add_argument("-epochs", type=int, default=50, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
@@ -39,7 +39,7 @@ def parse_train_args():
 
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=str, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default='2.1', help="Version number. None is original musgic generation AMT model")
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -47,7 +47,7 @@ def parse_train_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-motion_type", type=int, default=2, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-motion_type", type=int, default=0, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
@@ -126,7 +126,7 @@ def parse_eval_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
-    parser.add_argument('-music_gen_version', type=str, default=None, help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default='2.1', help="Version number. None is original musgic generation AMT model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
     if IS_VIDEO:
@@ -135,7 +135,7 @@ def parse_eval_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-motion_type", type=int, default=2, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-motion_type", type=int, default=0, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 

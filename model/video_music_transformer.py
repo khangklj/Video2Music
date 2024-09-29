@@ -137,7 +137,7 @@ class VideoMusicTransformer_V1(nn.Module):
         if not self.scene_embed:
             vf = self.Linear_vis(vf_concat)
         else:
-            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset)
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         ### POSITIONAL EMBEDDING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
@@ -387,7 +387,7 @@ class VideoMusicTransformer_V2(nn.Module):
         if not self.scene_embed:
             vf = self.Linear_vis(vf_concat)
         else:
-            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset)
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
@@ -626,7 +626,7 @@ class VideoMusicTransformer_V3(nn.Module):
         if not self.scene_embed:
             vf = self.Linear_vis(vf_concat)
         else:
-            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset)
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
@@ -836,7 +836,7 @@ class VideoMusicTransformer(nn.Module):
         if not self.scene_embed:
             vf = self.Linear_vis(vf_concat)
         else:
-            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset)
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         ### POSITIONAL ENCODING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)

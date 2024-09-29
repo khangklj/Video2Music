@@ -48,6 +48,7 @@ def parse_train_args():
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
     parser.add_argument("-motion_type", type=int, default=2, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-scene_embed", type=bool, default=True, help="Use scene offset embedding or not")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
@@ -92,6 +93,7 @@ def print_train_args(args):
     print("is_video:", args.is_video)
     print("emo_model:", args.emo_model)
     print("motion_type:", args.motion_type)
+    print("scene embedding:", args.scene_embed)
     print("music_gen_version:", args.music_gen_version)
 
     print(SEPERATOR)
@@ -136,6 +138,7 @@ def parse_eval_args():
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
     parser.add_argument("-motion_type", type=int, default=2, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-scene_embed", type=bool, default=True, help="Use scene offset embedding or not")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
     return parser.parse_known_args()
 
@@ -164,6 +167,7 @@ def print_eval_args(args):
     print("dim_feedforward:", args.dim_feedforward)   
     print("emo_model:", args.emo_model)
     print("motion_type:", args.motion_type) 
+    print("scene embedding:", args.scene_embed)
     print("music_gen_version:", args.music_gen_version)
 
     print(SEPERATOR)
@@ -195,6 +199,7 @@ def write_model_params(args, output_file):
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")
     o_stream.write("emo_model: " + str(args.emo_model) + "\n")
     o_stream.write("motion_type: " + str(args.motion_type) + "\n")
+    o_stream.write("scene_embed: " + str(args.scene_embed) + "\n")
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
 

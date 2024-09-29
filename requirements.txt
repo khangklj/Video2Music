@@ -26,3 +26,4 @@ gradio==4.7.1
 pytube==15.0.0
 pyfluidsynth
 torchtune
+gensim

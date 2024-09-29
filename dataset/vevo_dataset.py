@@ -9,10 +9,14 @@ from torch.utils.data import Dataset
 from utilities.constants import *
 from utilities.device import cpu_device
 from utilities.device import get_device
+from gensim.models import Word2Vec
 
 import json
 
 SEQUENCE_START = 0
+
+# filename = ''
+# chord_embedding = Word2Vec.load(filename)
 
 class VevoDataset(Dataset):
     def __init__(self, dataset_root = "./dataset/", split="train", split_ver="v1", vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, max_seq_chord=300, max_seq_video=300, random_seq=True, is_video = True):
@@ -157,6 +161,8 @@ class VevoDataset(Dataset):
                 if time >= self.max_seq_chord:
                     break
                 chord = line_arr[1]
+
+                # Original
                 chordID = self.chordDic[chord]
                 feature_chord[time] = chordID
                 chord_arr = chord.split(":")
@@ -177,6 +183,8 @@ class VevoDataset(Dataset):
                     feature_chordRoot[time] = chordRootID
                     feature_chordAttr[time] = chordAttrID
 
+                # CBOW in Chord Embedding
+                
         if "major" in key:
             feature_key = torch.tensor([0])
         else:

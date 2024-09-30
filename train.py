@@ -157,6 +157,10 @@ def main( vm = "" , isPrintArgs = True ):
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
                     rms_norm=args.rms_norm, scene_embed=args.scene_embed).to(get_device())
 
+    # Write model architecture
+    with open(os.path.join(args.output_dir, 'model_architecture.txt'), 'w') as f:
+        f.write(str(model))
+
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
         if(args.continue_epoch is None):

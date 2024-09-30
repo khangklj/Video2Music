@@ -213,6 +213,7 @@ class SharedMoELayer(Module):
             nn.Linear(d_model, d_model*2),
             nn.Linear(d_model*2, d_model)
         )
+        print(self.shared_experts)
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
@@ -242,7 +243,6 @@ class SharedMoELayer(Module):
             weight = weights[token_idx, batch_idx, topk_idx]
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
-        print(self.shared_experts)
         # Sharing
         out += 1.0 / k * self.shared_expert(x)
         return out

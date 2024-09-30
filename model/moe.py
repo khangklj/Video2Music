@@ -216,7 +216,7 @@ class SharedMoELayer(Module):
         print(self.shared_expert)
         print(self.shared_expert[0])        
         print(self.shared_expert[1])
-        print(self.shared_expert(torch.rand((1, 1))))
+        print(self.shared_expert(torch.rand((32, 300, 512))).shape)
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:

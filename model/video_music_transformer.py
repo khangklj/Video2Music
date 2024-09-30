@@ -59,7 +59,14 @@ class VideoMusicTransformer_V1(nn.Module):
 
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        if version_name in ('1.1', '1.2'):
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        else:
+            expert = nn.Sequential(
+                nn.Linear(self.d_model, self.d_model*2)
+                nn.Linear(self.d_model*2, self.d_model)
+            )
+            
         att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
         if version_name == '1.1':
             moelayer = MoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)

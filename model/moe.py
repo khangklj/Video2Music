@@ -210,8 +210,8 @@ class SharedMoELayer(Module):
             self.gate = KANLinear(d_model, n_experts)
 
         self.shared_expert = nn.Sequential(
-            nn.Linear(d_model, d_model*2+1),
-            nn.Linear(d_model*2+1, d_model)
+            nn.Linear(d_model, d_model*2),
+            nn.Linear(d_model*2, d_model)
         )
 
     def forward(self, x):

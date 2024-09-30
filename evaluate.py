@@ -127,8 +127,8 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
                     rms_norm=args.rms_norm, scene_embed=args.scene_embed).to(get_device())
         
-    model.load_state_dict(torch.load(args.model_weights, map_location=get_device()))
     print(model)
+    model.load_state_dict(torch.load(args.model_weights, map_location=get_device()))
     
     ##### Not smoothing evaluation loss #####
     eval_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD)

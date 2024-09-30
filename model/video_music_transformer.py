@@ -31,7 +31,8 @@ class VideoMusicTransformer_V1(nn.Module):
         self.scene_embed = scene_embed
 
         # Scene offsets embedding
-        self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
         # AMT + MoE + Positional Embedding
         # Input embedding for video and music features
@@ -272,7 +273,8 @@ class VideoMusicTransformer_V2(nn.Module):
         self.scene_embed = scene_embed
 
         # Scene offsets embedding
-        self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
@@ -511,7 +513,8 @@ class VideoMusicTransformer_V3(nn.Module):
         self.scene_embed = scene_embed
 
         # Scene offsets embedding
-        self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
@@ -750,7 +753,8 @@ class VideoMusicTransformer(nn.Module):
         self.scene_embed = scene_embed
 
         # Scene offsets embedding
-        self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
         
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)

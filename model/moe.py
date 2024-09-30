@@ -209,10 +209,7 @@ class SharedMoELayer(Module):
         else:
             self.gate = KANLinear(d_model, n_experts)
 
-        self.shared_expert = nn.Sequential(
-            nn.Linear(d_model, d_model*2),
-            nn.Linear(d_model*2, d_model)
-        )
+        self.shared_expert = _get_clones(expert, 1)[0]
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:
@@ -232,7 +229,7 @@ class SharedMoELayer(Module):
 
         weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
-        out = torch.zeros((*x.shape[:-1], self.shared_expert[1].out_features), device=get_device())
+        out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             

@@ -209,7 +209,10 @@ class SharedMoELayer(Module):
         else:
             self.gate = KANLinear(d_model, n_experts)
 
-        self.shared_expert = _get_clones(expert, 1)[0]
+        self.shared_expert = nn.Sequential(
+            nn.Linear(d_model, d_model*2),
+            nn.Linear(d_model*2, d_model)
+        )
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:

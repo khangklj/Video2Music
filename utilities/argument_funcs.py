@@ -2,7 +2,7 @@ import argparse
 from .constants import *
 
 version = VERSION
-rpr = false
+rpr = False
 music_gen_version = '2.2'
 batch_size = 20
 epochs = 50

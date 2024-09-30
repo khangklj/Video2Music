@@ -242,6 +242,7 @@ class SharedMoELayer(Module):
             weight = weights[token_idx, batch_idx, topk_idx]
             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
+        print(self.shared_experts)
         # Sharing
         out += 1.0 / k * self.shared_expert(x)
         return out

@@ -2,9 +2,9 @@ import argparse
 from .constants import *
 
 version = VERSION
-rpr = False
-music_gen_version = '2.2'
-batch_size = 20
+rpr = True
+music_gen_version = '1.0'
+batch_size = 32
 epochs = 50
 motion_type = 0
 split_ver = SPLIT_VER

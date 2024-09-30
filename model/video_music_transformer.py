@@ -63,7 +63,7 @@ class VideoMusicTransformer_V1(nn.Module):
             expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         else:
             expert = nn.Sequential(
-                nn.Linear(self.d_model, self.d_model*2)
+                nn.Linear(self.d_model, self.d_model*2),
                 nn.Linear(self.d_model*2, self.d_model)
             )
             

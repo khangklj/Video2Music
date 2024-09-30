@@ -214,8 +214,9 @@ class SharedMoELayer(Module):
             nn.Linear(d_model*2, d_model)
         )
         print(self.shared_expert)
-        print(self.shared_expert.linear1)
-        print(self.shared_expert.linear2)
+        print(self.shared_expert[0])        
+        print(self.shared_expert[1])
+        print(self.shared_expert(torch.rand((1, 1))))
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:

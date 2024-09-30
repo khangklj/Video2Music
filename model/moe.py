@@ -213,7 +213,7 @@ class SharedMoELayer(Module):
             nn.Linear(d_model, d_model*2),
             nn.Linear(d_model*2, d_model)
         )
-        print(self.shared_experts)
+        print(self.shared_expert)
 
     def forward(self, x):
         if hasattr(self, 'topk_scheduler') and self.training:

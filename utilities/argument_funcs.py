@@ -3,10 +3,10 @@ from .constants import *
 
 version = VERSION
 rpr = True
-music_gen_version = '1.3'
+music_gen_version = '1.2'
 batch_size = 32
 epochs = 50
-motion_type = 0
+motion_type = 1
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 

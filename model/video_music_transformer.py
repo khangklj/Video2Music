@@ -308,18 +308,27 @@ class VideoMusicTransformer_V2(nn.Module):
         RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff)
+
+        if version_name == '2.0':
+            expert = nn.Sequential(
+                nn.Linear(self.d_model, self.d_model*2),
+                nn.Dropout(self.dropout),
+                nn.Linear(self.d_model*2, self.d_model)
+            )
+        else:
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         
         # version_name = '2.1'
         topk_scheduler = None
         temperature_scheduler = None
 
-        if version_name in ('2.2', '2.3'):
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        # if version_name in ('2.2', '2.3'):
+        #     topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        if version_name == '2.3':
-            temperature_scheduler = TemperatureScheduler()
+        # if version_name == '2.3':
+        #     temperature_scheduler = TemperatureScheduler()
 
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

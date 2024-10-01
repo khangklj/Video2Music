@@ -64,6 +64,8 @@ class VideoMusicTransformer_V1(nn.Module):
         else:
             expert = nn.Sequential(
                 nn.Linear(self.d_model, self.d_model*2),
+                nn.SiLU(),
+                nn.Dropout(self.dropout),
                 nn.Linear(self.d_model*2, self.d_model)
             )
             
@@ -312,6 +314,7 @@ class VideoMusicTransformer_V2(nn.Module):
         if version_name == '2.0':
             expert = nn.Sequential(
                 nn.Linear(self.d_model, self.d_model*2),
+                nn.SiLU(),
                 nn.Dropout(self.dropout),
                 nn.Linear(self.d_model*2, self.d_model)
             )

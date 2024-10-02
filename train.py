@@ -97,7 +97,8 @@ def main( vm = "" , isPrintArgs = True ):
         emo_model = args.emo_model, 
         split_ver = SPLIT_VER, 
         random_seq = True, 
-        is_video = args.is_video)
+        is_video = args.is_video,
+        augmentation = args.augmentation)
     
     total_vf_dim = 0
 

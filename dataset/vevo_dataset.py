@@ -492,8 +492,8 @@ class VevoDataset(Dataset):
             return tensor
 
     def crossOver(self, sample1, sample2):
-        split_point1 = self.find_most_centered_zero(sample1['scene_offset'].squeeze())
-        split_point2 = self.find_most_centered_zero(sample2['scene_offset'].squeeze())
+        split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())
+        split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
 
         for key in sample1.keys():
             sample1[key][split_point1:], sample2[key][split_point2:] = sample2[key][split_point2:], sample1[key][split_point1:]
@@ -798,12 +798,12 @@ class VevoDataset(Dataset):
                 "loudness" : feature_loudness
                 }
 
-def create_vevo_datasets(dataset_root = "./dataset", max_seq_chord=300, max_seq_video=300, vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, split_ver="v1", random_seq=True, is_video=True):
+def create_vevo_datasets(dataset_root = "./dataset", max_seq_chord=300, max_seq_video=300, vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, split_ver="v1", random_seq=True, is_video=True, augmentation=False):
 
     train_dataset = VevoDataset(
         dataset_root = dataset_root, split="train", split_ver=split_ver, 
         vis_models=vis_models, emo_model =emo_model, motion_type=motion_type, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
-        random_seq=random_seq, is_video = is_video, augmentation=True)
+        random_seq=random_seq, is_video = is_video, augmentation=augmentation)
     
     val_dataset = VevoDataset(
         dataset_root = dataset_root, split="val", split_ver=split_ver, 

@@ -84,7 +84,8 @@ def main( vm = "" , isPrintArgs = True ):
         emo_model = args.emo_model, 
         motion_type = args.motion_type,
         split_ver = SPLIT_VER, 
-        random_seq = True)
+        random_seq = True,
+        augmentation = args.augmentation)
     
     total_vf_dim = 0
     for vf in train_dataset[0]["semanticList"]:

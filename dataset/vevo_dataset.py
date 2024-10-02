@@ -13,6 +13,7 @@ from gensim.models import Word2Vec
 
 import json
 from tqdm import tqdm
+import copy
 
 SEQUENCE_START = 0
 
@@ -161,7 +162,10 @@ class VevoDataset(Dataset):
                         simi_idx = j
                 
                 if simi_idx != -1:
-                    self.augmented_dataset.append(self.crossOver(self.dataset[simi_idx], self.dataset[i]))
+                    sample1 = copy.deepcopy(self.dataset[simi_idx])
+                    sample2 = copy.deepcopy(self.dataset[i])
+                    self.augmented_dataset.extend(self.crossOver(sample1, sample2))
+            print(len(self.augmented_dataset), 'samples')
 
     def __len__(self):
         if self.augmentation:
@@ -500,6 +504,9 @@ class VevoDataset(Dataset):
         split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
 
         for key in sample1.keys():
+            if key == 'key':
+                continue
+            
             sample1[key][split_point1:], sample2[key][split_point2:] = sample2[key][split_point2:], sample1[key][split_point1:]
             
             print(key, type(sample1[key]))
@@ -517,6 +524,8 @@ class VevoDataset(Dataset):
             else:
                 self.paddingOrCutting(sample1[key], padding_dim=sample1[key].shape[1], target_size=self.max_seq_video)
                 self.paddingOrCutting(sample2[key], padding_dim=sample2[key].shape[1], target_size=self.max_seq_video)
+
+        return sample1, sample2
 
     def __getitem__(self, idx):
         if self.augmentation:

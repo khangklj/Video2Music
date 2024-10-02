@@ -104,6 +104,7 @@ def main( vm = "" , isPrintArgs = True ):
 
     if args.is_video:
         for vf in train_dataset[0]["semanticList"]:
+            print(vf.shape)
             total_vf_dim += vf.shape[1]
         
         if args.scene_embed == False:

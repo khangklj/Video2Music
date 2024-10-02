@@ -12,6 +12,7 @@ from utilities.device import get_device
 from gensim.models import Word2Vec
 
 import json
+from tqdm import tqdm
 
 SEQUENCE_START = 0
 
@@ -19,10 +20,11 @@ SEQUENCE_START = 0
 # chord_embedding = Word2Vec.load(filename)
 
 class VevoDataset(Dataset):
-    def __init__(self, dataset_root = "./dataset/", split="train", split_ver="v1", vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, max_seq_chord=300, max_seq_video=300, random_seq=True, is_video = True):
+    def __init__(self, dataset_root = "./dataset/", split="train", split_ver="v1", vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, max_seq_chord=300, max_seq_video=300, random_seq=True, is_video = True, augmentation=False):
         
         self.dataset_root       = dataset_root
         self.motion_type = motion_type
+        self.augmentation = augmentation
 
         self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
@@ -134,9 +136,380 @@ class VevoDataset(Dataset):
         
         with open(chordAttrDicPath) as json_file:
             self.chordAttrDic = json.load(json_file)
-        
+
+        # Get all samples
+        self.dataset = []
+        print('Get all samples')
+        for i in tqdm(range(len(self.data_files_chord))):
+            self.dataset.append(self.createSample(i))
+
+        # Augmentation
+        if self.augmentation:
+            self.augmented_dataset = []
+            print('Augmentation')
+            for i in tqdm(range(len(self.dataset))):
+
+                self.augmented_dataset.append(self.dataset[i])
+
+                # Find the most similar sample based on emotion
+                simi_idx = -1
+                min_dist = 100
+                for j in range(i + 1, len(self.dataset)):
+                    dist = self.emotionSimi(self.dataset[i], self.dataset[j])
+                    if dist < min_dist:
+                        min_dist = dist
+                        simi_idx = j
+                
+                if simi_idx != -1:
+                    self.augmented_dataset.append(self.crossOver(self.dataset[simi_idx], self.dataset[i]))
+
     def __len__(self):
-        return len(self.data_files_chord)
+        if self.augmentation:
+            return len(self.augmented_dataset)
+        else:
+            return len(self.dataset)
+
+    def emotionSimi(self, sample1, sample2):
+        emo1 = torch.mean(sample1['emotion'], dim=0)
+        emo2 = torch.mean(sample2['emotion'], dim=0)
+        return torch.dist(emo1.unsqueeze(0), emo2.unsqueeze(0), p=2)
+
+    def createSample(self, idx):
+        #### ---- CHORD ----- ####
+        feature_chord = np.empty(self.max_seq_chord)
+        feature_chord.fill(CHORD_PAD)
+
+        feature_chordRoot = np.empty(self.max_seq_chord)
+        feature_chordRoot.fill(CHORD_ROOT_PAD)
+        feature_chordAttr = np.empty(self.max_seq_chord)
+        feature_chordAttr.fill(CHORD_ATTR_PAD)
+
+        key = ""
+        with open(self.data_files_chord[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                if line_arr[0] == "key":
+                    key = line_arr[1] + " "+ line_arr[2]
+                    continue
+                time = line_arr[0]
+                time = int(time)
+                if time >= self.max_seq_chord:
+                    break
+                chord = line_arr[1]
+
+                # Original
+                chordID = self.chordDic[chord]
+                feature_chord[time] = chordID
+                chord_arr = chord.split(":")
+
+                if len(chord_arr) == 1:
+                    if chord_arr[0] == "N":
+                        chordRootID = self.chordRootDic["N"]
+                        chordAttrID = self.chordAttrDic["N"]
+                        feature_chordRoot[time] = chordRootID
+                        feature_chordAttr[time] = chordAttrID
+                    else:
+                        chordRootID = self.chordRootDic[chord_arr[0]]
+                        feature_chordRoot[time] = chordRootID
+                        feature_chordAttr[time] = 1
+                elif len(chord_arr) == 2:
+                    chordRootID = self.chordRootDic[chord_arr[0]]
+                    chordAttrID = self.chordAttrDic[chord_arr[1]]
+                    feature_chordRoot[time] = chordRootID
+                    feature_chordAttr[time] = chordAttrID
+
+                # CBOW in Chord Embedding
+                
+        if "major" in key:
+            feature_key = torch.tensor([0])
+        else:
+            feature_key = torch.tensor([1])
+
+        feature_chord = torch.from_numpy(feature_chord)
+        feature_chord = feature_chord.to(torch.long)
+        
+        feature_chordRoot = torch.from_numpy(feature_chordRoot)
+        feature_chordRoot = feature_chordRoot.to(torch.long)
+
+        feature_chordAttr = torch.from_numpy(feature_chordAttr)
+        feature_chordAttr = feature_chordAttr.to(torch.long)
+
+        feature_key = feature_key.float()
+        
+        x = feature_chord[:self.max_seq_chord-1]
+        tgt = feature_chord[1:self.max_seq_chord]
+
+        x_root = feature_chordRoot[:self.max_seq_chord-1]
+        tgt_root = feature_chordRoot[1:self.max_seq_chord]
+        x_attr = feature_chordAttr[:self.max_seq_chord-1]
+        tgt_attr = feature_chordAttr[1:self.max_seq_chord]
+
+        if time < self.max_seq_chord:
+            tgt[time] = CHORD_END
+            tgt_root[time] = CHORD_ROOT_END
+            tgt_attr[time] = CHORD_ATTR_END
+        
+        #### ---- SCENE OFFSET ----- ####
+        feature_scene_offset = np.empty(self.max_seq_video)
+        feature_scene_offset.fill(SCENE_OFFSET_PAD)
+        with open(self.data_files_scene_offset[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                time = line_arr[0]
+                time = int(time)
+                if time >= self.max_seq_chord:
+                    break
+                sceneID = line_arr[1]
+                feature_scene_offset[time] = int(sceneID)+1
+
+        feature_scene_offset = torch.from_numpy(feature_scene_offset)
+        feature_scene_offset = feature_scene_offset.to(torch.float32)
+
+        #### ---- MOTION ----- ####
+        if self.motion_type == 0: # Original
+            feature_motion = np.empty(self.max_seq_video)
+            feature_motion.fill(MOTION_PAD)
+            with open(self.data_files_motion[idx], encoding = 'utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    line_arr = line.split(" ")
+                    time = line_arr[0]
+                    time = int(time)
+                    if time >= self.max_seq_chord:
+                        break
+                    motion = line_arr[1]
+                    feature_motion[time] = float(motion)
+                    
+        elif self.motion_type == 1: # Option 1
+            feature_motion = np.zeros((self.max_seq_chord, 512))
+            loaded_motion = np.load(self.data_files_motion[idx])
+            if loaded_motion.shape[0] > self.max_seq_chord:
+                feature_motion = loaded_motion[:self.max_seq_chord, :]
+            else:
+                feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+
+        elif self.motion_type == 2: # Option 2
+            feature_motion = np.zeros((self.max_seq_chord, 768))
+            loaded_motion = np.load(self.data_files_motion[idx])
+            if loaded_motion.shape[0] > self.max_seq_chord:
+                feature_motion = loaded_motion[:self.max_seq_chord, :]
+            else:
+                feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+
+        feature_motion = torch.from_numpy(feature_motion)
+        feature_motion = feature_motion.to(torch.float32)
+
+        #### ---- NOTE_DENSITY ----- ####
+        feature_note_density = np.empty(self.max_seq_video)
+        feature_note_density.fill(NOTE_DENSITY_PAD)
+        with open(self.data_files_note_density[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                time = line_arr[0]
+                time = int(time)
+                if time >= self.max_seq_chord:
+                    break
+                note_density = line_arr[1]
+                feature_note_density[time] = float(note_density)
+
+        feature_note_density = torch.from_numpy(feature_note_density)
+        feature_note_density = feature_note_density.to(torch.float32)
+
+        #### ---- LOUDNESS ----- ####
+        feature_loudness = np.empty(self.max_seq_video)
+        feature_loudness.fill(LOUDNESS_PAD)
+        with open(self.data_files_loudness[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                time = line_arr[0]
+                time = int(time)
+                if time >= self.max_seq_chord:
+                    break
+                loudness = line_arr[1]
+                feature_loudness[time] = float(loudness)
+
+        feature_loudness = torch.from_numpy(feature_loudness)
+        feature_loudness = feature_loudness.to(torch.float32)
+
+        #### ---- EMOTION ----- ####
+        if self.emo_model.startswith("6c"):
+            feature_emotion = np.empty( (self.max_seq_video, 6))
+        else:
+            feature_emotion = np.empty( (self.max_seq_video, 5))
+
+        feature_emotion.fill(EMOTION_PAD)
+        with open(self.data_files_emotion[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                if line_arr[0] == "time":
+                    continue
+                time = line_arr[0]
+                time = int(time)
+                if time >= self.max_seq_chord:
+                    break
+
+                if len(line_arr) == 7:
+                    emo1, emo2, emo3, emo4, emo5, emo6 = \
+                        line_arr[1],line_arr[2],line_arr[3],line_arr[4],line_arr[5],line_arr[6]                    
+                    emoList = [ float(emo1), float(emo2), float(emo3), float(emo4), float(emo5), float(emo6) ]
+                elif len(line_arr) == 6:
+                    emo1, emo2, emo3, emo4, emo5 = \
+                        line_arr[1],line_arr[2],line_arr[3],line_arr[4],line_arr[5]
+                    emoList = [ float(emo1), float(emo2), float(emo3), float(emo4), float(emo5) ]
+                
+                emoList = np.array(emoList)
+                feature_emotion[time] = emoList
+
+        feature_emotion = torch.from_numpy(feature_emotion)
+        feature_emotion = feature_emotion.to(torch.float32)
+
+        feature_emotion_argmax = torch.argmax(feature_emotion, dim=1)
+        _, max_prob_indices = torch.max(feature_emotion, dim=1)
+        max_prob_values = torch.gather(feature_emotion, dim=1, index=max_prob_indices.unsqueeze(1))
+        max_prob_values = max_prob_values.squeeze()
+
+        # -- emotion to chord
+        #              maj dim sus4 min7 min sus2 aug dim7 maj6 hdim7 7 min6 maj7
+        # 0. extcing : [1,0,1,0,0,0,0,0,0,0,1,0,0]
+        # 1. fearful : [0,1,0,1,0,0,0,1,0,1,0,0,0]
+        # 2. tense :   [0,1,1,1,0,0,0,0,0,0,1,0,0]
+        # 3. sad :     [0,0,0,1,1,1,0,0,0,0,0,0,0]
+        # 4. relaxing: [1,0,0,0,0,0,0,0,1,0,0,0,1]
+        # 5. neutral : [0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+        a0 = [0]+[1,0,1,0,0,0,0,0,0,0,1,0,0]*12+[0,0]
+        a1 = [0]+[0,1,0,1,0,0,0,1,0,1,0,0,0]*12+[0,0]
+        a2 = [0]+[0,1,1,1,0,0,0,0,0,0,1,0,0]*12+[0,0]
+        a3 = [0]+[0,0,0,1,1,1,0,0,0,0,0,0,0]*12+[0,0]
+        a4 = [0]+[1,0,0,0,0,0,0,0,1,0,0,0,1]*12+[0,0]
+        a5 = [0]+[0,0,0,0,0,0,0,0,0,0,0,0,0]*12+[0,0]
+
+        aend = [0]+[0,0,0,0,0,0,0,0,0,0,0,0,0]*12+[1,0]
+        apad = [0]+[0,0,0,0,0,0,0,0,0,0,0,0,0]*12+[0,1]
+
+        a0_tensor = torch.tensor(a0)
+        a1_tensor = torch.tensor(a1)
+        a2_tensor = torch.tensor(a2)
+        a3_tensor = torch.tensor(a3)
+        a4_tensor = torch.tensor(a4)
+        a5_tensor = torch.tensor(a5)
+
+        aend_tensor = torch.tensor(aend)
+        apad_tensor = torch.tensor(apad)
+
+        mapped_tensor = torch.zeros((300, 159))
+        for i, val in enumerate(feature_emotion_argmax):
+            if feature_chord[i] == CHORD_PAD:
+                mapped_tensor[i] = apad_tensor
+            elif feature_chord[i] == CHORD_END:
+                mapped_tensor[i] = aend_tensor
+            elif val == 0:
+                mapped_tensor[i] = a0_tensor
+            elif val == 1:
+                mapped_tensor[i] = a1_tensor
+            elif val == 2:
+                mapped_tensor[i] = a2_tensor
+            elif val == 3:
+                mapped_tensor[i] = a3_tensor
+            elif val == 4:
+                mapped_tensor[i] = a4_tensor
+            elif val == 5:
+                mapped_tensor[i] = a5_tensor
+
+        # feature emotion : [1, 300, 6]
+        # y : [299, 159]
+        # tgt : [299]
+        # tgt_emo : [299, 159]
+        # tgt_emo_prob : [299]
+
+        tgt_emotion = mapped_tensor[1:]
+        tgt_emotion_prob = max_prob_values[1:]
+        
+        feature_semantic_list = []
+        if self.is_video:
+            for i in range( len(self.vis_models_arr) ):
+                video_feature = np.load(self.data_files_semantic_list[i][idx])
+                dim_vf = video_feature.shape[1] # 2048
+                video_feature_tensor = torch.from_numpy( video_feature )
+                
+                feature_semantic = torch.full((self.max_seq_video, dim_vf,), SEMANTIC_PAD , dtype=torch.float32, device=cpu_device())
+                if(video_feature_tensor.shape[0] < self.max_seq_video):
+                    feature_semantic[:video_feature_tensor.shape[0]] = video_feature_tensor
+                else:
+                    feature_semantic = video_feature_tensor[:self.max_seq_video]
+                feature_semantic_list.append(feature_semantic)
+
+        return { "x":x, 
+                "tgt":tgt, 
+                "x_root":x_root, 
+                "tgt_root":tgt_root, 
+                "x_attr":x_attr, 
+                "tgt_attr":tgt_attr,
+                "semanticList": feature_semantic_list, 
+                "key": feature_key,
+                "scene_offset": feature_scene_offset,
+                "motion": feature_motion,
+                "emotion": feature_emotion,
+                "tgt_emotion" : tgt_emotion,
+                "tgt_emotion_prob" : tgt_emotion_prob,
+                "note_density" : feature_note_density,
+                "loudness" : feature_loudness
+                }
+
+    def find_most_centered(nums, center_num=1):
+        n = len(nums)
+        center = n // 2  # Find the center of the list
+        indices = [i for i, num in enumerate(nums) if num == center_num]  # Get the indices of all center_num
+        
+        if not indices:
+            return None  # If there are no center_num in the list, return None
+        
+        # Find the center_num index closest to the center
+        closest = min(indices, key=lambda x: abs(x - center))
+        
+        return closest
+
+    def paddingOrCutting(self, tensor, padding_value=0.0):
+        current_size = tensor.shape[0]
+        target_size = self.max_seq_chord
+    
+        if current_size > target_size:
+            # Cut the tensor if it is larger than the target size
+            return tensor[:target_size]
+        elif current_size < target_size:
+            # Pad the tensor if it is smaller than the target size
+            padding_size = target_size - current_size
+            # Create padding with the specified padding_value
+            padding = torch.full((padding_size, *tensor.shape[1:]), padding_value, dtype=tensor.dtype)
+            return torch.cat((tensor, padding), dim=0)
+        else:
+            # Return the tensor unchanged if it's already the target size
+            return tensor
+
+    def crossOver(self, sample1, sample2):
+        split_point1 = self.find_most_centered_zero(sample1['scene_offset'].squeeze())
+        split_point2 = self.find_most_centered_zero(sample2['scene_offset'].squeeze())
+
+        for key in sample1.keys():
+            sample1[key][split_point1:], sample2[key][split_point2:] = sample2[key][split_point2:], sample1[key][split_point1:]
+            
+            if key in ('x', 'tgt'):
+                self.paddingOrCutting(sample1[key], padding_value=CHORD_PAD)
+                self.paddingOrCutting(sample2[key], padding_value=CHORD_PAD)
+            elif key in ('x_root', 'tgt_root'):
+                self.paddingOrCutting(sample1[key], padding_value=CHORD_ROOT_PAD)
+                self.paddingOrCutting(sample2[key], padding_value=CHORD_ROOT_PAD)
+            elif key in ('x_attr', 'tgt_attr'):
+                self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD)
+                self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD)
+            else:
+                self.paddingOrCutting(sample1[key])
+                self.paddingOrCutting(sample2[key])
 
     def __getitem__(self, idx):
         #### ---- CHORD ----- ####
@@ -430,7 +803,7 @@ def create_vevo_datasets(dataset_root = "./dataset", max_seq_chord=300, max_seq_
     train_dataset = VevoDataset(
         dataset_root = dataset_root, split="train", split_ver=split_ver, 
         vis_models=vis_models, emo_model =emo_model, motion_type=motion_type, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
-        random_seq=random_seq, is_video = is_video )
+        random_seq=random_seq, is_video = is_video, augmentation=True)
     
     val_dataset = VevoDataset(
         dataset_root = dataset_root, split="val", split_ver=split_ver, 

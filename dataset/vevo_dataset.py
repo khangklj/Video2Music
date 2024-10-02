@@ -165,7 +165,7 @@ class VevoDataset(Dataset):
                     sample1 = copy.deepcopy(self.dataset[simi_idx])
                     sample2 = copy.deepcopy(self.dataset[i])
                     self.augmented_dataset.extend(self.crossOver(sample1, sample2))
-            print(len(self.augmented_dataset), 'samples')
+            print('Augmented to', len(self.augmented_dataset), 'samples')
 
     def __len__(self):
         if self.augmentation:
@@ -533,6 +533,7 @@ class VevoDataset(Dataset):
                 self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
                 self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
 
+        print(sample1['semanticList'].shape)
         return sample1, sample2
 
     def __getitem__(self, idx):

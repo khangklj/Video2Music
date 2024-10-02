@@ -443,6 +443,7 @@ class VevoDataset(Dataset):
                 else:
                     feature_semantic = video_feature_tensor[:self.max_seq_video]
                 feature_semantic_list.append(feature_semantic)
+        feature_semantic_list = torch.Tensor(feature_semantic_list)
 
         return { "x":x, 
                 "tgt":tgt, 

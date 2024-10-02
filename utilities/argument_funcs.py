@@ -4,7 +4,7 @@ from .constants import *
 version = VERSION
 rpr = True
 augmentation = True
-music_gen_version = '1.3'
+music_gen_version = '1.2'
 batch_size = 32
 epochs = 50
 motion_type = 0

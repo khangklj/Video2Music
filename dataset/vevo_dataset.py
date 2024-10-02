@@ -533,7 +533,6 @@ class VevoDataset(Dataset):
                 self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
                 self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
 
-        print(sample2['semanticList'].shape)
         return sample1, sample2
 
     def __getitem__(self, idx):

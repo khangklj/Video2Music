@@ -475,7 +475,12 @@ class VevoDataset(Dataset):
         return closest
 
     def paddingOrCutting(self, tensor, padding_value=0.0):
-        current_size = tensor.shape[0]
+        try:
+            current_size = tensor.size[0]
+            dim = tensor.size[1]
+        except:
+            current_size = len(tensor)
+            dim = len(tensor[0])
         target_size = self.max_seq_chord
     
         if current_size > target_size:
@@ -485,7 +490,7 @@ class VevoDataset(Dataset):
             # Pad the tensor if it is smaller than the target size
             padding_size = target_size - current_size
             # Create padding with the specified padding_value
-            padding = torch.full((padding_size, *tensor.shape[1:]), padding_value, dtype=tensor.dtype)
+            padding = torch.full((padding_size, dim), padding_value)
             return torch.cat((tensor, padding), dim=0)
         else:
             # Return the tensor unchanged if it's already the target size

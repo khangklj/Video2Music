@@ -126,8 +126,8 @@ class VideoMusicTransformer_V1(nn.Module):
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
         # Semantic
-        print(type(feature_semantic_list))
-        vf_concat = feature_semantic_list.float() 
+        print(feature_semantic_list[0].shape, len(feature_semantic_list))
+        vf_concat = feature_semantic_list[0].float() 
         
         # Scene offset
         if not self.scene_embed:

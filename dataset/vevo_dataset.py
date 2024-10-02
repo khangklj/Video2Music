@@ -497,7 +497,7 @@ class VevoDataset(Dataset):
             return torch.cat((tensor, padding), dim=0)
         else:
             # Return the tensor unchanged if it's already the target size
-            return tensor
+            return tensor.squeeze()
 
     def crossOver(self, sample1, sample2):
         split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())

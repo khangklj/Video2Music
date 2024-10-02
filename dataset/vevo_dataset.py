@@ -522,8 +522,12 @@ class VevoDataset(Dataset):
                 self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD, target_size=self.max_seq_chord-1)
                 self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD, target_size=self.max_seq_chord-1)
             else:
-                self.paddingOrCutting(sample1[key], padding_dim=sample1[key].shape[1], target_size=self.max_seq_video)
-                self.paddingOrCutting(sample2[key], padding_dim=sample2[key].shape[1], target_size=self.max_seq_video)
+                try:
+                    self.paddingOrCutting(sample1[key], padding_dim=sample1[key].shape[1], target_size=self.max_seq_video)
+                    self.paddingOrCutting(sample2[key], padding_dim=sample2[key].shape[1], target_size=self.max_seq_video)
+                except:
+                    self.paddingOrCutting(sample1[key], padding_dim=1, target_size=self.max_seq_video)
+                    self.paddingOrCutting(sample2[key], padding_dim=1, target_size=self.max_seq_video)
 
         return sample1, sample2
 

@@ -229,9 +229,7 @@ def eval_model(model, dataloader,
             tgt_emotion = batch["tgt_emotion"].to(get_device())
             tgt_emotion_prob = batch["tgt_emotion_prob"].to(get_device())
             
-            feature_semantic_list = [] 
-            for feature_semantic in batch["semanticList"]:
-                feature_semantic_list.append( feature_semantic.to(get_device()) )
+            feature_semantic_list = batch["semanticList"].to(get_device())
             
             feature_key = batch["key"].to(get_device())
             feature_scene_offset = batch["scene_offset"].to(get_device())

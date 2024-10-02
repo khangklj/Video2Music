@@ -268,7 +268,7 @@ class VevoDataset(Dataset):
                 sceneID = line_arr[1]
                 feature_scene_offset[time] = int(sceneID)+1
 
-        feature_scene_offset = torch.from_numpy(feature_scene_offset)
+        feature_scene_offset = torch.from_numpy(feature_scene_offset).squeeze()
         feature_scene_offset = feature_scene_offset.to(torch.float32)
 
         #### ---- MOTION ----- ####

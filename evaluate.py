@@ -76,8 +76,7 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
 
     total_vf_dim = 0
     if args.is_video:
-        for vf in test_dataset[0]["semanticList"]:
-            total_vf_dim += vf.shape[1]
+        total_vf_dim += test_dataset[0]["semanticList"].shape[1]
         
         if args.scene_embed == False:
             total_vf_dim += 1 # Scene_offset

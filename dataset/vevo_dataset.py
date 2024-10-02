@@ -488,7 +488,7 @@ class VevoDataset(Dataset):
             # Pad the tensor if it is smaller than the target size
             padding_size = target_size - current_size
             # Create padding with the specified padding_value
-            padding = torch.full((padding_size, padding_dim), padding_value)
+            padding = torch.full((padding_size, padding_dim), padding_value).squeeze()
             return torch.cat((tensor, padding), dim=0)
         else:
             # Return the tensor unchanged if it's already the target size
@@ -501,7 +501,7 @@ class VevoDataset(Dataset):
         for key in sample1.keys():
             sample1[key][split_point1:], sample2[key][split_point2:] = sample2[key][split_point2:], sample1[key][split_point1:]
             
-            print(type(sample1[key]))
+            print(key, type(sample1[key]))
             print(sample1[key].shape)
 
             if key in ('x', 'tgt'):

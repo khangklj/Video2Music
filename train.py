@@ -100,8 +100,6 @@ def main( vm = "" , isPrintArgs = True ):
         is_video = args.is_video,
         augmentation = args.augmentation)
     
-    print(len(train_dataset), len(val_dataset))
-    
     total_vf_dim = 0
 
     if args.is_video:

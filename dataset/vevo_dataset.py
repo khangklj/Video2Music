@@ -474,13 +474,11 @@ class VevoDataset(Dataset):
         
         return closest
 
-    def paddingOrCutting(self, tensor, padding_value=0.0):
+    def paddingOrCutting(self, tensor, padding_value=0.0, padding_dim=1):
         try:
             current_size = tensor.size[0]
-            dim = tensor.size[1]
         except:
             current_size = len(tensor)
-            dim = len(tensor[0])
         target_size = self.max_seq_chord
     
         if current_size > target_size:
@@ -490,7 +488,7 @@ class VevoDataset(Dataset):
             # Pad the tensor if it is smaller than the target size
             padding_size = target_size - current_size
             # Create padding with the specified padding_value
-            padding = torch.full((padding_size, dim), padding_value)
+            padding = torch.full((padding_size, padding_dim), padding_value)
             return torch.cat((tensor, padding), dim=0)
         else:
             # Return the tensor unchanged if it's already the target size
@@ -503,6 +501,9 @@ class VevoDataset(Dataset):
         for key in sample1.keys():
             sample1[key][split_point1:], sample2[key][split_point2:] = sample2[key][split_point2:], sample1[key][split_point1:]
             
+            print(type(sample1[key]))
+            print(sample1[key].shape)
+
             if key in ('x', 'tgt'):
                 self.paddingOrCutting(sample1[key], padding_value=CHORD_PAD)
                 self.paddingOrCutting(sample2[key], padding_value=CHORD_PAD)
@@ -513,8 +514,8 @@ class VevoDataset(Dataset):
                 self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD)
                 self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD)
             else:
-                self.paddingOrCutting(sample1[key])
-                self.paddingOrCutting(sample2[key])
+                self.paddingOrCutting(sample1[key], padding_dim=sample1[key].shape[1])
+                self.paddingOrCutting(sample2[key], padding_dim=sample2[key].shape[1])
 
     def __getitem__(self, idx):
         #### ---- CHORD ----- ####

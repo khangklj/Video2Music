@@ -219,7 +219,6 @@ def eval_model(model, dataloader,
         sum_h3 = 0.0
         sum_h5 = 0.0
         
-        print(len(dataloader))
         for batch in dataloader:
             x   = batch["x"].to(get_device())
             tgt = batch["tgt"].to(get_device())

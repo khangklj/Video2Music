@@ -512,6 +512,11 @@ class VevoDataset(Dataset):
             print(key, type(sample1[key]))
             print(sample1[key].shape)
 
+            try:
+                padding_dim = sample1[key].shape[1]
+            except:
+                padding_dim = 1
+
             if key in ('x', 'tgt'):
                 self.paddingOrCutting(sample1[key], padding_value=CHORD_PAD, target_size=self.max_seq_chord-1)
                 self.paddingOrCutting(sample2[key], padding_value=CHORD_PAD, target_size=self.max_seq_chord-1)
@@ -521,13 +526,12 @@ class VevoDataset(Dataset):
             elif key in ('x_attr', 'tgt_attr'):
                 self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD, target_size=self.max_seq_chord-1)
                 self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD, target_size=self.max_seq_chord-1)
+            elif key in ('emotion', 'tgt_emotion', 'tgt_emotion_prob'):
+                self.paddingOrCutting(sample1[key], padding_value=EMOTION_PAD, target_size=self.max_seq_chord-1)
+                self.paddingOrCutting(sample2[key], padding_value=EMOTION_PAD, target_size=self.max_seq_chord-1)
             else:
-                try:
-                    self.paddingOrCutting(sample1[key], padding_dim=sample1[key].shape[1], target_size=self.max_seq_video)
-                    self.paddingOrCutting(sample2[key], padding_dim=sample2[key].shape[1], target_size=self.max_seq_video)
-                except:
-                    self.paddingOrCutting(sample1[key], padding_dim=1, target_size=self.max_seq_video)
-                    self.paddingOrCutting(sample2[key], padding_dim=1, target_size=self.max_seq_video)
+                self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
+                self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
 
         return sample1, sample2
 

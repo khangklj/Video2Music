@@ -444,7 +444,7 @@ class VevoDataset(Dataset):
                     feature_semantic = video_feature_tensor[:self.max_seq_video]
                 feature_semantic_list.append(feature_semantic)
         feature_semantic_list = np.stack(feature_semantic_list)
-        feature_semantic_list = torch.tensor(feature_semantic_list)
+        feature_semantic_list = torch.tensor(feature_semantic_list).squeeze()
 
         return { "x":x, 
                 "tgt":tgt, 

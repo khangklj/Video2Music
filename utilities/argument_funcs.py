@@ -3,7 +3,7 @@ from .constants import *
 
 version = VERSION
 rpr = True
-augmentation = False
+augmentation = True
 music_gen_version = '1.3'
 batch_size = 32
 epochs = 50

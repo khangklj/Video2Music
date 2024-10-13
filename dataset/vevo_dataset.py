@@ -483,7 +483,7 @@ class VevoDataset(Dataset):
                 "motion": feature_motion,
                 "emotion": feature_emotion,
                 "tgt_emotion" : tgt_emotion,
-                # "tgt_emotion_prob" : tgt_emotion_prob,
+                "tgt_emotion_prob" : tgt_emotion_prob,
                 # "note_density" : feature_note_density,
                 # "loudness" : feature_loudness
                 }

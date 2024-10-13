@@ -149,8 +149,17 @@ class VevoDataset(Dataset):
             self.augmented_dataset = []
             print('Augmentation...')
             for i in tqdm(range(len(self.dataset))):
+                sample = copy.deepcopy(self.dataset[i])
+                for key in sample.keys():
+                    if key == 'key':
+                        continue
+                    try:
+                        padding_dim = sample1[key].shape[1]
+                    except:
+                        padding_dim = 1
+                    self.paddingSample(sample, key, padding_dim)
 
-                self.augmented_dataset.append(self.dataset[i])
+                self.augmented_dataset.append(sample)
 
                 # Find the most similar sample based on emotion
                 simi_idx = -1
@@ -515,6 +524,18 @@ class VevoDataset(Dataset):
             # Return the tensor unchanged if it's already the target size
             return tensor
 
+    def paddingSample(self, sample, key, padding_dim):
+        if key in ('x', 'tgt'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('x_root', 'tgt_root'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('x_attr', 'tgt_attr'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('emotion', 'tgt_emotion', 'tgt_emotion_prob'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        else:
+            sample[key] = self.paddingOrCutting(sample[key], padding_dim=padding_dim, target_size=self.max_seq_video)
+    
     def crossOver(self, sample1, sample2):
         sample1 = copy.deepcopy(sample1)
         sample2 = copy.deepcopy(sample2)
@@ -541,23 +562,10 @@ class VevoDataset(Dataset):
             except:
                 padding_dim = 1
 
-            if key in ('x', 'tgt'):
-                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-            elif key in ('x_root', 'tgt_root'):
-                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-            elif key in ('x_attr', 'tgt_attr'):
-                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-            elif key in ('emotion', 'tgt_emotion', 'tgt_emotion_prob'):
-                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-            else:
-                sample1[key] = self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
-                sample2[key] = self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
+            self.paddingSample(sample1, key, padding_dim)
+            self.paddingSample(sample2, key, padding_dim)
 
-            if key == 'emotion':
+            if sample1[key].shape != sample2[key].shape:
                 print(sample1[key].shape, sample2[key].shape)
         return sample1, sample2
 

@@ -166,11 +166,11 @@ class VevoDataset(Dataset):
                         simi_idx = j
                 
                 if simi_idx != -1:
-                    print(f'Sample {i} similar with sample {simi_idx} distance {min_dist}')
+                    # print(f'Sample {i} similar with sample {simi_idx} distance {min_dist}')
                     sample1 = copy.deepcopy(self.dataset[simi_idx])
                     sample2 = copy.deepcopy(self.dataset[i])
                     self.augmented_dataset.extend(self.crossOver(sample1, sample2))
-            print('Augmented to', len(self.augmented_dataset), 'samples')
+            print('Augmentation adchieve', len(self.augmented_dataset), 'samples')
 
     def __len__(self):
         if self.augmentation:
@@ -521,7 +521,7 @@ class VevoDataset(Dataset):
         split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())
         split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
 
-        print(split_point1, split_point2)
+        # print(f'Split point 1: {split_point1}, Split point 2: {split_point2}')
 
         for key in sample1.keys():
             if key == 'key':
@@ -542,20 +542,20 @@ class VevoDataset(Dataset):
                 padding_dim = 1
 
             if key in ('x', 'tgt'):
-                self.paddingOrCutting(sample1[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                self.paddingOrCutting(sample2[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
             elif key in ('x_root', 'tgt_root'):
-                self.paddingOrCutting(sample1[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                self.paddingOrCutting(sample2[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
             elif key in ('x_attr', 'tgt_attr'):
-                self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
             elif key in ('emotion', 'tgt_emotion', 'tgt_emotion_prob'):
-                self.paddingOrCutting(sample1[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
-                self.paddingOrCutting(sample2[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample1[key] = self.paddingOrCutting(sample1[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+                sample2[key] = self.paddingOrCutting(sample2[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
             else:
-                self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
-                self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
+                sample1[key] = self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
+                sample2[key] = self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
 
         return sample1, sample2
 

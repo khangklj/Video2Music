@@ -557,6 +557,7 @@ class VevoDataset(Dataset):
                 sample1[key] = self.paddingOrCutting(sample1[key], padding_dim=padding_dim, target_size=self.max_seq_video)
                 sample2[key] = self.paddingOrCutting(sample2[key], padding_dim=padding_dim, target_size=self.max_seq_video)
 
+            print(sample1[key].shape, sample2[key].shape)
         return sample1, sample2
 
     def __getitem__(self, idx):

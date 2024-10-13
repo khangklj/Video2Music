@@ -477,12 +477,12 @@ class VevoDataset(Dataset):
                 "loudness" : feature_loudness
                 }
 
-    def find_most_centered(nums, center_num=0):
+    def find_most_centered(nums, center_num=1):
         n = len(nums)
         center = n // 2  # Find the center of the list
         indices = [i for i, num in enumerate(nums) if num == center_num]  # Get the indices of all center_num
         
-        print(indices, center_num in nums, center_num, nums, sep='\n')
+        # print(indices, center_num in nums, center_num, nums, sep='\n')
         if not indices:
             return None  # If there are no center_num in the list, return None
         

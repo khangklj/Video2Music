@@ -517,7 +517,7 @@ class VevoDataset(Dataset):
         split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
 
         print(split_point1, split_point2)
-        print(sample1['scene_offset'].shape(), sample2['scene_offset'].shape())
+        print(sample1['scene_offset'].shape, sample2['scene_offset'].shape)
         for key in sample1.keys():
             if key == 'key':
                 continue

@@ -513,18 +513,20 @@ class VevoDataset(Dataset):
             return tensor.squeeze()
 
     def crossOver(self, sample1, sample2):
+        sample1 = copy.deepcopy(sample1)
+        sample2 = copy.deepcopy(sample2)
         split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())
         split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
 
-        print(split_point1, split_point2)
-        print(sample1['scene_offset'].shape, sample2['scene_offset'].shape)
         for key in sample1.keys():
             if key == 'key':
                 continue
             
-            sample1[key][split_point1:], sample2[key][split_point2:] = sample2[key][split_point2:], sample1[key][split_point1:]
-            sample1[key] = sample1[key].squeeze()
-            sample2[key] = sample2[key].squeeze()
+            slice1 = sample1[key][split_point1:]
+            slice2 = sample2[key][split_point2:]
+
+            sample1[key] = torch.cat([sample1[key][:split_point1], slice2], dim=0)
+            sample2[key] = torch.cat([sample2[key][:split_point2], slice1], dim=0)
 
             try:
                 padding_dim = sample1[key].shape[1]

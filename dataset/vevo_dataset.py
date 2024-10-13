@@ -147,7 +147,7 @@ class VevoDataset(Dataset):
         # Augmentation
         if self.augmentation:
             self.augmented_dataset = []
-            print('Augmentation')
+            print('Augmentation...')
             for i in tqdm(range(len(self.dataset))):
 
                 self.augmented_dataset.append(self.dataset[i])
@@ -176,6 +176,7 @@ class VevoDataset(Dataset):
     def emotionSimi(self, sample1, sample2):
         emo1 = torch.mean(sample1['emotion'], dim=0)
         emo2 = torch.mean(sample2['emotion'], dim=0)
+        print(emo1, emo2)
         return torch.dist(emo1.unsqueeze(0), emo2.unsqueeze(0), p=2)
 
     def createSample(self, idx):
@@ -467,7 +468,7 @@ class VevoDataset(Dataset):
                 "loudness" : feature_loudness
                 }
 
-    def find_most_centered(nums, center_num=1):
+    def find_most_centered(nums, center_num=0):
         n = len(nums)
         center = n // 2  # Find the center of the list
         indices = [i for i, num in enumerate(nums) if num == center_num]  # Get the indices of all center_num

@@ -527,6 +527,7 @@ class VevoDataset(Dataset):
 
             sample1[key] = torch.cat([sample1[key][:split_point1], slice2], dim=0)
             sample2[key] = torch.cat([sample2[key][:split_point2], slice1], dim=0)
+            print(sample1[key].shape, sample2[key].shape)
 
             try:
                 padding_dim = sample1[key].shape[1]

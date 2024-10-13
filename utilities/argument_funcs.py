@@ -8,7 +8,7 @@ chord_embedding = False
 music_gen_version = '1.3'
 batch_size = 32
 epochs = 50
-motion_type = 1
+motion_type = 2
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 

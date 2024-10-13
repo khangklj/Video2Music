@@ -506,11 +506,14 @@ class VevoDataset(Dataset):
             # Pad the tensor if it is smaller than the target size
             padding_size = target_size - current_size
             # Create padding with the specified padding_value
-            padding = torch.full((padding_size, padding_dim), padding_value).squeeze()
+            if padding_dim != 1:
+                padding = torch.full((padding_size, padding_dim), padding_value)
+            else:
+                padding = torch.full((padding_size), padding_value)
             return torch.cat((tensor, padding), dim=0)
         else:
             # Return the tensor unchanged if it's already the target size
-            return tensor.squeeze()
+            return tensor
 
     def crossOver(self, sample1, sample2):
         sample1 = copy.deepcopy(sample1)

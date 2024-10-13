@@ -179,10 +179,10 @@ class VevoDataset(Dataset):
             return len(self.dataset)
 
     def emotionSimi(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
-        st1 = idx1 - window_size if idx1 - window_size > 0 else 0
-        en1 = idx1 + window_size if idx1 + window_size < sample1['emotion'].shape[0] else sample1['emotion'].shape[0]
-        st2 = idx2 - window_size if idx2 - window_size > 0 else 0
-        en2 = idx2 + window_size if idx2 + window_size < sample2['emotion'].shape[0] else sample2['emotion'].shape[0]
+        st1 = (idx1 - window_size) if idx1 - window_size > 0 else 0
+        en1 = (idx1 + window_size) if idx1 + window_size < sample1['emotion'].shape[0] else sample1['emotion'].shape[0]
+        st2 = (idx2 - window_size) if idx2 - window_size > 0 else 0
+        en2 = (idx2 + window_size) if idx2 + window_size < sample2['emotion'].shape[0] else sample2['emotion'].shape[0]
         emo1 = sample1['emotion'][st1:en1]
         emo2 = sample2['emotion'][st2:en2]
         distance = torch.norm(emo1 - emo2, dim=1)

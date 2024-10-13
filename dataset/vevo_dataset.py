@@ -482,6 +482,7 @@ class VevoDataset(Dataset):
         center = n // 2  # Find the center of the list
         indices = [i for i, num in enumerate(nums) if num == center_num]  # Get the indices of all center_num
         
+        print(indices)
         if not indices:
             return None  # If there are no center_num in the list, return None
         

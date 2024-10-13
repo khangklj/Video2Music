@@ -17,7 +17,8 @@ import json
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer_V1, self).__init__()
 
         self.nlayers    = n_layers
@@ -266,7 +267,8 @@ class VideoMusicTransformer_V1(nn.Module):
 class VideoMusicTransformer_V2(nn.Module):
     def __init__(self, version_name='2.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer_V2, self).__init__()
 
         self.nlayers    = n_layers
@@ -516,7 +518,8 @@ class VideoMusicTransformer_V2(nn.Module):
 class VideoMusicTransformer_V3(nn.Module):
     def __init__(self, version_name='3.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer_V3, self).__init__()
 
         self.nlayers    = n_layers
@@ -756,7 +759,8 @@ class VideoMusicTransformer_V3(nn.Module):
 class VideoMusicTransformer(nn.Module):
     def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim = 0, rpr=False, scene_embed=False):
+                 max_sequence_chord=300, total_vf_dim = 0, rpr=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer, self).__init__()
         self.nlayers    = n_layers
         self.nhead      = num_heads

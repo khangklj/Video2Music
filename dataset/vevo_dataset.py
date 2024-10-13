@@ -158,6 +158,7 @@ class VevoDataset(Dataset):
                 for j in range(i + 1, len(self.dataset)):
                     dist = self.emotionSimi(self.dataset[i], self.dataset[j])
                     if dist < min_dist:
+                        print(min_dist)
                         min_dist = dist
                         simi_idx = j
                 
@@ -176,7 +177,6 @@ class VevoDataset(Dataset):
     def emotionSimi(self, sample1, sample2):
         emo1 = torch.mean(sample1['emotion'], dim=0)
         emo2 = torch.mean(sample2['emotion'], dim=0)
-        print(emo1, emo2)
         return torch.dist(emo1.unsqueeze(0), emo2.unsqueeze(0), p=2)
 
     def createSample(self, idx):

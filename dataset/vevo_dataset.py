@@ -488,7 +488,7 @@ class VevoDataset(Dataset):
         # Find the center_num index closest to the center
         closest = min(indices, key=lambda x: abs(x - center))
         
-        return closest
+        return int(closest)
 
     def paddingOrCutting(self, tensor, padding_value=0.0, padding_dim=1, target_size=0):
         try:

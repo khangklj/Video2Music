@@ -148,7 +148,7 @@ class VevoDataset(Dataset):
         if self.augmentation:
             self.augmented_dataset = []
             print('Augmentation...')
-            for i in tqdm(range(len(self.dataset), 10)):
+            for i in tqdm(range(len(self.dataset), 64)):
                 sample = copy.deepcopy(self.dataset[i])
                 for key in sample.keys():
                     if key == 'key':

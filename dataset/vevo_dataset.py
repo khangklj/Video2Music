@@ -155,14 +155,18 @@ class VevoDataset(Dataset):
                 # Find the most similar sample based on emotion
                 simi_idx = -1
                 min_dist = 100
+                window_size = 20
                 for j in range(i + 1, len(self.dataset)):
-                    dist = self.emotionSimi(self.dataset[i], self.dataset[j])
+                    dist = self.emotionSimi(self.dataset[i], self.dataset[j], 
+                                            idx1=self.find_most_centered(self.dataset[i]['scene_offset'].squeeze()),
+                                            idx2=self.find_most_centered(self.dataset[j]['scene_offset'].squeeze()),
+                                            window_size=window_size)
                     if dist < min_dist:
-                        print(min_dist)
                         min_dist = dist
                         simi_idx = j
                 
                 if simi_idx != -1:
+                    print(f'Sample {i} similar with sample {simi_idx} distance {min_dist}')
                     sample1 = copy.deepcopy(self.dataset[simi_idx])
                     sample2 = copy.deepcopy(self.dataset[i])
                     self.augmented_dataset.extend(self.crossOver(sample1, sample2))
@@ -174,10 +178,15 @@ class VevoDataset(Dataset):
         else:
             return len(self.dataset)
 
-    def emotionSimi(self, sample1, sample2):
-        emo1 = torch.mean(sample1['emotion'], dim=0)
-        emo2 = torch.mean(sample2['emotion'], dim=0)
-        return torch.dist(emo1.unsqueeze(0), emo2.unsqueeze(0), p=2)
+    def emotionSimi(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
+        st1 = idx1 - window_size if idx1 - window_size > 0 else 0
+        en1 = idx1 + window_size if idx1 + window_size < sample1['emotion'].shape[0] else sample1['emotion'].shape[0]
+        st2 = idx2 - window_size if idx2 - window_size > 0 else 0
+        en2 = idx2 + window_size if idx2 + window_size < sample2['emotion'].shape[0] else sample2['emotion'].shape[0]
+        emo1 = sample1['emotion'][st1:en1]
+        emo2 = sample2['emotion'][st2:en2]
+        distance = torch.norm(emo1 - emo2, dim=1)
+        return torch.mean(distance)
 
     def createSample(self, idx):
         #### ---- CHORD ----- ####

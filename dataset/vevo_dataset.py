@@ -179,15 +179,14 @@ class VevoDataset(Dataset):
             return len(self.dataset)
 
     def emotionSimi(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
-        st1 = (idx1 - window_size) if idx1 - window_size > 0 else 0
-        en1 = (idx1 + window_size) if idx1 + window_size < sample1['emotion'].shape[0] else sample1['emotion'].shape[0]
-        st2 = (idx2 - window_size) if idx2 - window_size > 0 else 0
-        en2 = (idx2 + window_size) if idx2 + window_size < sample2['emotion'].shape[0] else sample2['emotion'].shape[0]
+        if idx1 < window_size or idx2 < window_size:
+            return 100.0
         
-        left_window = idx1 - st1 if idx1 - st1 < idx2 - st2 else idx2 - st2
-        right_window = en1 - idx1 if en1 - idx1 < en2 - idx2 else en2 - idx2
-        emo1 = sample1['emotion'][idx1 - left_window:idx1 + right_window]
-        emo2 = sample2['emotion'][idx2 - left_window:idx2 + right_window]
+        if idx1 + window_size > sample1['emotion'].shape[0] or idx2 + window_size > sample2['emotion'].shape[0]:
+            return 100.0
+        
+        emo1 = sample1['emotion'][idx1 - window_size:idx1 + window_size]
+        emo2 = sample2['emotion'][idx2 - window_size:idx2 + window_size]
         distance = torch.norm(emo1 - emo2, dim=1)
         return torch.mean(distance)
 
@@ -517,6 +516,8 @@ class VevoDataset(Dataset):
         split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())
         split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
 
+        print(split_point1, split_point2)
+        print(sample1['scene_offset'].shape(), sample2['scene_offset'].shape())
         for key in sample1.keys():
             if key == 'key':
                 continue

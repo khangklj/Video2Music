@@ -183,8 +183,11 @@ class VevoDataset(Dataset):
         en1 = (idx1 + window_size) if idx1 + window_size < sample1['emotion'].shape[0] else sample1['emotion'].shape[0]
         st2 = (idx2 - window_size) if idx2 - window_size > 0 else 0
         en2 = (idx2 + window_size) if idx2 + window_size < sample2['emotion'].shape[0] else sample2['emotion'].shape[0]
-        emo1 = sample1['emotion'][st1:en1]
-        emo2 = sample2['emotion'][st2:en2]
+        
+        left_window = idx1 - st1 if idx1 - st1 < idx2 - st2 else idx2 - st2
+        right_window = en1 - idx1 if en1 - idx1 < en2 - idx2 else en2 - idx2
+        emo1 = sample1['emotion'][idx1 - left_window:idx1 + right_window]
+        emo2 = sample2['emotion'][idx2 - left_window:idx2 + right_window]
         distance = torch.norm(emo1 - emo2, dim=1)
         return torch.mean(distance)
 

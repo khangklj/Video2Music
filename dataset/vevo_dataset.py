@@ -483,7 +483,7 @@ class VevoDataset(Dataset):
                 "motion": feature_motion,
                 "emotion": feature_emotion,
                 "tgt_emotion" : tgt_emotion,
-                # "tgt_emotion_prob" : tgt_emotion_prob,
+                "tgt_emotion_prob" : tgt_emotion_prob,
                 "note_density" : feature_note_density,
                 "loudness" : feature_loudness
                 }
@@ -533,6 +533,8 @@ class VevoDataset(Dataset):
             sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
         elif key in ('emotion', 'tgt_emotion', 'tgt_emotion_prob'):
             sample[key] = self.paddingOrCutting(sample[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+            if key == 'tgt_emotion_prob':
+                print(sample[key].shape)
         else:
             sample[key] = self.paddingOrCutting(sample[key], padding_dim=padding_dim, target_size=self.max_seq_video)
     

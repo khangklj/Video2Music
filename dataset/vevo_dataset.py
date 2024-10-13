@@ -148,7 +148,7 @@ class VevoDataset(Dataset):
         if self.augmentation:
             self.augmented_dataset = []
             print('Augmentation...')
-            for i in tqdm(range(len(self.dataset))):
+            for i in tqdm(range(len(self.dataset), 10)):
                 sample = copy.deepcopy(self.dataset[i])
                 for key in sample.keys():
                     if key == 'key':
@@ -477,15 +477,15 @@ class VevoDataset(Dataset):
                 "tgt_root":tgt_root, 
                 "x_attr":x_attr, 
                 "tgt_attr":tgt_attr,
-                "semanticList": feature_semantic_list, 
-                "key": feature_key,
-                "scene_offset": feature_scene_offset,
-                "motion": feature_motion,
-                "emotion": feature_emotion,
-                "tgt_emotion" : tgt_emotion,
-                "tgt_emotion_prob" : tgt_emotion_prob,
-                "note_density" : feature_note_density,
-                "loudness" : feature_loudness
+                # "semanticList": feature_semantic_list, 
+                # "key": feature_key,
+                # "scene_offset": feature_scene_offset,
+                # "motion": feature_motion,
+                # "emotion": feature_emotion,
+                # "tgt_emotion" : tgt_emotion,
+                # "tgt_emotion_prob" : tgt_emotion_prob,
+                # "note_density" : feature_note_density,
+                # "loudness" : feature_loudness
                 }
 
     def find_most_centered(self, nums, center_num=1.0):

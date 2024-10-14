@@ -27,3 +27,4 @@ pytube==15.0.0
 pyfluidsynth
 torchtune
 gensim
+minGRU-pytorch

@@ -13,9 +13,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         time_before = time.time()
         opt.zero_grad()
 
-        feature_semantic_list = [] 
-        for feature_semantic in batch["semanticList"]:
-            feature_semantic_list.append( feature_semantic.to(get_device()) )
+        feature_semantic_list = batch["semanticList"].to(get_device())
 
         feature_scene_offset = batch["scene_offset"].to(get_device())
         feature_motion = batch["motion"].to(get_device())

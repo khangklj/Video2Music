@@ -17,6 +17,7 @@ from efficient_kan import KANLinear
 from .mamba import Mamba, MoEMamba, MambaConfig
 from .bimamba import BiMambaEncoder
 
+from minGRU_pytorch import minGRU
 
 class advancedRNNBlock(nn.Module):
     def __init__(self, rnn_type='gru', ff_type='mlp', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
@@ -111,17 +112,19 @@ class VideoRegression(nn.Module):
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
         elif self.regModel == "bimamba+":
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, norm_first=norm_first)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
         elif self.regModel == "moe_bimamba+":
             expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
             moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer, norm_first=norm_first)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
         elif self.regModel == "sharedmoe_bimamba+":
             expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
             moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer, norm_first=norm_first)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
+        elif self.regModel == 'minGRU':
+            self.model = minGRU(self.d_model)
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)
@@ -132,7 +135,7 @@ class VideoRegression(nn.Module):
         projection = nn.Linear
         # projection = KANLinear
         
-        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)            
 
@@ -176,20 +179,24 @@ class VideoRegression(nn.Module):
             out, _ = self.gru(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)
-        elif self.regModel in ("mamba", "moemamba", "mamba+"):
-            vf_concat = vf_concat.permute(1,0,2)
+        elif self.regModel in ("mamba", "moemamba", "mamba+"):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
             out = self.dropout(out)           
             out = self.fc4(out)
-        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
-            vf_concat = vf_concat.permute(1,0,2)
+        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
+            out = self.dropout(out)
+            out = self.fc4(out)
+        elif self.regModel == 'minGRU':            
+            vf_concat = self.fc3(vf_concat)
+
+            out = self.model(vf_concat)
             out = self.dropout(out)
             out = self.fc4(out)
         return out

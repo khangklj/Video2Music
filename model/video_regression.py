@@ -186,17 +186,11 @@ class VideoRegression(nn.Module):
 
             out = self.dropout(out)           
             out = self.fc4(out)
-        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):            
+        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
             out = self.dropout(out)
-            out = self.fc4(out)
-        elif self.regModel == 'minGRU':            
-            vf_concat = self.fc3(vf_concat)
-
-            out = self.model(vf_concat)
-            out = self.dropout(out)
-            out = self.fc4(out)
+            out = self.fc4(out)        
         return out

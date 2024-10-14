@@ -166,7 +166,7 @@ class VevoDataset(Dataset):
                 min_dist = 100
                 window_size = 20
                 for j in range(i + 1, len(self.dataset)):
-                    dist = self.emotionSimi(self.dataset[i], self.dataset[j], 
+                    dist = self.emotionDistance(self.dataset[i], self.dataset[j], 
                                             idx1=self.find_most_centered(self.dataset[i]['scene_offset'].squeeze()),
                                             idx2=self.find_most_centered(self.dataset[j]['scene_offset'].squeeze()),
                                             window_size=window_size)
@@ -187,7 +187,7 @@ class VevoDataset(Dataset):
         else:
             return len(self.dataset)
 
-    def emotionSimi(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
+    def emotionDistance(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
         if idx1 < window_size or idx2 < window_size:
             return 100.0
         

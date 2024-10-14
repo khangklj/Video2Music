@@ -4,6 +4,13 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
+regModel = 'moe_bimamba+'
+augmentation = True
+chord_embedding = False
+batch_size = 32
+epochs = 50
+motion_type = 0
+scene_embed = False
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -37,8 +44,7 @@ def parse_train_args():
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
-    parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default=regModel, help="Version name. None is original loudness and note density Regression model")
 
     # regModel version name:
     # lstm
@@ -57,6 +63,10 @@ def parse_train_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
+    parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
+    parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-scene_embed", type=bool, default=scene_embed, help="Use scene offset embedding or not")
+
     return parser.parse_known_args()
 
 def print_train_args(args):
@@ -95,8 +105,11 @@ def print_train_args(args):
     print("use_KAN: ", args.use_KAN)
     print("")
     print("is_video:", args.is_video)
-    print("motion_type:", args.motion_type)
     print("regModel:", args.regModel)
+
+    print("motion_type:", args.motion_type)
+    print("scene embedding:", args.scene_embed)
+    print("augmentation:", args.augmentation)
 
     print(SEPERATOR)
     print("")
@@ -131,7 +144,6 @@ def parse_eval_args():
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version number. None is original loudness and note density Regression model")
-    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:
@@ -151,6 +163,10 @@ def parse_eval_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
+    parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
+    parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-scene_embed", type=bool, default=scene_embed, help="Use scene offset embedding or not")
+
     return parser.parse_known_args()
 
 def print_eval_args(args):
@@ -175,7 +191,10 @@ def print_eval_args(args):
     print("")
     print("dim_feedforward:", args.dim_feedforward)    
     print("regModel:", args.regModel)
+
     print("motion_type:", args.motion_type)
+    print("scene embedding:", args.scene_embed)
+    print("augmentation:", args.augmentation)
 
     print(SEPERATOR)
     print("")
@@ -201,8 +220,11 @@ def write_model_params(args, output_file):
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")
-    o_stream.write("motion_type: " + str(args.motion_type) + "\n")
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
+
+    o_stream.write("motion_type: " + str(args.motion_type) + "\n")
+    o_stream.write("scene_embed: " + str(args.scene_embed) + "\n")
+    o_stream.write("augmentation: " + str(args.augmentation) + "\n")
 
     o_stream.close()

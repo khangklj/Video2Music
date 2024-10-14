@@ -180,7 +180,7 @@ class VevoDataset(Dataset):
                                 simi_idx = j
                         
                         if simi_idx != -1:
-                            print(f'\nSample {i}-{round(rate1, 1)} similar with sample {simi_idx}-{round(rate2, 1)} distance {min_dist}')
+                            # print(f'\nSample {i}-{round(rate1, 1)} similar with sample {simi_idx}-{round(rate2, 1)} distance {min_dist}')
                             sample1 = self.dataset[simi_idx]
                             sample2 = self.dataset[i]
                             self.augmented_dataset.extend(self.swap(sample1, sample2, 

@@ -148,7 +148,7 @@ class VevoDataset(Dataset):
         if self.augmentation:
             self.augmented_dataset = []
             print('Augmentation...')
-            for i in tqdm(range(500, len(self.dataset))):
+            for i in tqdm(range(len(self.dataset))):
                 sample = copy.deepcopy(self.dataset[i])
                 for key in sample.keys():
                     if key == 'key':
@@ -180,7 +180,7 @@ class VevoDataset(Dataset):
                                 simi_idx = j
                         
                         if simi_idx != -1:
-                            print(f'Sample {i}-{round(rate1, 1)} similar with sample {simi_idx}-{round(rate2, 1)} distance {min_dist}')
+                            print(f'\nSample {i}-{round(rate1, 1)} similar with sample {simi_idx}-{round(rate2, 1)} distance {min_dist}')
                             sample1 = self.dataset[simi_idx]
                             sample2 = self.dataset[i]
                             self.augmented_dataset.extend(self.swap(sample1, sample2, 

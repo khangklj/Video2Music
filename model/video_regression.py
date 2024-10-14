@@ -82,6 +82,8 @@ class VideoRegression(nn.Module):
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
+        self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
+
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
         elif self.regModel == "bigru":

@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torchtune
 from torch.nn.modules.normalization import LayerNorm
 import random
 import numpy as np
@@ -10,7 +9,7 @@ from .positional_encoding import PositionalEncoding
 from .rpr import TransformerDecoderRPR, TransformerDecoderLayerRPR
 from efficient_kan import KANLinear
 from .custom_transformer import *
-from .rotate_operation import Rotary
+from .rotate_operation import *
 from .moe import *
 from datetime import datetime
 import json
@@ -18,7 +17,8 @@ import json
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer_V1, self).__init__()
 
         self.nlayers    = n_layers
@@ -29,6 +29,11 @@ class VideoMusicTransformer_V1(nn.Module):
         self.max_seq_midi    = max_sequence_midi
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
+        self.scene_embed = scene_embed
+
+        # Scene offsets embedding
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
         # AMT + MoE + Positional Embedding
         # Input embedding for video and music features
@@ -49,15 +54,24 @@ class VideoMusicTransformer_V1(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = torchtune.modules.RMSNorm(self.d_model)
+            norm = RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        if version_name in ('1.1', '1.3'):
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        else:
+            expert = nn.Sequential(
+                nn.Linear(self.d_model, self.d_model*2),
+                nn.SiLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(self.d_model*2, self.d_model)
+            )
+            
         att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
-        if version_name == '1.1':
+        if version_name in ('1.0', '1.1'):
             moelayer = MoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
         else:
             moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
@@ -112,15 +126,27 @@ class VideoMusicTransformer_V1(nn.Module):
         xf = self.Linear_chord(x)
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
-        vf_concat = feature_semantic_list[0].float()
-
-        for i in range(1, len(feature_semantic_list)):
-            vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
+        # Semantic
+        vf_concat = feature_semantic_list.float() 
         
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        # Scene offset
+        if not self.scene_embed:
+            vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+
+        # Motion
+        try:
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        except:
+            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+        
+        # Emotion
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf = self.Linear_vis(vf_concat)
+        
+        # Video embedding
+        if not self.scene_embed:
+            vf = self.Linear_vis(vf_concat)
+        else:
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         ### POSITIONAL EMBEDDING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
@@ -241,7 +267,8 @@ class VideoMusicTransformer_V1(nn.Module):
 class VideoMusicTransformer_V2(nn.Module):
     def __init__(self, version_name='2.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer_V2, self).__init__()
 
         self.nlayers    = n_layers
@@ -252,6 +279,11 @@ class VideoMusicTransformer_V2(nn.Module):
         self.max_seq_midi    = max_sequence_midi
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
+        self.scene_embed = scene_embed
+
+        # Scene offsets embedding
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
@@ -270,26 +302,36 @@ class VideoMusicTransformer_V2(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = torchtune.modules.RMSNorm(self.d_model)
+            norm = RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        RoPE = Rotary(self.d_model)
+        RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff)
+
+        if version_name == '2.0':
+            expert = nn.Sequential(
+                nn.Linear(self.d_model, self.d_model*2),
+                nn.SiLU(),
+                nn.Dropout(self.dropout),
+                nn.Linear(self.d_model*2, self.d_model)
+            )
+        else:
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         
         # version_name = '2.1'
         topk_scheduler = None
         temperature_scheduler = None
 
-        if version_name in ('2.2', '2.3'):
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        # if version_name in ('2.2', '2.3'):
+        #     topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        if version_name == '2.3':
-            temperature_scheduler = TemperatureScheduler()
+        # if version_name == '2.3':
+        #     temperature_scheduler = TemperatureScheduler()
 
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
@@ -344,15 +386,29 @@ class VideoMusicTransformer_V2(nn.Module):
         xf = self.Linear_chord(x)
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
+        # Semantic
         vf_concat = feature_semantic_list[0].float()
-
         for i in range(1, len(feature_semantic_list)):
             vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
         
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        # Scene offset
+        if not self.scene_embed:
+            vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+
+        # Motion
+        try:
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        except:
+            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+        
+        # Emotion
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf = self.Linear_vis(vf_concat)
+        
+        # Video embedding
+        if not self.scene_embed:
+            vf = self.Linear_vis(vf_concat)
+        else:
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
@@ -462,7 +518,8 @@ class VideoMusicTransformer_V2(nn.Module):
 class VideoMusicTransformer_V3(nn.Module):
     def __init__(self, version_name='3.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False):
+                 max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer_V3, self).__init__()
 
         self.nlayers    = n_layers
@@ -473,14 +530,19 @@ class VideoMusicTransformer_V3(nn.Module):
         self.max_seq_midi    = max_sequence_midi
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
+        self.scene_embed = scene_embed
+
+        # Scene offsets embedding
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
         self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
         
-        projection = nn.Linear
-        # projection = KANLinear
+        # projection = nn.Linear
+        projection = KANLinear
 
         self.total_vf_dim = total_vf_dim
         self.Linear_vis     = projection(self.total_vf_dim, self.d_model)
@@ -491,51 +553,38 @@ class VideoMusicTransformer_V3(nn.Module):
         
         # Transformer
         if rms_norm:
-            norm = torchtune.modules.RMSNorm(self.d_model)
+            norm = RMSNorm(self.d_model)
         else:
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        pre_norm = True
-        RoPE = Rotary(self.d_model)
+        RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
         self.n_experts = 6
         self.n_experts_per_token = 2
-        if version_name == '3.1':
-            att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
-            expert = GLUExpert(self.d_model, self.d_ff)
-            
+        expert = GLUExpert(self.d_model, self.d_ff)
+        att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
+        
+        # version_name = '3.1'
+        topk_scheduler = None
+        temperature_scheduler = None
+
+        if version_name in ('3.1', '3.2'):
             topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                    use_KAN=use_KAN)
-            
-            encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm, norm, self.dropout)
-            decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm, norm, self.dropout)
-        elif version_name in ('3.2', '3.3'):
-            att = AngleMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
-            expert = AngleGLUExpert(self.d_model, self.d_ff)
+        # if version_name == '2.3':
+        #     temperature_scheduler = TemperatureScheduler()
 
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
-        
-            moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
-                                    n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                    topk_scheduler=topk_scheduler, temperature_scheduler=None,
-                                    use_KAN=use_KAN)
-            
-            if version_name == '3.2':
-                angle_decay = False
-            elif version_name == '3.3':
-                angle_decay = True
-
-            encoder_layer = RoSCTransformerEncoderLayer(att, moelayer, norm, self.dropout, angle_decay)
-            decoder_layer = RoSCTransformerDecoderLayer(att, att, moelayer, norm, self.dropout, angle_decay)
+        moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
+                                  n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
+                                  topk_scheduler=topk_scheduler, temperature_scheduler=temperature_scheduler,
+                                  use_KAN=use_KAN)
 
         # Encoder
+        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
         # Decoder
+        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
 
         # Full model
@@ -578,15 +627,29 @@ class VideoMusicTransformer_V3(nn.Module):
         xf = self.Linear_chord(x)
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
+        # Semantic
         vf_concat = feature_semantic_list[0].float()
-
         for i in range(1, len(feature_semantic_list)):
             vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
         
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        # Scene offset
+        if not self.scene_embed:
+            vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+
+        # Motion
+        try:
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        except:
+            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+        
+        # Emotion
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf = self.Linear_vis(vf_concat)
+        
+        # Video embedding
+        if not self.scene_embed:
+            vf = self.Linear_vis(vf_concat)
+        else:
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
@@ -696,7 +759,8 @@ class VideoMusicTransformer_V3(nn.Module):
 class VideoMusicTransformer(nn.Module):
     def __init__(self, n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
-                 max_sequence_chord=300, total_vf_dim = 0, rpr=False):
+                 max_sequence_chord=300, total_vf_dim = 0, rpr=False, scene_embed=False,
+                 chord_embed=False):
         super(VideoMusicTransformer, self).__init__()
         self.nlayers    = n_layers
         self.nhead      = num_heads
@@ -707,6 +771,11 @@ class VideoMusicTransformer(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
         self.rpr        = rpr
+        self.scene_embed = scene_embed
+
+        # Scene offsets embedding
+        if self.scene_embed:
+            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
         
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
@@ -770,15 +839,29 @@ class VideoMusicTransformer(nn.Module):
         xf = self.Linear_chord(x)
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
+        # Semantic
         vf_concat = feature_semantic_list[0].float()
-
         for i in range(1, len(feature_semantic_list)):
             vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
         
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        # Scene offset
+        if not self.scene_embed:
+            vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+
+        # Motion
+        try:
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        except:
+            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+        
+        # Emotion
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
-        vf = self.Linear_vis(vf_concat)
+        
+        # Video embedding
+        if not self.scene_embed:
+            vf = self.Linear_vis(vf_concat)
+        else:
+            vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
         ### POSITIONAL ENCODING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)

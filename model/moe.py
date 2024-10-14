@@ -35,13 +35,13 @@ class GLUExpert(Module):
         self.linear1 = Linear(d_model, d_ff)
         self.linear2 = Linear(d_ff, d_model)
         self.gate = Linear(d_model, d_ff)
-        # self.dropout = Dropout(dropout)
+        self.dropout = Dropout(dropout)
 
     def forward(self, x):
         x_ff = self.linear1(x)
         x_gated = self.gate(x)
         x_ff = x_ff * F.silu(x_gated)
-        x_ff = self.linear2(x_ff)
+        x_ff = self.linear2(self.dropout(x_ff))
         return x_ff
     
 class AngleGLUExpert(Module):
@@ -229,7 +229,7 @@ class SharedMoELayer(Module):
 
         weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
-        out = torch.zeros((*x.shape[:-1], self.shared_expert.linear2.out_features), device=get_device())
+        out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             

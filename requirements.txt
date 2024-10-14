@@ -1,5 +1,4 @@
 torch==2.3.1
-torchtune
 torchvision==0.18.1
 clip @ git+https://github.com/openai/CLIP.git
 efficient_kan @ git+https://github.com/Blealtan/efficient-kan.git
@@ -27,3 +26,4 @@ gradio==4.7.1
 pytube==15.0.0
 pyfluidsynth
 torchtune
+gensim

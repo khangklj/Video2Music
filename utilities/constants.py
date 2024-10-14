@@ -66,6 +66,7 @@ SEMANTIC_PAD               = 0.0
 
 # SCENE_OFFSET
 SCENE_OFFSET_PAD        = 0.0 
+SCENE_OFFSET_MAX        = 300
 
 # MOTION
 MOTION_PAD        = 0.0 

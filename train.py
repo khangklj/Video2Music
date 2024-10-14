@@ -93,18 +93,28 @@ def main( vm = "" , isPrintArgs = True ):
         max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 
         vis_models = args.vis_models,
+        motion_type = args.motion_type,
         emo_model = args.emo_model, 
         split_ver = SPLIT_VER, 
         random_seq = True, 
-        is_video = args.is_video)
+        is_video = args.is_video,
+        augmentation = args.augmentation)
     
     total_vf_dim = 0
 
     if args.is_video:
-        for vf in train_dataset[0]["semanticList"]:
-            total_vf_dim += vf.shape[1]
-        total_vf_dim += 1 # Scene_offset
-        total_vf_dim += 1 # Motion
+        total_vf_dim += train_dataset[0]["semanticList"].shape[1]
+        
+        if args.scene_embed == False:
+            total_vf_dim += 1 # Scene_offset
+        
+        # Motion
+        if args.motion_type == 0:
+            total_vf_dim += 1 
+        elif args.motion_type == 1:
+            total_vf_dim += 512
+        elif args.motion_type == 2:
+            total_vf_dim += 768
         
         # Emotion
         if args.emo_model.startswith("6c"):
@@ -121,7 +131,8 @@ def main( vm = "" , isPrintArgs = True ):
             model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr).to(get_device())
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, rpr=args.rpr, 
+                        scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
         else:
             model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
@@ -132,19 +143,23 @@ def main( vm = "" , isPrintArgs = True ):
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
-                    rms_norm=args.rms_norm).to(get_device())
+                    rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
     elif args.music_gen_version.startswith('2.'):
         model = VideoMusicTransformer_V2(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
-                    rms_norm=args.rms_norm).to(get_device())
+                    rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
     elif args.music_gen_version.startswith('3.'):
         model = VideoMusicTransformer_V3(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
-                    rms_norm=args.rms_norm).to(get_device())
+                    rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
+
+    # Write model architecture
+    with open(os.path.join(args.output_dir, 'model_architecture.txt'), 'w') as f:
+        f.write(str(model))
 
     start_epoch = BASELINE_EPOCH
     if(args.continue_weights is not None):
@@ -223,17 +238,17 @@ def main( vm = "" , isPrintArgs = True ):
             print(SEPERATOR)
             print("Baseline model evaluation (Epoch 0):")
 
-        train_metric_dict = eval_model(model, train_loader_tmp, 
-                                train_loss_func, train_loss_emotion_func,
-                                isVideo= args.is_video)
+        # train_metric_dict = eval_model(model, train_loader_tmp, 
+        #                         train_loss_func, train_loss_emotion_func,
+        #                         isVideo= args.is_video)
         
-        train_total_loss = train_metric_dict["avg_total_loss"]
-        train_loss_chord = train_metric_dict["avg_loss_chord"]
-        train_loss_emotion = train_metric_dict["avg_loss_emotion"]
+        # train_total_loss = train_metric_dict["avg_total_loss"]
+        # train_loss_chord = train_metric_dict["avg_loss_chord"]
+        # train_loss_emotion = train_metric_dict["avg_loss_emotion"]
             
-        train_h1 = train_metric_dict["avg_h1"]
-        train_h3 = train_metric_dict["avg_h3"]
-        train_h5 = train_metric_dict["avg_h5"]
+        # train_h1 = train_metric_dict["avg_h1"]
+        # train_h3 = train_metric_dict["avg_h3"]
+        # train_h5 = train_metric_dict["avg_h5"]
 
         eval_metric_dict = eval_model(model, val_loader, 
                                 eval_loss_func, eval_loss_emotion_func,
@@ -250,13 +265,13 @@ def main( vm = "" , isPrintArgs = True ):
         lr = get_lr(opt)
 
         print("Epoch:", epoch+1)
-        print("Avg train loss (total):", train_total_loss)
-        print("Avg train loss (chord):", train_loss_chord)
-        print("Avg train loss (emotion):", train_loss_emotion)
+        # print("Avg train loss (total):", train_total_loss)
+        # print("Avg train loss (chord):", train_loss_chord)
+        # print("Avg train loss (emotion):", train_loss_emotion)
 
-        print("Avg train h1:", train_h1)
-        print("Avg train h3:", train_h3)
-        print("Avg train h5:", train_h5)
+        # print("Avg train h1:", train_h1)
+        # print("Avg train h3:", train_h3)
+        # print("Avg train h5:", train_h5)
 
         print("Avg val loss (total):", eval_total_loss)
         print("Avg val loss (chord):", eval_loss_chord)
@@ -284,11 +299,11 @@ def main( vm = "" , isPrintArgs = True ):
                 print("Best val loss:", best_eval_loss, file=o_stream)
                 
         if(not args.no_tensorboard):
-            tensorboard_summary.add_scalar("Avg_CE_loss/train", train_total_loss, global_step=epoch+1)
+            # tensorboard_summary.add_scalar("Avg_CE_loss/train", train_total_loss, global_step=epoch+1)
             tensorboard_summary.add_scalar("Avg_CE_loss/eval", eval_total_loss, global_step=epoch+1)
-            tensorboard_summary.add_scalar("Avg_CE_loss_chord/train", train_loss_chord, global_step=epoch+1)
+            # tensorboard_summary.add_scalar("Avg_CE_loss_chord/train", train_loss_chord, global_step=epoch+1)
             tensorboard_summary.add_scalar("Avg_CE_loss_chord/eval", eval_loss_chord, global_step=epoch+1)
-            tensorboard_summary.add_scalar("Avg_CE_loss_emotion/train", train_loss_emotion, global_step=epoch+1)
+            # tensorboard_summary.add_scalar("Avg_CE_loss_emotion/train", train_loss_emotion, global_step=epoch+1)
             tensorboard_summary.add_scalar("Avg_CE_loss_emotion/eval", eval_loss_emotion, global_step=epoch+1)
             tensorboard_summary.add_scalar("Learn_rate/train", lr, global_step=epoch+1)
             tensorboard_summary.flush()
@@ -301,7 +316,7 @@ def main( vm = "" , isPrintArgs = True ):
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
             writer.writerow([epoch+1, lr, 
-                             train_total_loss, train_loss_chord, train_loss_emotion, train_h1, train_h3, train_h5,
+                            #  train_total_loss, train_loss_chord, train_loss_emotion, train_h1, train_h3, train_h5,
                              eval_total_loss, eval_loss_chord, eval_loss_emotion, eval_h1, eval_h3, eval_h5])
             
     # Sanity check just to make sure everything is gone

@@ -65,7 +65,8 @@ class advancedRNNBlock(nn.Module):
         x = self.last_layer(x)
         return x
 class VideoRegression(nn.Module):
-    def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, use_KAN=False, max_sequence_video=300, total_vf_dim=0, regModel="bilstm"):
+    def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, use_KAN=False, max_sequence_video=300, 
+                 total_vf_dim=0, regModel="bilstm", scene_embed=False, chord_embed=False):
         super(VideoRegression, self).__init__()
         self.n_layers    = n_layers
         self.d_model    = d_model
@@ -74,9 +75,14 @@ class VideoRegression(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
+        self.scene_embed = scene_embed
+        self.chord_embed = chord_embed
 
-        # CONFIG NORM FIRST BIMAMBA+
-        norm_first = False
+        # Scene offsets embedding
+        # if self.scene_embed:
+        #     self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+
+        # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
@@ -132,14 +138,27 @@ class VideoRegression(nn.Module):
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
-        vf_concat = feature_semantic_list[0].float()
-        for i in range(1, len(feature_semantic_list)):
-            vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
+        # Semantic
+        vf_concat = feature_semantic_list.float() 
+        
+        # Scene offset
+        if not self.scene_embed:
+            vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
 
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) 
-        vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) 
-        vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1)
-        vf_concat = vf_concat.permute(1,0,2)
+        # Motion
+        try:
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        except:
+            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+        
+        # Emotion
+        vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        
+        # Video embedding
+        # if not self.scene_embed:
+        #     vf_concat = self.Linear_vis(vf_concat)
+        # else:
+        #     vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
 
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)

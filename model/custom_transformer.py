@@ -21,6 +21,22 @@ from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _
 
 from torch.nn.functional import linear, softmax, dropout
 
+# From torchtune
+class RMSNorm(nn.Module):
+    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+        super().__init__()
+        self.eps = eps
+        self.scale = nn.Parameter(torch.ones(dim))
+
+def forward(self, x: Tensor) -> Tensor:
+        # computation is in fp32
+        x_fp32 = x.float()
+        x_normed = (
+            x_fp32 * torch.rsqrt(x_fp32.pow(2).mean(-1, keepdim=True) + self.eps)
+        ).type_as(x)
+        return x_normed * self.scale
+
+
 # From pytorch and modify RoPE
 class CustomMultiheadAttention(Module):
     __constants__ = ['batch_first']
@@ -745,11 +761,6 @@ def custom_multi_head_attention_forward(
             b_v,
         )
 
-    # RoPE here - OUR MODIFY
-    if RoPE is not None:
-        q = RoPE.forward(q, seq_dim=0)
-        k = RoPE.forward(k, seq_dim=0)
-
     # prep attention mask
 
     if attn_mask is not None:
@@ -903,6 +914,15 @@ def custom_multi_head_attention_forward(
         q = q.view(bsz, num_heads, tgt_len, head_dim)
         k = k.view(bsz, num_heads, src_len, head_dim)
         v = v.view(bsz, num_heads, src_len, head_dim)
+
+        # RoPE here - OUR MODIFY
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        if RoPE is not None:
+            q = RoPE.forward(q)
+            k = RoPE.forward(k)
+        q = q.transpose(1, 2)
+        k = v.transpose(1, 2)
 
         attn_output = F.scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal

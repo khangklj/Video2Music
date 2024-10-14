@@ -9,19 +9,34 @@ from torch.utils.data import Dataset
 from utilities.constants import *
 from utilities.device import cpu_device
 from utilities.device import get_device
+from gensim.models import Word2Vec
 
 import json
+from tqdm import tqdm
+import copy
 
 SEQUENCE_START = 0
 
+# filename = ''
+# chord_embedding = Word2Vec.load(filename)
+
 class VevoDataset(Dataset):
-    def __init__(self, dataset_root = "./dataset/", split="train", split_ver="v1", vis_models="2d/clip_l14p", emo_model="6c_l14p", max_seq_chord=300, max_seq_video=300, random_seq=True, is_video = True):
+    def __init__(self, dataset_root = "./dataset/", split="train", split_ver="v1", vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, max_seq_chord=300, max_seq_video=300, random_seq=True, is_video = True, augmentation=False):
         
         self.dataset_root       = dataset_root
+        self.motion_type = motion_type
+        self.augmentation = augmentation
 
         self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
-        self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "all")
+        
+        if self.motion_type == 0:
+            self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "all") # Original
+        elif self.motion_type == 1:
+            self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "option1") # Option 1
+        elif self.motion_type == 2:
+            self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "option2") # Option 2
+        
         self.vevo_scene_offset_root = os.path.join( dataset_root, "vevo_scene_offset", "all")
         self.vevo_meta_split_path = os.path.join( dataset_root, "vevo_meta", "split", split_ver, split + ".txt")
         
@@ -65,7 +80,12 @@ class VevoDataset(Dataset):
         for fid in self.id_list:
             fpath_chord = os.path.join( self.vevo_chord_root, fid + ".lab" )
             fpath_emotion = os.path.join( self.vevo_emotion_root, fid + ".lab" )
-            fpath_motion = os.path.join( self.vevo_motion_root, fid + ".lab" )
+            
+            if self.motion_type == 0:
+                fpath_motion = os.path.join( self.vevo_motion_root, fid + ".lab" ) # Original
+            elif self.motion_type == 1 or self.motion_type == 2:
+                fpath_motion = os.path.join( self.vevo_motion_root, fid + ".npy" ) # Option 1 and 2
+            
             fpath_scene_offset = os.path.join( self.vevo_scene_offset_root, fid + ".lab" )
 
             fpath_loudness = os.path.join( self.vevo_loudness_root, fid + ".lab" )
@@ -117,11 +137,69 @@ class VevoDataset(Dataset):
         
         with open(chordAttrDicPath) as json_file:
             self.chordAttrDic = json.load(json_file)
-        
-    def __len__(self):
-        return len(self.data_files_chord)
 
-    def __getitem__(self, idx):
+        # Get all samples
+        self.dataset = []
+        print('Get all samples')
+        for i in tqdm(range(len(self.data_files_chord))):
+            self.dataset.append(self.createSample(i))
+
+        # Augmentation
+        if self.augmentation:
+            self.augmented_dataset = []
+            print('Augmentation...')
+            for i in tqdm(range(500, len(self.dataset))):
+                sample = copy.deepcopy(self.dataset[i])
+                for key in sample.keys():
+                    if key == 'key':
+                        continue
+                    try:
+                        padding_dim = sample1[key].shape[1]
+                    except:
+                        padding_dim = 1
+                    self.paddingSample(sample, key, padding_dim)
+
+                self.augmented_dataset.append(sample)
+
+                # Find the most similar sample based on emotion
+                simi_idx = -1
+                min_dist = 100
+                window_size = 20
+                for j in range(i + 1, len(self.dataset)):
+                    dist = self.emotionDistance(self.dataset[i], self.dataset[j], 
+                                            idx1=self.find_most_centered(self.dataset[i]['scene_offset'].squeeze()),
+                                            idx2=self.find_most_centered(self.dataset[j]['scene_offset'].squeeze()),
+                                            window_size=window_size)
+                    if dist < min_dist:
+                        min_dist = dist
+                        simi_idx = j
+                
+                if simi_idx != -1:
+                    # print(f'Sample {i} similar with sample {simi_idx} distance {min_dist}')
+                    sample1 = copy.deepcopy(self.dataset[simi_idx])
+                    sample2 = copy.deepcopy(self.dataset[i])
+                    self.augmented_dataset.extend(self.crossOver(sample1, sample2))
+            print('Augmentation adchieve', len(self.augmented_dataset), 'samples')
+
+    def __len__(self):
+        if self.augmentation:
+            return len(self.augmented_dataset)
+        else:
+            return len(self.dataset)
+
+    def emotionDistance(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
+        if idx1 < window_size or idx2 < window_size:
+            return 100.0
+        
+        if idx1 + window_size > sample1['emotion'].shape[0] or idx2 + window_size > sample2['emotion'].shape[0]:
+            return 100.0
+        
+        emo1 = sample1['emotion'][idx1 - window_size:idx1 + window_size]
+        emo2 = sample2['emotion'][idx2 - window_size:idx2 + window_size]
+        distance = torch.norm(emo1 - emo2, dim=1)
+        return torch.mean(distance)
+
+    def createSample(self, idx):
         #### ---- CHORD ----- ####
         feature_chord = np.empty(self.max_seq_chord)
         feature_chord.fill(CHORD_PAD)
@@ -144,6 +222,8 @@ class VevoDataset(Dataset):
                 if time >= self.max_seq_chord:
                     break
                 chord = line_arr[1]
+
+                # Original
                 chordID = self.chordDic[chord]
                 feature_chord[time] = chordID
                 chord_arr = chord.split(":")
@@ -164,6 +244,8 @@ class VevoDataset(Dataset):
                     feature_chordRoot[time] = chordRootID
                     feature_chordAttr[time] = chordAttrID
 
+                # CBOW in Chord Embedding
+                
         if "major" in key:
             feature_key = torch.tensor([0])
         else:
@@ -207,22 +289,39 @@ class VevoDataset(Dataset):
                 sceneID = line_arr[1]
                 feature_scene_offset[time] = int(sceneID)+1
 
-        feature_scene_offset = torch.from_numpy(feature_scene_offset)
+        feature_scene_offset = torch.from_numpy(feature_scene_offset).squeeze()
         feature_scene_offset = feature_scene_offset.to(torch.float32)
 
         #### ---- MOTION ----- ####
-        feature_motion = np.empty(self.max_seq_video)
-        feature_motion.fill(MOTION_PAD)
-        with open(self.data_files_motion[idx], encoding = 'utf-8') as f:
-            for line in f:
-                line = line.strip()
-                line_arr = line.split(" ")
-                time = line_arr[0]
-                time = int(time)
-                if time >= self.max_seq_chord:
-                    break
-                motion = line_arr[1]
-                feature_motion[time] = float(motion)
+        if self.motion_type == 0: # Original
+            feature_motion = np.empty(self.max_seq_video)
+            feature_motion.fill(MOTION_PAD)
+            with open(self.data_files_motion[idx], encoding = 'utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    line_arr = line.split(" ")
+                    time = line_arr[0]
+                    time = int(time)
+                    if time >= self.max_seq_chord:
+                        break
+                    motion = line_arr[1]
+                    feature_motion[time] = float(motion)
+                    
+        elif self.motion_type == 1: # Option 1
+            feature_motion = np.zeros((self.max_seq_chord, 512))
+            loaded_motion = np.load(self.data_files_motion[idx])
+            if loaded_motion.shape[0] > self.max_seq_chord:
+                feature_motion = loaded_motion[:self.max_seq_chord, :]
+            else:
+                feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+
+        elif self.motion_type == 2: # Option 2
+            feature_motion = np.zeros((self.max_seq_chord, 768))
+            loaded_motion = np.load(self.data_files_motion[idx])
+            if loaded_motion.shape[0] > self.max_seq_chord:
+                feature_motion = loaded_motion[:self.max_seq_chord, :]
+            else:
+                feature_motion[:loaded_motion.shape[0], :] = loaded_motion
 
         feature_motion = torch.from_numpy(feature_motion)
         feature_motion = feature_motion.to(torch.float32)
@@ -369,6 +468,8 @@ class VevoDataset(Dataset):
                 else:
                     feature_semantic = video_feature_tensor[:self.max_seq_video]
                 feature_semantic_list.append(feature_semantic)
+        feature_semantic_list = np.stack(feature_semantic_list)
+        feature_semantic_list = torch.tensor(feature_semantic_list).squeeze()
 
         return { "x":x, 
                 "tgt":tgt, 
@@ -387,21 +488,110 @@ class VevoDataset(Dataset):
                 "loudness" : feature_loudness
                 }
 
-def create_vevo_datasets(dataset_root = "./dataset", max_seq_chord=300, max_seq_video=300, vis_models="2d/clip_l14p", emo_model="6c_l14p", split_ver="v1", random_seq=True, is_video=True):
+    def find_most_centered(self, nums, center_num=1.0):
+        n = len(nums)
+        center = n // 2  # Find the center of the list
+        indices = [i for i, num in enumerate(nums) if num == center_num]  # Get the indices of all center_num
+        
+        # print(indices, center_num in nums, center_num, nums, sep='\n')
+        if not indices:
+            return None  # If there are no center_num in the list, return None
+        
+        # Find the center_num index closest to the center
+        closest = min(indices, key=lambda x: abs(x - center))
+        
+        return int(closest)
+
+    def paddingOrCutting(self, tensor, padding_value=0.0, padding_dim=1, target_size=0):
+        try:
+            current_size = tensor.size[0]
+        except:
+            current_size = len(tensor)
+    
+        if current_size > target_size:
+            # Cut the tensor if it is larger than the target size
+            return tensor[:target_size]
+        elif current_size < target_size:
+            # Pad the tensor if it is smaller than the target size
+            padding_size = target_size - current_size
+            # Create padding with the specified padding_value
+            if padding_dim != 1:
+                padding = torch.full((padding_size, padding_dim), padding_value)
+            else:
+                padding = torch.full((padding_size,), padding_value)
+            return torch.cat((tensor, padding), dim=0)
+        else:
+            # Return the tensor unchanged if it's already the target size
+            return tensor
+
+    def paddingSample(self, sample, key, padding_dim):
+        if key in ('x', 'tgt'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('x_root', 'tgt_root'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_ROOT_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('x_attr', 'tgt_attr'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=CHORD_ATTR_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('tgt_emotion', 'tgt_emotion_prob'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord-1)
+        elif key in ('emotion'):
+            sample[key] = self.paddingOrCutting(sample[key], padding_value=EMOTION_PAD, padding_dim=padding_dim, target_size=self.max_seq_chord)
+        else:
+            sample[key] = self.paddingOrCutting(sample[key], padding_dim=padding_dim, target_size=self.max_seq_video)
+    
+    def crossOver(self, sample1, sample2):
+        sample1 = copy.deepcopy(sample1)
+        sample2 = copy.deepcopy(sample2)
+        split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())
+        split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
+
+        # print(f'Split point 1: {split_point1}, Split point 2: {split_point2}')
+
+        for key in sample1.keys():
+            if key == 'key':
+                continue
+            
+            slice1 = sample1[key][split_point1:]
+            slice2 = sample2[key][split_point2:]
+
+            # print(sample1[key].shape, sample2[key].shape)
+            # print(split_point1, split_point2)
+            sample1[key] = torch.cat([sample1[key][:split_point1], slice2], dim=0)
+            sample2[key] = torch.cat([sample2[key][:split_point2], slice1], dim=0)
+            # print(sample1[key].shape, sample2[key].shape)
+
+            try:
+                padding_dim = sample1[key].shape[1]
+            except:
+                padding_dim = 1
+
+            self.paddingSample(sample1, key, padding_dim)
+            self.paddingSample(sample2, key, padding_dim)
+
+            if sample1[key].shape != sample2[key].shape:
+                print(sample1[key].shape, sample2[key].shape)
+        return sample1, sample2
+
+    def __getitem__(self, idx):
+        if self.augmentation:
+            return self.augmented_dataset[idx]
+        else:
+            return self.dataset[idx]
+
+def create_vevo_datasets(dataset_root = "./dataset", max_seq_chord=300, max_seq_video=300, vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, split_ver="v1", random_seq=True, is_video=True, augmentation=False):
 
     train_dataset = VevoDataset(
         dataset_root = dataset_root, split="train", split_ver=split_ver, 
-        vis_models=vis_models, emo_model =emo_model, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
-        random_seq=random_seq, is_video = is_video )
+        vis_models=vis_models, emo_model =emo_model, motion_type=motion_type, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
+        random_seq=random_seq, is_video = is_video, augmentation=augmentation)
     
     val_dataset = VevoDataset(
         dataset_root = dataset_root, split="val", split_ver=split_ver, 
-        vis_models=vis_models, emo_model =emo_model, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
+        vis_models=vis_models, emo_model =emo_model, motion_type=motion_type, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
         random_seq=random_seq, is_video = is_video )
     
     test_dataset = VevoDataset(
         dataset_root = dataset_root, split="test", split_ver=split_ver, 
-        vis_models=vis_models, emo_model =emo_model, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
+        vis_models=vis_models, emo_model =emo_model, motion_type=motion_type, max_seq_chord=max_seq_chord, max_seq_video=max_seq_video, 
         random_seq=random_seq, is_video = is_video )
     
     return train_dataset, val_dataset, test_dataset

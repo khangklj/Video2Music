@@ -2,6 +2,13 @@ import argparse
 from .constants import *
 
 version = VERSION
+rpr = True
+augmentation = True
+chord_embedding = False
+music_gen_version = '1.2'
+batch_size = 32
+epochs = 50
+motion_type = 2
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 
@@ -24,8 +31,8 @@ def parse_train_args():
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=0.1, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
-    parser.add_argument("-batch_size", type=int, default=18, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=50, help="Number of epochs to use")
+    parser.add_argument("-batch_size", type=int, default=batch_size, help="Batch size to use")
+    parser.add_argument("-epochs", type=int, default=epochs, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
@@ -39,7 +46,7 @@ def parse_train_args():
 
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
-    parser.add_argument('-music_gen_version', type=str, default='2.2', help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default=music_gen_version, help="Version number. None is original musgic generation AMT model")
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -47,7 +54,11 @@ def parse_train_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-rpr", type=bool, default=RPR, help="...")
+    parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
+    parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
+    parser.add_argument("-rpr", type=bool, default=rpr, help="...")
+    parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     return parser.parse_known_args()
 
 def print_train_args(args):
@@ -89,7 +100,12 @@ def print_train_args(args):
     print("dropout:", args.dropout)
     print("rms_norm:", args.rms_norm)
     print("is_video:", args.is_video)
+    print("emo_model:", args.emo_model)
+    print("motion_type:", args.motion_type)
+    print("scene embedding:", args.scene_embed)
+    print("chord embedding:", args.chord_embed)
     print("music_gen_version:", args.music_gen_version)
+    print("augmentation:", args.augmentation)
 
     print(SEPERATOR)
     print("")
@@ -123,7 +139,7 @@ def parse_eval_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
-    parser.add_argument('-music_gen_version', type=str, default='2.2', help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default=music_gen_version, help="Version number. None is original musgic generation AMT model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 
     if IS_VIDEO:
@@ -132,7 +148,11 @@ def parse_eval_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-rpr", type=bool, default=RPR, help="...")
+    parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
+    parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
+    parser.add_argument("-rpr", type=bool, default=rpr, help="...")
+    parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     return parser.parse_known_args()
 
 def print_eval_args(args):
@@ -157,8 +177,13 @@ def print_eval_args(args):
     print("d_model:", args.d_model)
     print("")
     print("rms_norm:", args.rms_norm)
-    print("dim_feedforward:", args.dim_feedforward)    
+    print("dim_feedforward:", args.dim_feedforward)   
+    print("emo_model:", args.emo_model)
+    print("motion_type:", args.motion_type) 
+    print("scene embedding:", args.scene_embed)
+    print("chord embedding:", args.chord_embed)
     print("music_gen_version:", args.music_gen_version)
+    print("augmentation:", args.augmentation)
 
     print(SEPERATOR)
     print("")
@@ -187,6 +212,11 @@ def write_model_params(args, output_file):
 
     o_stream.write("is_video: " + str(args.is_video) + "\n")
     o_stream.write("vis_models: " + str(args.vis_models) + "\n")
+    o_stream.write("emo_model: " + str(args.emo_model) + "\n")
+    o_stream.write("motion_type: " + str(args.motion_type) + "\n")
+    o_stream.write("scene_embed: " + str(args.scene_embed) + "\n")
+    o_stream.write("chord_embed: " + str(args.chord_embed) + "\n")
+    o_stream.write("augmentation: " + str(args.augmentation) + "\n")
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
 

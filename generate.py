@@ -7,9 +7,9 @@ from third_party.midi_processor.processor import decode_midi, encode_midi
 from utilities.argument_funcs import parse_generate_args, print_generate_args
 from utilities.chord_to_midi import *
 
-from model.music_transformer import MusicTransformer
-from model.video_music_transformer import VideoMusicTransformer
-from model.video_regression import VideoRegression
+from model.music_transformer import *
+from model.video_music_transformer import *
+from model.video_regression import *
 
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 
@@ -125,6 +125,7 @@ def main():
             max_seq_chord = args.max_sequence_chord, 
             max_seq_video = args.max_sequence_video, 
             vis_models = args.vis_models,
+            motion_type = args.motion_type,
             emo_model = args.emo_model, 
             split_ver = SPLIT_VER, 
             random_seq = False, 
@@ -143,7 +144,14 @@ def main():
             total_vf_dim += vf.shape[1]
     
     total_vf_dim += 1 # Scene_offset
-    total_vf_dim += 1 # Motion
+
+    # Motion
+    if args.motion_type == 0:
+        total_vf_dim += 1 
+    elif args.motion_type == 1:
+        total_vf_dim += 512
+    elif args.motion_type == 2:
+        total_vf_dim += 768
     
     # Emotion
     if args.emo_model.startswith("6c"):
@@ -209,13 +217,24 @@ def main():
             model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_chord=args.max_sequence_chord, rpr=args.rpr).to(get_device())
-    elif args.music_gen_version == 1:
-        model = VideoMusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
-                        d_model=args.d_model, dim_feedforward=args.dim_feedforward,
-                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
-                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, 
-                        rpr=args.rpr, version=args.music_gen_version).to(get_device())
-        model.load_state_dict(torch.load(args.model_weights))
+    elif args.music_gen_version.startswith('1.'):
+        model = VideoMusicTransformer_V1(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
+                    d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                    max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
+                    rms_norm=args.rms_norm).to(get_device())
+    elif args.music_gen_version.startswith('2.'):
+        model = VideoMusicTransformer_V2(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
+                    d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                    max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
+                    rms_norm=args.rms_norm).to(get_device())
+    elif args.music_gen_version.startswith('3.'):
+        model = VideoMusicTransformer_V3(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
+                    d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                    max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                    max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
+                    rms_norm=args.rms_norm).to(get_device())
 
     if args.regression_version == None and args.is_video:
         modelReg = VideoRegression(max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel= args.regModel).to(get_device())

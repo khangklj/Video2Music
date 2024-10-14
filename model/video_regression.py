@@ -79,10 +79,10 @@ class VideoRegression(nn.Module):
         self.chord_embed = chord_embed
 
         # Scene offsets embedding
-        if self.scene_embed:
-            self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+        # if self.scene_embed:
+        #     self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
 
-        self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
+        # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
@@ -155,10 +155,10 @@ class VideoRegression(nn.Module):
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         
         # Video embedding
-        if not self.scene_embed:
-            vf_concat = self.Linear_vis(vf_concat)
-        else:
-            vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
+        # if not self.scene_embed:
+        #     vf_concat = self.Linear_vis(vf_concat)
+        # else:
+        #     vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
 
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)

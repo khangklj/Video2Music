@@ -71,9 +71,7 @@ def eval_model(model, dataloader, loss):
         sum_rmse_loudness = 0.0
 
         for batch in dataloader:
-            feature_semantic_list = [] 
-            for feature_semantic in batch["semanticList"]:
-                feature_semantic_list.append( feature_semantic.to(get_device()) )
+            feature_semantic_list = batch["semanticList"].to(get_device())
 
             feature_scene_offset = batch["scene_offset"].to(get_device())
             feature_motion = batch["motion"].to(get_device())

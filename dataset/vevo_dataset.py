@@ -165,20 +165,27 @@ class VevoDataset(Dataset):
                 simi_idx = -1
                 min_dist = 100
                 window_size = 20
-                for j in range(i + 1, len(self.dataset)):
-                    dist = self.emotionDistance(self.dataset[i], self.dataset[j], 
-                                            idx1=self.find_most_centered(self.dataset[i]['scene_offset'].squeeze()),
-                                            idx2=self.find_most_centered(self.dataset[j]['scene_offset'].squeeze()),
-                                            window_size=window_size)
-                    if dist < min_dist:
-                        min_dist = dist
-                        simi_idx = j
-                
-                if simi_idx != -1:
-                    # print(f'Sample {i} similar with sample {simi_idx} distance {min_dist}')
-                    sample1 = copy.deepcopy(self.dataset[simi_idx])
-                    sample2 = copy.deepcopy(self.dataset[i])
-                    self.augmented_dataset.extend(self.crossOver(sample1, sample2))
+                split_rate = [1/3, 2/3]
+                for rate1 in split_rate:
+                    for rate2 in split_rate:
+                        for j in range(i + 1, len(self.dataset)):
+                            dist = self.emotionDistance(self.dataset[i], self.dataset[j], 
+                                                        idx1=self.find_fit_index(self.dataset[i]['scene_offset'].squeeze(), 
+                                                                                idx=int(self.dataset[i]['scene_offset'].shape[0] * rate1)),
+                                                        idx2=self.find_fit_index(self.dataset[j]['scene_offset'].squeeze(), 
+                                                                                idx=int(self.dataset[j]['scene_offset'].shape[0] * rate2)),
+                                                        window_size=window_size)
+                            if dist < min_dist:
+                                min_dist = dist
+                                simi_idx = j
+                        
+                        if simi_idx != -1:
+                            print(f'Sample {i}-{rate1} similar with sample {simi_idx}-{rate2} distance {min_dist}')
+                            sample1 = self.dataset[simi_idx]
+                            sample2 = self.dataset[i]
+                            self.augmented_dataset.extend(self.swap(sample1, sample2, 
+                                                                    int(self.dataset[simi_idx]['scene_offset'].shape[0] * rate1), 
+                                                                    int(self.dataset[i]['scene_offset'].shape[0] * rate2)))
             print('Augmentation adchieve', len(self.augmented_dataset), 'samples')
 
     def __len__(self):
@@ -488,17 +495,15 @@ class VevoDataset(Dataset):
                 "loudness" : feature_loudness
                 }
 
-    def find_most_centered(self, nums, center_num=1.0):
-        n = len(nums)
-        center = n // 2  # Find the center of the list
-        indices = [i for i, num in enumerate(nums) if num == center_num]  # Get the indices of all center_num
+    def find_fit_index(self, nums, idx=0, val=1.0):
+        indices = [i for i, num in enumerate(nums) if num == val]  # Get the indices of all val
         
-        # print(indices, center_num in nums, center_num, nums, sep='\n')
+        # print(indices, val in nums, val, nums, sep='\n')
         if not indices:
-            return None  # If there are no center_num in the list, return None
+            return None  # If there are no val in the list, return None
         
-        # Find the center_num index closest to the center
-        closest = min(indices, key=lambda x: abs(x - center))
+        # Find the val index closest to the idx
+        closest = min(indices, key=lambda x: abs(x - idx))
         
         return int(closest)
 
@@ -538,13 +543,9 @@ class VevoDataset(Dataset):
         else:
             sample[key] = self.paddingOrCutting(sample[key], padding_dim=padding_dim, target_size=self.max_seq_video)
     
-    def crossOver(self, sample1, sample2):
+    def swap(self, sample1, sample2, split_point1, split_point2):
         sample1 = copy.deepcopy(sample1)
         sample2 = copy.deepcopy(sample2)
-        split_point1 = self.find_most_centered(sample1['scene_offset'].squeeze())
-        split_point2 = self.find_most_centered(sample2['scene_offset'].squeeze())
-
-        # print(f'Split point 1: {split_point1}, Split point 2: {split_point2}')
 
         for key in sample1.keys():
             if key == 'key':
@@ -553,11 +554,8 @@ class VevoDataset(Dataset):
             slice1 = sample1[key][split_point1:]
             slice2 = sample2[key][split_point2:]
 
-            # print(sample1[key].shape, sample2[key].shape)
-            # print(split_point1, split_point2)
             sample1[key] = torch.cat([sample1[key][:split_point1], slice2], dim=0)
             sample2[key] = torch.cat([sample2[key][:split_point2], slice1], dim=0)
-            # print(sample1[key].shape, sample2[key].shape)
 
             try:
                 padding_dim = sample1[key].shape[1]
@@ -569,6 +567,7 @@ class VevoDataset(Dataset):
 
             if sample1[key].shape != sample2[key].shape:
                 print(sample1[key].shape, sample2[key].shape)
+        
         return sample1, sample2
 
     def __getitem__(self, idx):

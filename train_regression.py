@@ -88,8 +88,7 @@ def main( vm = "" , isPrintArgs = True ):
         augmentation = args.augmentation)
     
     total_vf_dim = 0
-    for vf in train_dataset[0]["semanticList"]:
-        total_vf_dim += vf.shape[1]
+    total_vf_dim += train_dataset[0]["semanticList"].shape[1]
 
     total_vf_dim += 1 # Scene_offset
     

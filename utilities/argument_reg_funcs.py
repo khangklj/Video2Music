@@ -4,12 +4,12 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'minGRULM'
+regModel = 'bigru'
 augmentation = False
 chord_embedding = False
 batch_size = 32
 epochs = 100
-motion_type = 0
+motion_type = 1
 scene_embed = False
 
 def parse_train_args():
@@ -56,6 +56,7 @@ def parse_train_args():
     # moemamba
     # moe_bimamba+
     # shared_bimamba+
+    # minGRU, minGRULM
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -156,6 +157,7 @@ def parse_eval_args():
     # moemamba
     # moe_bimamba+
     # shared_bimamba+
+    # minGRU, minGRULM
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")

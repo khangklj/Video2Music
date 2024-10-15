@@ -58,8 +58,10 @@ def main( vm = "", isPrintArgs = True):
         max_seq_video = args.max_sequence_video, 
         vis_models = args.vis_models,
         emo_model = args.emo_model, 
+        motion_type = args.motion_type,
         split_ver = SPLIT_VER, 
-        random_seq = True)
+        random_seq = True,
+        augmentation = args.augmentation)
     
     test_loader = DataLoader(test_dataset, batch_size=1, num_workers=args.n_workers)
 
@@ -67,7 +69,14 @@ def main( vm = "", isPrintArgs = True):
     total_vf_dim += test_dataset[0]["semanticList"].shape[1]
 
     total_vf_dim += 1 # Scene_offset
-    total_vf_dim += 1 # Motion
+
+    # Motion
+    if args.motion_type == 0:
+        total_vf_dim += 1 
+    elif args.motion_type == 1:
+        total_vf_dim += 512
+    elif args.motion_type == 2:
+        total_vf_dim += 768
     
     # Emotion
     if args.emo_model.startswith("6c"):

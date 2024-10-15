@@ -8,11 +8,11 @@ chord_embedding = False
 music_gen_version = '1.2'
 batch_size = 32
 epochs = 50
-motion_type = 2
+motion_type = 1
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 dropout = 0.2
-droptoken = 0.2
+droptoken = 0.1
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

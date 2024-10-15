@@ -5,11 +5,11 @@ version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 regModel = 'moe_bimamba+'
-augmentation = True
+augmentation = False
 chord_embedding = False
 batch_size = 32
 epochs = 50
-motion_type = 0
+motion_type = 1
 scene_embed = False
 
 def parse_train_args():

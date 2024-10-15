@@ -3,7 +3,7 @@ from .constants import *
 
 version = VERSION
 rpr = True
-augmentation = False
+augmentation = True
 chord_embedding = False
 music_gen_version = '1.2'
 batch_size = 32

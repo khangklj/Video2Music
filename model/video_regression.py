@@ -197,7 +197,6 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
 
             out = self.dropout(out)
-            print(out.shape)
             out = self.fc4(out)
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)

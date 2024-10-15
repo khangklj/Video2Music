@@ -8,7 +8,7 @@ regModel = 'minGRU'
 augmentation = False
 chord_embedding = False
 batch_size = 32
-epochs = 50
+epochs = 100
 motion_type = 0
 scene_embed = False
 
@@ -31,7 +31,7 @@ def parse_train_args():
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=100, help="Number of epochs to use")
+    parser.add_argument("-epochs", type=int, default=epochs, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")

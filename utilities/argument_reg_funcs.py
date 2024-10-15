@@ -8,8 +8,8 @@ regModel = 'bigru'
 augmentation = False
 chord_embedding = False
 batch_size = 32
-epochs = 50
-motion_type = 2
+epochs = 100
+motion_type = 1
 scene_embed = False
 
 def parse_train_args():

@@ -165,8 +165,8 @@ class VevoDataset(Dataset):
                 simi_idx = -1
                 min_dist = 100
                 window_size = 20
-                # split_rate = [1/3, 2/3]
-                split_rate = [1/2]
+                split_rate = [1/3, 2/3]
+                # split_rate = [1/2]
                 for rate1 in split_rate:
                     for rate2 in split_rate:
                         for j in range(i + 1, len(self.dataset)):

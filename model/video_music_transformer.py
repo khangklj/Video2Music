@@ -152,7 +152,7 @@ class VideoMusicTransformer_V1(nn.Module):
         # Drop Tokens
         if self.dropTokenRate != 0.0:
             batch_size, seq_len, d_model = vf.shape
-            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float()
+            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
             mask = mask.unsqueeze(-1).repeat(1, 1, d_model)
             vf = vf * mask
 
@@ -422,7 +422,7 @@ class VideoMusicTransformer_V2(nn.Module):
         # Drop Tokens
         if self.dropTokenRate != 0.0:
             batch_size, seq_len, d_model = vf.shape
-            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float()
+            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
             mask = mask.unsqueeze(-1).repeat(1, 1, d_model)
             vf = vf * mask
 
@@ -671,7 +671,7 @@ class VideoMusicTransformer_V3(nn.Module):
         # Drop Tokens
         if self.dropTokenRate != 0.0:
             batch_size, seq_len, d_model = vf.shape
-            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float()
+            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
             mask = mask.unsqueeze(-1).repeat(1, 1, d_model)
             vf = vf * mask
 

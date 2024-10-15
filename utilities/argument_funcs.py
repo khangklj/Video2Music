@@ -12,7 +12,7 @@ motion_type = 1
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 dropout = 0.2
-droptoken = 0.5
+droptoken = 0.2
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

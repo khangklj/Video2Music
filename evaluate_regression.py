@@ -64,9 +64,7 @@ def main( vm = "", isPrintArgs = True):
     test_loader = DataLoader(test_dataset, batch_size=1, num_workers=args.n_workers)
 
     total_vf_dim = 0
-    if args.is_video:
-        for vf in test_dataset[0]["semanticList"]:
-            total_vf_dim += vf.shape[1]
+    total_vf_dim += test_dataset[0]["semanticList"].shape[1]
 
     total_vf_dim += 1 # Scene_offset
     total_vf_dim += 1 # Motion

@@ -17,6 +17,8 @@ from efficient_kan import KANLinear
 from .mamba import Mamba, MoEMamba, MambaConfig
 from .bimamba import BiMambaEncoder
 
+from .minGRU import minGRU
+from .minGRULM import minGRULM
 
 class advancedRNNBlock(nn.Module):
     def __init__(self, rnn_type='gru', ff_type='mlp', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
@@ -122,6 +124,10 @@ class VideoRegression(nn.Module):
             moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
             config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
+        elif self.regModel == 'minGRU':
+            self.model = minGRU(self.d_model)
+        elif self.regModel == 'minGRULM':            
+            self.model = minGRULM(total_vf_dim=self.total_vf_dim, dim=self.d_model, depth=self.n_layers)
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)
@@ -132,9 +138,11 @@ class VideoRegression(nn.Module):
         projection = nn.Linear
         # projection = KANLinear
         
-        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
-            self.fc4 = projection(self.d_model, 2)            
+            self.fc4 = projection(self.d_model, 2)
+        elif self.regModel == 'minGRULM':
+            self.fc = nn.Linear(self.total_vf_dim, 2)            
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -176,20 +184,23 @@ class VideoRegression(nn.Module):
             out, _ = self.gru(vf_concat)
             out = out.permute(1,0,2)
             out = self.fc(out)
-        elif self.regModel in ("mamba", "moemamba", "mamba+"):
-            vf_concat = vf_concat.permute(1,0,2)
+        elif self.regModel in ("mamba", "moemamba", "mamba+"):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
             out = self.dropout(out)           
             out = self.fc4(out)
-        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+'):
-            vf_concat = vf_concat.permute(1,0,2)
+        elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
             out = self.dropout(out)
+            print(out.shape)
             out = self.fc4(out)
+        elif self.regModel == 'minGRULM':
+            out = self.model(vf_concat)
+            out = self.dropout(out)
+            out = self.fc(out)        
         return out

@@ -11,6 +11,8 @@ epochs = 50
 motion_type = 2
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
+dropout = 0.2
+droptoken = 0.2
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -42,7 +44,7 @@ def parse_train_args():
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
-    parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
+    parser.add_argument("-dropout", type=float, default=dropout, help="Dropout rate")
 
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
@@ -59,6 +61,7 @@ def parse_train_args():
     parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
     parser.add_argument("-rpr", type=bool, default=rpr, help="...")
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
+    parser.add_argument("-droptoken", type=float, default=droptoken, help="Drop Token rate")
     return parser.parse_known_args()
 
 def print_train_args(args):
@@ -106,6 +109,7 @@ def print_train_args(args):
     print("chord embedding:", args.chord_embed)
     print("music_gen_version:", args.music_gen_version)
     print("augmentation:", args.augmentation)
+    print("droptoken:", args.droptoken)
 
     print(SEPERATOR)
     print("")
@@ -153,6 +157,7 @@ def parse_eval_args():
     parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
     parser.add_argument("-rpr", type=bool, default=rpr, help="...")
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
+    parser.add_argument("-droptoken", type=float, default=droptoken, help="Drop Token rate")
     return parser.parse_known_args()
 
 def print_eval_args(args):
@@ -217,6 +222,7 @@ def write_model_params(args, output_file):
     o_stream.write("scene_embed: " + str(args.scene_embed) + "\n")
     o_stream.write("chord_embed: " + str(args.chord_embed) + "\n")
     o_stream.write("augmentation: " + str(args.augmentation) + "\n")
+    o_stream.write("droptoken: " + str(args.droptoken) + "\n")
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
 

@@ -154,7 +154,9 @@ class VideoMusicTransformer_V1(nn.Module):
             batch_size, seq_len, d_model = vf.shape
             mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
             mask = mask.unsqueeze(-1).repeat(1, 1, d_model)
+            print(vf.shape)
             vf = vf * mask
+            print(vf.shape)
 
         ### POSITIONAL EMBEDDING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)

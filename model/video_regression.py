@@ -17,7 +17,8 @@ from efficient_kan import KANLinear
 from .mamba import Mamba, MoEMamba, MambaConfig
 from .bimamba import BiMambaEncoder
 
-from minGRU_pytorch import minGRU
+from .minGRU import minGRU
+from .minGRULM import minGRULM
 
 class advancedRNNBlock(nn.Module):
     def __init__(self, rnn_type='gru', ff_type='mlp', d_model=256, d_hidden=1024, dropout=0.1, bidirectional=True):
@@ -125,6 +126,8 @@ class VideoRegression(nn.Module):
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
         elif self.regModel == 'minGRU':
             self.model = minGRU(self.d_model)
+        elif self.regModel == 'minGRULM':            
+            self.model = minGRULM(total_vf_dim=self.total_vf_dim, dim=self.d_model, depth=self.n_layers)
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)
@@ -137,7 +140,9 @@ class VideoRegression(nn.Module):
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
-            self.fc4 = projection(self.d_model, 2)            
+            self.fc4 = projection(self.d_model, 2)
+        elif self.regModel == 'minGRULM':
+            self.fc = nn.Linear(self.total_vf_dim, 2)            
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -192,5 +197,10 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
 
             out = self.dropout(out)
-            out = self.fc4(out)        
+            print(out.shape)
+            out = self.fc4(out)
+        elif self.regModel == 'minGRULM':
+            out = self.model(vf_concat)
+            out = self.dropout(out)
+            out = self.fc(out)        
         return out

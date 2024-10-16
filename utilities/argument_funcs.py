@@ -12,7 +12,8 @@ motion_type = 2
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 dropout = 0.2
-droptoken = 0.5
+droptoken = 0.2
+lr = 1e-5
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -31,7 +32,7 @@ def parse_train_args():
     parser.add_argument("--no_tensorboard", type=bool, default=True, help="Turns off tensorboard result reporting")
     parser.add_argument("-continue_weights", type=str, default=None, help="Model weights to continue training based on")
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
-    parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
+    parser.add_argument("-lr", type=float, default=lr, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-ce_smoothing", type=float, default=0.1, help="Smoothing parameter for smoothed cross entropy loss (defaults to no smoothing)")
     parser.add_argument("-batch_size", type=int, default=batch_size, help="Batch size to use")
     parser.add_argument("-epochs", type=int, default=epochs, help="Number of epochs to use")

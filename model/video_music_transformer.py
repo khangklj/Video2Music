@@ -13,7 +13,7 @@ from .rotate_operation import *
 from .moe import *
 from datetime import datetime
 import json
-from gensim.models import Word2Vec
+import gensim
 
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
@@ -40,7 +40,7 @@ class VideoMusicTransformer_V1(nn.Module):
 
         # Chord embedding
         if self.chord_embed:
-            chord_embedding_model = Word2Vec.load('./cbow.bin')
+            chord_embedding_model = gensim.models.KeyedVectors.load_word2vec_format('./cbow.bin', binary=True)
             embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
             embedding_weights.requires_grad = False
             self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
@@ -816,7 +816,7 @@ class VideoMusicTransformer(nn.Module):
         
         # Chord embedding
         if self.chord_embed:
-            chord_embedding_model = Word2Vec.load('./cbow.bin')
+            chord_embedding_model = gensim.models.KeyedVectors.load_word2vec_format('./cbow.bin', binary=True)
             embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
             embedding_weights.requires_grad = False
             self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)

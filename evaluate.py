@@ -101,7 +101,7 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim, 
-                        rpr=args.rpr, scene_embed=args.scene_embed).to(get_device())
+                        rpr=args.rpr, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
         else:
             model = MusicTransformer(n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
@@ -112,19 +112,19 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
-                    rms_norm=args.rms_norm, scene_embed=args.scene_embed).to(get_device())
+                    rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
     elif args.music_gen_version.startswith('2.'):
         model = VideoMusicTransformer_V2(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
-                    rms_norm=args.rms_norm, scene_embed=args.scene_embed).to(get_device())
+                    rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
     elif args.music_gen_version.startswith('3.'):
         model = VideoMusicTransformer_V3(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
-                    rms_norm=args.rms_norm, scene_embed=args.scene_embed).to(get_device())
+                    rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
         
     print(model)
     model.load_state_dict(torch.load(args.model_weights, map_location=get_device()))

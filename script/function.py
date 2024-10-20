@@ -59,13 +59,13 @@ def get_id_list(idlist_path='idlist.txt', format=1):
         lines = fi.readlines()
 
     for line in lines[:]:
-        tmp = line.split('\t')
+        tmp = line.split('\t')        
         if format == 1:
           index, id = tmp[0][:3], tmp[1][:-1]
+          ans.append((index, id))
         elif format == 2:
           index, id = tmp[0], tmp[1][:-1]
-        ans.append((index, id))
-
+          ans.append((index, id))       
     return ans
 
 

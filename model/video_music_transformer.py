@@ -813,6 +813,13 @@ class VideoMusicTransformer(nn.Module):
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
         
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load('./cbow.bin')
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
+
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
@@ -858,9 +865,12 @@ class VideoMusicTransformer(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):

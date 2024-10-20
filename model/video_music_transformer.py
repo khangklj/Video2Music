@@ -808,6 +808,7 @@ class VideoMusicTransformer(nn.Module):
         self.max_seq_chord    = max_sequence_chord
         self.rpr        = rpr
         self.scene_embed = scene_embed
+        self.chord_embed = chord_embed
 
         # Scene offsets embedding
         if self.scene_embed:

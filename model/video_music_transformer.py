@@ -15,7 +15,7 @@ from datetime import datetime
 import json
 from gensim.models import Word2Vec
 
-chordEmbeddingModelPath = '.\word2vec_filled.bin'
+chordEmbeddingModelPath = './word2vec_filled.bin'
 
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,

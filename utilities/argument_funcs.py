@@ -3,17 +3,17 @@ from .constants import *
 
 version = VERSION
 rpr = True
-augmentation = True
-chord_embedding = False
-music_gen_version = '1.2'
+augmentation = False
+chord_embed = True
+music_gen_version = None
 batch_size = 32
 epochs = 50
-motion_type = 1
+motion_type = 0
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 dropout = 0.2
-droptoken = 0.2
-lr = 1e-5
+droptoken = 0.0
+lr = None
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -59,7 +59,7 @@ def parse_train_args():
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
     parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
-    parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
+    parser.add_argument("-chord_embed", type=bool, default=chord_embed, help="Use chord embedding or not")
     parser.add_argument("-rpr", type=bool, default=rpr, help="...")
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     parser.add_argument("-droptoken", type=float, default=droptoken, help="Drop Token rate")
@@ -155,7 +155,7 @@ def parse_eval_args():
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
     parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
-    parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
+    parser.add_argument("-chord_embed", type=bool, default=chord_embed, help="Use chord embedding or not")
     parser.add_argument("-rpr", type=bool, default=rpr, help="...")
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     parser.add_argument("-droptoken", type=float, default=droptoken, help="Drop Token rate")

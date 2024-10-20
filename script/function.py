@@ -21,7 +21,7 @@ Parameter:
 Return: None
 '''
 import os
-from pytubefix import YouTube
+from pytube import YouTube
 
 def download_youtube_video(video_id, save_path=None, new_filename=None):
     try:
@@ -53,19 +53,16 @@ Parameter:
     idlist_path: path of file idlist.txt
 Return: List[(str, str)] # (index, video_id)
 '''
-def get_id_list(idlist_path='idlist.txt', format=1):
+def get_id_list(idlist_path='idlist.txt'):
     ans = []
     with open(idlist_path, 'r', encoding='utf-8') as fi:
         lines = fi.readlines()
 
     for line in lines[:]:
-        tmp = line.split('\t')        
-        if format == 1:
-          index, id = tmp[0][:3], tmp[1][:-1]
-          ans.append((index, id))
-        elif format == 2:
-          index, id = tmp[0], tmp[1][:-1]
-          ans.append((index, id))       
+        tmp = line.split('\t')
+        index, id = tmp[0][:3], tmp[1][:-1]
+        ans.append((index, id))
+
     return ans
 
 

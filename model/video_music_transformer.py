@@ -13,6 +13,9 @@ from .rotate_operation import *
 from .moe import *
 from datetime import datetime
 import json
+from gensim.models import Word2Vec
+
+chordEmbeddingModelPath = './word2vec_filled.bin'
 
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
@@ -30,11 +33,19 @@ class VideoMusicTransformer_V1(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
         self.scene_embed = scene_embed
+        self.chord_embed = chord_embed
         self.dropTokenRate = dropTokenRate
 
         # Scene offsets embedding
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
 
         # AMT + MoE + Positional Embedding
         # Input embedding for video and music features
@@ -109,9 +120,12 @@ class VideoMusicTransformer_V1(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):
@@ -796,11 +810,19 @@ class VideoMusicTransformer(nn.Module):
         self.max_seq_chord    = max_sequence_chord
         self.rpr        = rpr
         self.scene_embed = scene_embed
+        self.chord_embed = chord_embed
 
         # Scene offsets embedding
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
         
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
+
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
@@ -846,9 +868,12 @@ class VideoMusicTransformer(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):

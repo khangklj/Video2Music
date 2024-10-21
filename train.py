@@ -241,17 +241,18 @@ def main( vm = "" , isPrintArgs = True ):
             print(SEPERATOR)
             print("Baseline model evaluation (Epoch 0):")
 
-        # train_metric_dict = eval_model(model, train_loader_tmp, 
-        #                         train_loss_func, train_loss_emotion_func,
-        #                         isVideo= args.is_video)
-        
-        # train_total_loss = train_metric_dict["avg_total_loss"]
-        # train_loss_chord = train_metric_dict["avg_loss_chord"]
-        # train_loss_emotion = train_metric_dict["avg_loss_emotion"]
+        if not args.augmentation:
+            train_metric_dict = eval_model(model, train_loader_tmp, 
+                                    train_loss_func, train_loss_emotion_func,
+                                    isVideo= args.is_video)
             
-        # train_h1 = train_metric_dict["avg_h1"]
-        # train_h3 = train_metric_dict["avg_h3"]
-        # train_h5 = train_metric_dict["avg_h5"]
+            train_total_loss = train_metric_dict["avg_total_loss"]
+            train_loss_chord = train_metric_dict["avg_loss_chord"]
+            train_loss_emotion = train_metric_dict["avg_loss_emotion"]
+                
+            train_h1 = train_metric_dict["avg_h1"]
+            train_h3 = train_metric_dict["avg_h3"]
+            train_h5 = train_metric_dict["avg_h5"]
 
         eval_metric_dict = eval_model(model, val_loader, 
                                 eval_loss_func, eval_loss_emotion_func,
@@ -268,13 +269,15 @@ def main( vm = "" , isPrintArgs = True ):
         lr = get_lr(opt)
 
         print("Epoch:", epoch+1)
-        # print("Avg train loss (total):", train_total_loss)
-        # print("Avg train loss (chord):", train_loss_chord)
-        # print("Avg train loss (emotion):", train_loss_emotion)
 
-        # print("Avg train h1:", train_h1)
-        # print("Avg train h3:", train_h3)
-        # print("Avg train h5:", train_h5)
+        if not args.augmentation:
+            print("Avg train loss (total):", train_total_loss)
+            print("Avg train loss (chord):", train_loss_chord)
+            print("Avg train loss (emotion):", train_loss_emotion)
+
+            print("Avg train h1:", train_h1)
+            print("Avg train h3:", train_h3)
+            print("Avg train h5:", train_h5)
 
         print("Avg val loss (total):", eval_total_loss)
         print("Avg val loss (chord):", eval_loss_chord)
@@ -318,9 +321,14 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, 
-                            #  train_total_loss, train_loss_chord, train_loss_emotion, train_h1, train_h3, train_h5,
-                             eval_total_loss, eval_loss_chord, eval_loss_emotion, eval_h1, eval_h3, eval_h5])
+            if not args.augmentation:
+                writer.writerow([epoch+1, lr, 
+                                 train_total_loss, train_loss_chord, train_loss_emotion, train_h1, train_h3, train_h5,
+                                eval_total_loss, eval_loss_chord, eval_loss_emotion, eval_h1, eval_h3, eval_h5])
+            else:
+                writer.writerow([epoch+1, lr, 
+                                #  train_total_loss, train_loss_chord, train_loss_emotion, train_h1, train_h3, train_h5,
+                                eval_total_loss, eval_loss_chord, eval_loss_emotion, eval_h1, eval_h3, eval_h5])
             
     # Sanity check just to make sure everything is gone
     if(not args.no_tensorboard):

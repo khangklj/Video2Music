@@ -13,6 +13,9 @@ from .rotate_operation import *
 from .moe import *
 from datetime import datetime
 import json
+from gensim.models import Word2Vec
+
+chordEmbeddingModelPath = './word2vec_filled.bin'
 
 class VideoMusicTransformer_V1(nn.Module):
     def __init__(self, version_name='1.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
@@ -30,11 +33,19 @@ class VideoMusicTransformer_V1(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
         self.scene_embed = scene_embed
+        self.chord_embed = chord_embed
         self.dropTokenRate = dropTokenRate
 
         # Scene offsets embedding
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
 
         # AMT + MoE + Positional Embedding
         # Input embedding for video and music features
@@ -109,9 +120,12 @@ class VideoMusicTransformer_V1(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):
@@ -152,9 +166,9 @@ class VideoMusicTransformer_V1(nn.Module):
         # Drop Tokens
         if self.dropTokenRate != 0.0:
             batch_size, seq_len, d_model = vf.shape
-            mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float()
-            mask = mask.unsqueeze(-1).repeat(1, 1, d_model)
-            vf = vf * mask
+            droptoken_mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
+            droptoken_mask = droptoken_mask.unsqueeze(-1).repeat(1, 1, d_model)
+            vf = vf * droptoken_mask
 
         ### POSITIONAL EMBEDDING ###
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
@@ -276,7 +290,7 @@ class VideoMusicTransformer_V2(nn.Module):
     def __init__(self, version_name='2.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
-                 chord_embed=False):
+                 chord_embed=False, dropTokenRate=0.0):
         super(VideoMusicTransformer_V2, self).__init__()
 
         self.nlayers    = n_layers
@@ -288,6 +302,7 @@ class VideoMusicTransformer_V2(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
         self.scene_embed = scene_embed
+        self.dropTokenRate = dropTokenRate
 
         # Scene offsets embedding
         if self.scene_embed:
@@ -418,6 +433,13 @@ class VideoMusicTransformer_V2(nn.Module):
         else:
             vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
+        # Drop Tokens
+        if self.dropTokenRate != 0.0:
+            batch_size, seq_len, d_model = vf.shape
+            droptoken_mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
+            droptoken_mask = droptoken_mask.unsqueeze(-1).repeat(1, 1, d_model)
+            vf = vf * droptoken_mask
+
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
 
@@ -527,7 +549,7 @@ class VideoMusicTransformer_V3(nn.Module):
     def __init__(self, version_name='3.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
-                 chord_embed=False):
+                 chord_embed=False, dropTokenRate=0.0):
         super(VideoMusicTransformer_V3, self).__init__()
 
         self.nlayers    = n_layers
@@ -539,6 +561,7 @@ class VideoMusicTransformer_V3(nn.Module):
         self.max_seq_video    = max_sequence_video
         self.max_seq_chord    = max_sequence_chord
         self.scene_embed = scene_embed
+        self.dropTokenRate = dropTokenRate
 
         # Scene offsets embedding
         if self.scene_embed:
@@ -659,6 +682,13 @@ class VideoMusicTransformer_V3(nn.Module):
         else:
             vf = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
         
+        # Drop Tokens
+        if self.dropTokenRate != 0.0:
+            batch_size, seq_len, d_model = vf.shape
+            droptoken_mask = (torch.rand(batch_size, seq_len) > self.dropTokenRate).float().to(get_device())
+            droptoken_mask = droptoken_mask.unsqueeze(-1).repeat(1, 1, d_model)
+            vf = vf * droptoken_mask
+
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
 
@@ -780,11 +810,19 @@ class VideoMusicTransformer(nn.Module):
         self.max_seq_chord    = max_sequence_chord
         self.rpr        = rpr
         self.scene_embed = scene_embed
+        self.chord_embed = chord_embed
 
         # Scene offsets embedding
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
         
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
+
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
@@ -830,9 +868,12 @@ class VideoMusicTransformer(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):

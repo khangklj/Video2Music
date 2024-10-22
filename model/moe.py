@@ -239,7 +239,7 @@ class SharedMoELayer(Module):
             
             # print(weights.shape, selected_experts.shape, self.bias.shape)
             # Only get gate_logits
-            weights /= self.bias[selected_experts.unsqueeze(0)]
+            weights /= self.bias[selected_experts].unsqueeze(0)
 
             print(selected_experts.shape, '\n', selected_experts)
 

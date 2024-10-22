@@ -211,7 +211,7 @@ class SharedMoELayer(Module):
             self.gate = KANLinear(d_model, n_experts)
 
         if self.balancing:
-            self.bias = nn.Parameter(torch.zeros((1, n_experts)), requires_grad=False)
+            self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
             self.update_rate = 0.001
 
         self.shared_expert = _get_clones(expert, 1)[0]
@@ -236,7 +236,10 @@ class SharedMoELayer(Module):
             weights, selected_experts = torch.topk(gate_logits, k)
         else:
             weights, selected_experts = torch.topk(gate_logits * self.bias, k)
-            weights /= self.bias
+            
+            print(weights.shape, selected_experts.shape, self.bias.shape)
+            # Only get gate_logits
+            weights /= self.bias[selected_experts]
 
             print(selected_experts.shape, '\n', selected_experts)
 

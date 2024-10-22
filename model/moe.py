@@ -246,6 +246,7 @@ class SharedMoELayer(Module):
             e = c - c_mean
 
             if not self.training:
+                print(e.shape, c.shape, c_mean.shape)
                 self.bias += self.update_rate * e
 
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())

@@ -105,12 +105,15 @@ class VideoMusicTransformer_V1(nn.Module):
             deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
 
             rate = 3
-            encoder = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 
+            encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 
                                     [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers-rate)])
             
-            decoder = nn.ModuleList([copy.deepcopy(shallow_decoder_layer) for _ in range(rate)] + 
+            decoder_layers = nn.ModuleList([copy.deepcopy(shallow_decoder_layer) for _ in range(rate)] + 
                                     [copy.deepcopy(deep_decoder_layer) for _ in range(self.nlayers-rate)])
             
+            encoder = TransformerEncoderShorter(encoder_layers, norm)
+            decoder = TransformerDecoderShorter(decoder_layers, norm)
+
         # Full model
         self.transformer = nn.Transformer(
             d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,

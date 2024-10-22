@@ -88,14 +88,29 @@ class VideoMusicTransformer_V1(nn.Module):
         else:
             moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
 
-        # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
+        if version_name != '1.3.3':
+            # Encoder
+            encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+            encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
 
-        # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
+            # Decoder
+            decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+            decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
+        else:
+            swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)
+            shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
+            shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
 
+            deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+            deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+
+            rate = 3
+            encoder = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 
+                                    [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers-rate)])
+            
+            decoder = nn.ModuleList([copy.deepcopy(shallow_decoder_layer) for _ in range(rate)] + 
+                                    [copy.deepcopy(deep_decoder_layer) for _ in range(self.nlayers-rate)])
+            
         # Full model
         self.transformer = nn.Transformer(
             d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,

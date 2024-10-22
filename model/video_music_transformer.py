@@ -414,7 +414,7 @@ class VideoMusicTransformer_V2(nn.Module):
 
         self.softmax    = nn.Softmax(dim=-1)
 
-        del RoPE, expert, att, moelayer, encoder_layer, decoder_layer
+        del RoPE, expert, att, moelayer
         torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):

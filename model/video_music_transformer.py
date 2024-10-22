@@ -443,9 +443,7 @@ class VideoMusicTransformer_V2(nn.Module):
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
         # Semantic
-        vf_concat = feature_semantic_list[0].float()
-        for i in range(1, len(feature_semantic_list)):
-            vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
+        vf_concat = feature_semantic_list.float() 
         
         # Scene offset
         if not self.scene_embed:

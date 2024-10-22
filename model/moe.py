@@ -212,7 +212,7 @@ class SharedMoELayer(Module):
 
         if self.balancing:
             self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
-            self.update_rate = 0.001
+            self.update_rate = 0.01
 
         self.shared_expert = _get_clones(expert, 1)[0]
 
@@ -235,14 +235,18 @@ class SharedMoELayer(Module):
         if not self.balancing:
             weights, selected_experts = torch.topk(gate_logits, k)
         else:
-            weights, selected_experts = torch.topk(gate_logits * self.bias, k)
+            weights, selected_experts = torch.topk(gate_logits + self.bias, k)
             
-            # print(self.bias[selected_experts].shape)
-            # print(weights.shape, selected_experts.shape, self.bias.shape)
             # Only get gate_logits
-            weights /= self.bias[selected_experts].squeeze()
+            weights -= self.bias[selected_experts].squeeze()
 
-            print(selected_experts.shape, '\n', selected_experts)
+            c = torch.bincount(selected_experts.flatten())
+            c_mean = torch.mean(c)
+
+            e = c - c_mean
+
+            if not self.training:
+                self.bias += self.update_rate * e
 
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())

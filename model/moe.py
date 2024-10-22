@@ -189,13 +189,14 @@ class MoELayer(Module):
         return out
     
 class SharedMoELayer(Module):
-    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, balancing=False, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
         super(SharedMoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
+        self.balancing = balancing
 
         # If has topk scheduler then no need n_experts and n_experts_per_token
         if topk_scheduler is not None:
@@ -208,6 +209,10 @@ class SharedMoELayer(Module):
             self.gate = nn.Linear(d_model, n_experts)
         else:
             self.gate = KANLinear(d_model, n_experts)
+
+        if self.balancing:
+            self.bias = nn.Parameter(torch.zeros((1, n_experts)), requires_grad=False)
+            self.update_rate = 0.001
 
         self.shared_expert = _get_clones(expert, 1)[0]
 
@@ -227,7 +232,14 @@ class SharedMoELayer(Module):
         # print(x.shape)
         gate_logits = self.gate(x)
 
-        weights, selected_experts = torch.topk(gate_logits, k)
+        if not self.balancing:
+            weights, selected_experts = torch.topk(gate_logits, k)
+        else:
+            weights, selected_experts = torch.topk(gate_logits * self.bias, k)
+            weights /= self.bias
+
+            print(selected_experts.shape, '\n', selected_experts)
+
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
         for i, expert in enumerate(self.experts):

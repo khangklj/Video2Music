@@ -86,7 +86,9 @@ class VideoMusicTransformer_V1(nn.Module):
         if version_name in ('1.0', '1.1'):
             moelayer = MoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
         else:
-            moelayer = SharedMoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
+            moelayer = SharedMoELayer(expert, self.d_model, n_experts=self.n_experts, 
+                                      n_experts_per_token=self.n_experts_per_token, balancing=False,
+                                      dropout=self.dropout)
 
         if version_name != '1.3.3':
             # Encoder
@@ -119,7 +121,7 @@ class VideoMusicTransformer_V1(nn.Module):
             d_model=self.d_model, nhead=self.nhead, num_encoder_layers=self.nlayers,
             num_decoder_layers=self.nlayers, dropout=self.dropout, # activation=self.ff_activ,
             dim_feedforward=self.d_ff, custom_encoder=encoder, custom_decoder=decoder
-        )   
+        )
     
         if IS_SEPERATED:
             self.Wout_root       = nn.Linear(self.d_model, CHORD_ROOT_SIZE)
@@ -305,7 +307,7 @@ class VideoMusicTransformer_V1(nn.Module):
         return gen_seq[:, :cur_i]
 
 class VideoMusicTransformer_V2(nn.Module):
-    def __init__(self, version_name='2.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
+    def __init__(self, version_name='2.0', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
                  chord_embed=False, dropTokenRate=0.0):
@@ -321,10 +323,18 @@ class VideoMusicTransformer_V2(nn.Module):
         self.max_seq_chord    = max_sequence_chord
         self.scene_embed = scene_embed
         self.dropTokenRate = dropTokenRate
+        self.chord_embed = chord_embed
 
         # Scene offsets embedding
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
 
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
@@ -348,19 +358,12 @@ class VideoMusicTransformer_V2(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+        # RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+        RoPE = None
         self.n_experts = 6
         self.n_experts_per_token = 2
 
-        if version_name == '2.0':
-            expert = nn.Sequential(
-                nn.Linear(self.d_model, self.d_model*2),
-                nn.SiLU(),
-                nn.Dropout(self.dropout),
-                nn.Linear(self.d_model*2, self.d_model)
-            )
-        else:
-            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
 
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         
@@ -376,16 +379,25 @@ class VideoMusicTransformer_V2(nn.Module):
 
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                  topk_scheduler=topk_scheduler, temperature_scheduler=temperature_scheduler,
-                                  use_KAN=use_KAN)
+                                  balancing=True, topk_scheduler=topk_scheduler, 
+                                  temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
-        # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
+        swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
+        shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
 
-        # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
+        deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+        deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+
+        rate = 3
+        encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 
+                                [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers-rate)])
+        
+        decoder_layers = nn.ModuleList([copy.deepcopy(shallow_decoder_layer) for _ in range(rate)] + 
+                                [copy.deepcopy(deep_decoder_layer) for _ in range(self.nlayers-rate)])
+        
+        encoder = TransformerEncoderShorter(encoder_layers, norm)
+        decoder = TransformerDecoderShorter(decoder_layers, norm)
 
         # Full model
         self.transformer = nn.Transformer(
@@ -411,9 +423,12 @@ class VideoMusicTransformer_V2(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):

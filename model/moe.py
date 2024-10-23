@@ -189,13 +189,14 @@ class MoELayer(Module):
         return out
     
 class SharedMoELayer(Module):
-    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
+    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, balancing=False, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
         super(SharedMoELayer, self).__init__()
         self.n_experts = n_experts
         self.n_experts_per_token = n_experts_per_token
         self.d_model = d_model
         self.dropout = nn.Dropout(dropout)
         self.experts = _get_clones(expert, n_experts)
+        self.balancing = balancing
 
         # If has topk scheduler then no need n_experts and n_experts_per_token
         if topk_scheduler is not None:
@@ -208,6 +209,10 @@ class SharedMoELayer(Module):
             self.gate = nn.Linear(d_model, n_experts)
         else:
             self.gate = KANLinear(d_model, n_experts)
+
+        if self.balancing:
+            self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
+            self.update_rate = 0.01
 
         self.shared_expert = _get_clones(expert, 1)[0]
 
@@ -227,7 +232,23 @@ class SharedMoELayer(Module):
         # print(x.shape)
         gate_logits = self.gate(x)
 
-        weights, selected_experts = torch.topk(gate_logits, k)
+        if not self.balancing:
+            weights, selected_experts = torch.topk(gate_logits, k)
+        else:
+            weights, selected_experts = torch.topk(gate_logits + self.bias, k)
+            
+            # Only get gate_logits
+            weights -= self.bias[selected_experts].squeeze()
+
+            c = torch.bincount(selected_experts.flatten()).to(self.bias.dtype)
+            c_mean = torch.mean(c)
+
+            e = c - c_mean
+
+            if not self.training:
+                print(e.shape, c.shape, c_mean.shape)
+                self.bias += self.update_rate * e
+
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
         for i, expert in enumerate(self.experts):

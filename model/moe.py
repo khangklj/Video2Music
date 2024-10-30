@@ -17,6 +17,7 @@ from utilities.device import get_device
 from efficient_kan import KANLinear
 import copy
 from utilities.argument_funcs import parse_train_args
+from third_party.log_experts import update_expert_counts
 
 class KANExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
@@ -248,6 +249,9 @@ class SharedMoELayer(Module):
             if not self.training:
                 print(e.shape, c.shape, c_mean.shape)
                 self.bias += self.update_rate * e
+
+        # Logging
+        update_expert_counts(selected_experts)
 
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())

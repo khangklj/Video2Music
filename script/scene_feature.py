@@ -4,13 +4,15 @@ from scenedetect import open_video, SceneManager, split_video_ffmpeg
 from scenedetect.detectors import ContentDetector, AdaptiveDetector
 from scenedetect.video_splitter import split_video_ffmpeg
 from scenedetect.scene_manager import save_images
+from tqdm import tqdm
 
 def main():
     directory = "../dataset/vevo_chord/lab/all/"
     directory_vevo = "../dataset/vevo/"
     datadict = {}
 
-    for filename in sorted(os.listdir(directory)):
+    # for filename in sorted(os.listdir(directory)):
+    for filename in tqdm(sorted(os.listdir(directory_vevo))):
         print(filename)
         fname = filename.split(".")[0]
         #fname = int(fname)

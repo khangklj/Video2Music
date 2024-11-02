@@ -19,6 +19,7 @@ import json
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import argparse
+from third_party.log_experts import save_and_plot
 
 version = VERSION
 split_ver = SPLIT_VER
@@ -35,7 +36,7 @@ fh.setFormatter(logging.Formatter(log_format))
 logging.getLogger().addHandler(fh)
 
 # main
-def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
+def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False, isSavedExpertEmotionPlot = False):
     args = parse_eval_args()[0]
 
     if isPrintArgs:
@@ -153,16 +154,18 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False):
     logging.info(f"Avg test loss (emotion): {eval_loss_emotion:.4f}" )
     logging.info(f"Avg test h1: {eval_h1:.4f}")
     logging.info(f"Avg test h3: {eval_h3:.4f}")
-    logging.info(f"Avg test h5: {eval_h5:.4f}")
+    logging.info(f"Avg test h5: {eval_h5:.4f}")    
+
+    if isSavedExpertEmotionPlot:
+        save_and_plot()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-save_conf_matrix", type=bool, default=False, help="Whether or not to save confusion matrix as .npy in Video2Music/log folder")
+    parser.add_argument("-save_expert_emotion_plot", type=bool, default=False, help="Whether or not to save the count of emotion selected by expert as .png in Video2Music/log folder")
     args = parser.parse_known_args()[0]
     if len(VIS_MODELS_ARR) != 0 :
         for vm in VIS_MODELS_ARR:
-            main(vm, False, isSavedConfusionMatrix=args.save_conf_matrix)
+            main(vm, False, isSavedConfusionMatrix=args.save_conf_matrix, isSavedExpertEmotionPlot=args.save_expert_emotion_plot)
     else:
-        main(isSavedConfusionMatrix=args.save_conf_matrix)
-
-
+        main(isSavedConfusionMatrix=args.save_conf_matrix, isSavedExpertEmotionPlot=args.save_expert_emotion_plot)

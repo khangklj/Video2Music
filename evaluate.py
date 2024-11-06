@@ -19,7 +19,7 @@ import json
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import argparse
-from third_party.log_experts import save_and_plot
+from third_party.log_experts import save_and_plot, change_logging_state
 
 version = VERSION
 split_ver = SPLIT_VER
@@ -37,6 +37,8 @@ logging.getLogger().addHandler(fh)
 
 # main
 def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False, isSavedExpertEmotionPlot = False):
+    if isSavedExpertEmotionPlot:
+        change_logging_state(True)
     args = parse_eval_args()[0]
 
     if isPrintArgs:
@@ -156,8 +158,10 @@ def main( vm = "", isPrintArgs = True, isSavedConfusionMatrix = False, isSavedEx
     logging.info(f"Avg test h3: {eval_h3:.4f}")
     logging.info(f"Avg test h5: {eval_h5:.4f}")    
 
-    if isSavedExpertEmotionPlot:
-        save_and_plot()
+    # Logging emotion expert plot
+    save_and_plot()
+    # Turn off logging
+    change_logging_state(False)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

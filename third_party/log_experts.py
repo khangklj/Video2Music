@@ -22,9 +22,9 @@ def change_logging_state(state):
     global is_logging
     is_logging = state
 
-
 def get_highest_emotion_indices(emotion_feature):
-    if is_logging:
+    global is_logging
+    if not is_logging:
         return
     global indices  # Declare that we are using the global variable
     indices = []  # Reset the global indices list
@@ -45,7 +45,8 @@ def get_highest_emotion_indices(emotion_feature):
 
 
 def update_expert_counts(selected_expert):
-    if is_logging:
+    global is_logging
+    if not is_logging:
         return
     global indices  # Use the global indices
     global counts  # Use the global counts
@@ -71,6 +72,9 @@ def update_expert_counts(selected_expert):
 def save_and_plot(
     filename="log/experts_emotion_count", plotname="log/experts_emotion_count_plot"
 ):
+    global is_logging
+    if not is_logging:
+        return
     global counts
     for i in range(n_layers):
         f = filename + str(i) + ".json"

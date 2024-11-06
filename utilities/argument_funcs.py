@@ -4,8 +4,8 @@ from .constants import *
 version = VERSION
 rpr = True
 augmentation = False
-chord_embed = True
-music_gen_version = '1.3.3'
+chord_embed = False
+music_gen_version = '1.3.1'
 batch_size = 32
 epochs = 50
 motion_type = 1

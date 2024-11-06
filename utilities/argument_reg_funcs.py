@@ -4,11 +4,11 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'moe_bimamba+'
+regModel = 'bigru'
 augmentation = False
 chord_embedding = False
 batch_size = 32
-epochs = 50
+epochs = 100
 motion_type = 2
 scene_embed = False
 
@@ -31,7 +31,7 @@ def parse_train_args():
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
     parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
     parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
-    parser.add_argument("-epochs", type=int, default=100, help="Number of epochs to use")
+    parser.add_argument("-epochs", type=int, default=epochs, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
@@ -56,6 +56,7 @@ def parse_train_args():
     # moemamba
     # moe_bimamba+
     # shared_bimamba+
+    # minGRU, minGRULM
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")
@@ -143,7 +144,7 @@ def parse_eval_args():
     parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
-    parser.add_argument('-regModel', type=str, default='moe_bimamba+', help="Version number. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default=regModel, help="Version number. None is original loudness and note density Regression model")
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
     
     # regModel version name:
@@ -156,6 +157,7 @@ def parse_eval_args():
     # moemamba
     # moe_bimamba+
     # shared_bimamba+
+    # minGRU, minGRULM
 
     if IS_VIDEO:
         parser.add_argument("-vis_models", type=str, default=VIS_MODELS_SORTED, help="...")

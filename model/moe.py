@@ -17,6 +17,7 @@ from utilities.device import get_device
 from efficient_kan import KANLinear
 import copy
 from utilities.argument_funcs import parse_train_args
+from third_party.log_experts import update_expert_counts
 
 class KANExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
@@ -174,6 +175,9 @@ class MoELayer(Module):
             t = 1.0
             
         gate_logits = self.gate(x) / t
+        
+        # Logging
+        update_expert_counts(selected_experts)
 
         weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
@@ -249,6 +253,9 @@ class SharedMoELayer(Module):
                 print(e.shape, c.shape, c_mean.shape)
                 self.bias += self.update_rate * e
 
+        # Logging
+        update_expert_counts(selected_experts)
+
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
         for i, expert in enumerate(self.experts):
@@ -320,6 +327,9 @@ class SelfBalanceSharedMoELayer(Module):
             self.gate.reset_count()
         
         weights, selected_experts = self.gate(x, k, t)
+
+        # Logging
+        update_expert_counts(selected_experts)
 
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):

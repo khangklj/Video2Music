@@ -14,6 +14,7 @@ from .moe import *
 from datetime import datetime
 import json
 from gensim.models import Word2Vec
+from third_party.log_experts import get_highest_emotion_indices
 
 chordEmbeddingModelPath = './word2vec_filled.bin'
 
@@ -175,6 +176,7 @@ class VideoMusicTransformer_V1(nn.Module):
             vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
         
         # Emotion
+        get_highest_emotion_indices(feature_emotion)
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         
         # Video embedding

@@ -326,6 +326,7 @@ class VideoMusicTransformer_V2(nn.Module):
         self.scene_embed = scene_embed
         self.dropTokenRate = dropTokenRate
         self.chord_embed = chord_embed
+        self.version_name = version_name
 
         # Scene offsets embedding
         if self.scene_embed:
@@ -360,8 +361,15 @@ class VideoMusicTransformer_V2(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
-        # RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+
         RoPE = None
+        if version_name in ('2.0'):
+            # Positional embedding
+            self.positional_embedding = nn.Embedding(self.max_seq_chord, self.d_model)
+            self.positional_embedding_video = nn.Embedding(self.max_seq_video, self.d_model)
+        elif version_name in ('2.1'):
+            RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+
         self.n_experts = 6
         self.n_experts_per_token = 2
 
@@ -373,7 +381,7 @@ class VideoMusicTransformer_V2(nn.Module):
         topk_scheduler = None
         temperature_scheduler = None
 
-        if version_name in ('2.0'):
+        if version_name in ('2.0', '2.1'):
             topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
         # if version_name == '2.3':
@@ -475,6 +483,17 @@ class VideoMusicTransformer_V2(nn.Module):
 
         xf = xf.permute(1,0,2) # -> (max_seq-1, batch_size, d_model)
         vf = vf.permute(1,0,2) # -> (max_seq_video, batch_size, d_model)
+
+        if self.self.version_name:
+            # Generate position indices
+            xf_position_indices = torch.arange(xf.shape[0]).unsqueeze(1).expand(xf.shape[0], xf.shape[1]).to(get_device())
+            vf_position_indices = torch.arange(vf.shape[0]).unsqueeze(1).expand(vf.shape[0], vf.shape[1]).to(get_device())
+
+            xf += self.positional_embedding(xf_position_indices)
+            vf += self.positional_embedding_video(vf_position_indices)
+
+            del xf_position_indices, vf_position_indices
+            torch.cuda.empty_cache()
 
         ### TRANSFORMER ###
         x_out = self.transformer(src=vf, tgt=xf, tgt_mask=mask)

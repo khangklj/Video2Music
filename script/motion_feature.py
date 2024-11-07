@@ -45,9 +45,9 @@ def main():
     #     torch.nn.AdaptiveAvgPool2d(1),
     #     torch.nn.Flatten()
     # )
-    # model = model.to(get_device())
-    # model.eval()
-    # transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
+    model = model.to(get_device())
+    model.eval()
+    transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
 
     # === Our option 2 === #
     model, preprocess = clip.load("ViT-L/14@336px", device=get_device())

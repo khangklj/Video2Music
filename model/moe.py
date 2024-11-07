@@ -177,7 +177,7 @@ class MoELayer(Module):
         gate_logits = self.gate(x) / t
         
         # Logging
-        # update_expert_counts(selected_experts)
+        update_expert_counts(selected_experts)
 
         weights, selected_experts = torch.topk(gate_logits, k)
         weights = softmax(weights, dim=-1, dtype=torch.float).to(get_device())
@@ -254,7 +254,7 @@ class SharedMoELayer(Module):
                 self.bias += self.update_rate * e
 
         # Logging
-        # update_expert_counts(selected_experts)
+        update_expert_counts(selected_experts)
 
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
@@ -329,7 +329,7 @@ class SelfBalanceSharedMoELayer(Module):
         weights, selected_experts = self.gate(x, k, t)
 
         # Logging
-        # update_expert_counts(selected_experts)
+        update_expert_counts(selected_experts)
 
         out = torch.zeros_like(x)
         for i, expert in enumerate(self.experts):

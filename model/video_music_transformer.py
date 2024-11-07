@@ -176,7 +176,7 @@ class VideoMusicTransformer_V1(nn.Module):
             vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
         
         # Emotion
-        # get_highest_emotion_indices(feature_emotion)
+        get_highest_emotion_indices(feature_emotion)
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         
         # Video embedding
@@ -373,8 +373,8 @@ class VideoMusicTransformer_V2(nn.Module):
         topk_scheduler = None
         temperature_scheduler = None
 
-        # if version_name in ('2.2', '2.3'):
-        #     topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        if version_name in ('2.0'):
+            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
         # if version_name == '2.3':
         #     temperature_scheduler = TemperatureScheduler()

@@ -389,7 +389,7 @@ class VideoMusicTransformer_V2(nn.Module):
 
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                  balancing=True, topk_scheduler=topk_scheduler, 
+                                  balancing=False, topk_scheduler=topk_scheduler, 
                                   temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
         swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)

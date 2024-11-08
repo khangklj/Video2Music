@@ -1,5 +1,8 @@
 import torch
 from third_party.midi_processor.processor import RANGE_NOTE_ON, RANGE_NOTE_OFF, RANGE_VEL, RANGE_TIME_SHIFT
+from utilities.argument_funcs import parse_train_args
+
+args = parse_train_args()[0]
 
 #Proposed (AMT l0.4)
 # VERSION = "v27_video_rpr_nosep_l0.4"
@@ -19,6 +22,8 @@ GEN_MODEL = "Video Music Transformer"
 # Video Music Transformer
 
 LOSS_LAMBDA = 0.4 # lamda * chord  +  ( 1-lamda ) * emotion
+if args.optimizer == "Lion":
+    LOSS_LAMBDA = 0.2
 
 EMOTION_THRESHOLD = 0.80
 

@@ -233,8 +233,9 @@ class SharedMoELayer(Module):
         else:
             t = 1.0
             
-        # print(x.shape)
+        print(x.shape)
         gate_logits = self.gate(x)
+        print(gate_logits.shape)
 
         if not self.balancing:
             weights, selected_experts = torch.topk(gate_logits, k)

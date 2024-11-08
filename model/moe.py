@@ -244,6 +244,8 @@ class SharedMoELayer(Module):
             # Only get gate_logits
             weights -= self.bias[selected_experts].squeeze()
 
+            print(selected_experts)
+            print(selected_experts.shape)
             c = torch.bincount(selected_experts.flatten()).to(self.bias.dtype)
             c_mean = torch.mean(c)
 

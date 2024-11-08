@@ -251,6 +251,7 @@ class SharedMoELayer(Module):
 
             if not self.training:
                 e = e.unsqueeze(1)
+                print(self.bias.shape, e.shape)
                 self.bias += self.update_rate * e
 
         # Logging

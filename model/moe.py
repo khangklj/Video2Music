@@ -240,10 +240,11 @@ class SharedMoELayer(Module):
         if not self.balancing:
             weights, selected_experts = torch.topk(gate_logits, k)
         else:
-            weights, selected_experts = torch.topk(gate_logits + self.bias, k)
+            b = self.bias.T
+            weights, selected_experts = torch.topk(gate_logits + b, k)
             
             # Only get gate_logits
-            weights -= self.bias[selected_experts].squeeze()
+            weights -= b[selected_experts].squeeze()
 
             print(selected_experts)
             print(selected_experts.shape)

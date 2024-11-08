@@ -250,7 +250,7 @@ class SharedMoELayer(Module):
             e = c - c_mean
 
             if not self.training:
-                print(e.shape, c.shape, c_mean.shape)
+                print(e.shape, self.bias.shape)
                 self.bias += self.update_rate * e
 
         # Logging

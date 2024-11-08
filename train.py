@@ -207,7 +207,7 @@ def main( vm = "" , isPrintArgs = True ):
     elif args.music_gen_version[:2] == '1.' or args.music_gen_version in ('2.0', '2.1'):
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.music_gen_version in ('2.2'):
-        opt = Lion(model.parameters(), lr=lr / 10, betas=(0.95, 0.98), weight_decay=3.0)
+        opt = Lion(model.parameters(), lr=lr / 6, betas=(0.95, 0.98), weight_decay=3.0)
 
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)

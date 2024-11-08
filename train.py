@@ -202,11 +202,11 @@ def main( vm = "" , isPrintArgs = True ):
     train_loss_emotion_func = eval_loss_emotion_func
 
     ##### Optimizer #####
-    if args.music_gen_version == None:
+    if args.optimizer in (None, 'Adam'):
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    elif args.music_gen_version[:2] == '1.' or args.music_gen_version in ('2.0', '2.1'):
+    elif args.optimizer == 'AdamW':
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    elif args.music_gen_version in ('2.2'):
+    elif args.optimizer == 'Lion':
         opt = Lion(model.parameters(), lr=lr / 6, betas=(0.95, 0.98), weight_decay=1.0)
 
     if(args.lr is None):

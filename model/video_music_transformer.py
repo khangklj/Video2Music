@@ -384,12 +384,13 @@ class VideoMusicTransformer_V2(nn.Module):
         if version_name in ('2.0', '2.1'):
             topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
-        # if version_name == '2.3':
-        #     temperature_scheduler = TemperatureScheduler()
-
+        balancing = False
+        if self.version_name in ('2.3'):
+            balancing = True
+          
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                  balancing=False, topk_scheduler=topk_scheduler, 
+                                  balancing=balancing, topk_scheduler=topk_scheduler, 
                                   temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
         swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)

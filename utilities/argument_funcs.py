@@ -64,7 +64,7 @@ def parse_train_args():
     parser.add_argument("-rpr", type=bool, default=rpr, help="...")
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     parser.add_argument("-droptoken", type=float, default=droptoken, help="Drop Token rate")
-    parser.add_argument("-optimizer", type=str, default='Adam', help="Choose optimizer")
+    parser.add_argument("-optimizer", type=str, default=optimizer, help="Choose optimizer")
     return parser.parse_known_args()
 
 def print_train_args(args):

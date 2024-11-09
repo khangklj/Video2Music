@@ -377,12 +377,7 @@ class VideoMusicTransformer_V2(nn.Module):
 
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         
-        # version_name = '2.1'
-        topk_scheduler = None
-        temperature_scheduler = None
-
-        if version_name in ('2.0', '2.1'):
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
         
         balancing = False
         if self.version_name in ('2.3'):

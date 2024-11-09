@@ -240,11 +240,9 @@ class SharedMoELayer(Module):
         else:
             b = self.bias.T.unsqueeze(0)
             _, selected_experts = torch.topk(gate_logits + b, k, dim=-1)
-            # print(x.shape, gate_logits.shape, b.shape, (gate_logits + b).shape)
 
             # Only get gate_logits
             weights = torch.gather(gate_logits, dim=-1, index=selected_experts)
-            print(weights.shape, selected_experts.shape)
 
             # print(selected_experts)
             # print(selected_experts.shape)
@@ -255,10 +253,8 @@ class SharedMoELayer(Module):
 
             if not self.training:
                 e = e.unsqueeze(1)
-                print(self.bias.shape, e.shape)
                 self.bias += self.update_rate * e
 
-            assert self.training
         # Logging
         update_expert_counts(selected_experts)
 

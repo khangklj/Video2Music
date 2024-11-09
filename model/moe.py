@@ -245,7 +245,7 @@ class SharedMoELayer(Module):
             weights = torch.gather(gate_logits, dim=-1, index=selected_experts)
 
             c = torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)
-            c = torch.cat((torch.tensor([0]), c))
+            c = torch.cat((torch.tensor([0]).to(get_device()), c))
             c = c[1:]
 
             c_mean = torch.mean(c)

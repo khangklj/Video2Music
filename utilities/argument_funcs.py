@@ -15,8 +15,8 @@ dropout = 0.2
 droptoken = 0.0
 lr = None
 optimizer = 'AdamW' # Adam / AdamW / Lion
-if music_gen_version in ('2.2', '2.3'):
-    optimizer = 'Lion'
+# if music_gen_version in ('2.2', '2.3'):
+#     optimizer = 'Lion'
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

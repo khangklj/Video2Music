@@ -55,7 +55,6 @@ def update_expert_counts(selected_expert):
     # Remove unnecessary dimensions for easier processing
     selected_expert = selected_expert.squeeze(1)
     # Iterate over the global indices
-    print(selected_expert.shape, len(indices))
     for i in range(selected_expert.size(0)):
         index = indices[i]
         if index != -1:  # Skip if index is -1

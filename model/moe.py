@@ -258,6 +258,7 @@ class SharedMoELayer(Module):
                 print(self.bias.shape, e.shape)
                 self.bias += self.update_rate * e
 
+            assert self.training
         # Logging
         update_expert_counts(selected_experts)
 

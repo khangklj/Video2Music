@@ -239,7 +239,8 @@ class SharedMoELayer(Module):
             weights, selected_experts = torch.topk(gate_logits, k)
         else:
             b = self.bias.T.unsqueeze(0)
-            _, selected_experts = torch.topk(gate_logits + b, k, dim=-1)
+            _, selected_experts = torch.topk(gate_logits + b, 8, dim=-1)
+            selected_experts = selected_experts[..., :2]
 
             # Only get gate_logits
             weights = torch.gather(gate_logits, dim=-1, index=selected_experts)

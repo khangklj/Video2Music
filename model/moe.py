@@ -252,7 +252,7 @@ class SharedMoELayer(Module):
 
             e = c - c_mean
 
-            if not self.training:
+            if self.training:
                 e = e.unsqueeze(1)
                 self.bias += self.update_rate * e
 

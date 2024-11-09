@@ -243,9 +243,11 @@ class SharedMoELayer(Module):
 
             # Only get gate_logits
             weights = torch.gather(gate_logits, dim=-1, index=selected_experts)
-            print(selected_experts.unique().numel())
 
             c = torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)
+            c = torch.cat((torch.tensor([0]), c))
+            c = c[1:]
+
             c_mean = torch.mean(c)
 
             e = c - c_mean

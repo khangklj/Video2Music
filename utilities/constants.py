@@ -18,7 +18,7 @@ GEN_MODEL = "Video Music Transformer"
 # Music Transformer
 # Video Music Transformer
 
-LOSS_LAMBDA = 0.2 # lamda * chord  +  ( 1-lamda ) * emotion
+LOSS_LAMBDA = 0.3 # lamda * chord  +  ( 1-lamda ) * emotion
 
 EMOTION_THRESHOLD = 0.80
 

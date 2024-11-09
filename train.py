@@ -207,7 +207,7 @@ def main( vm = "" , isPrintArgs = True ):
     elif args.optimizer == 'AdamW':
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.optimizer == 'Lion':
-        opt = Lion(model.parameters(), lr=lr / 4, betas=(0.95, 0.98), weight_decay=1.0)
+        opt = Lion(model.parameters(), lr=lr / 2, betas=(0.95, 0.98), weight_decay=1.0)
 
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)

@@ -5,8 +5,8 @@ version = VERSION
 rpr = True
 augmentation = False
 chord_embed = True
-music_gen_version = '2.2'
-batch_size = 36
+music_gen_version = '2.3'
+batch_size = 32
 epochs = 50
 motion_type = 1
 split_ver = SPLIT_VER
@@ -15,8 +15,8 @@ dropout = 0.2
 droptoken = 0.0
 lr = None
 optimizer = 'AdamW' # Adam / AdamW / Lion
-if music_gen_version in ('2.2', '2.3'):
-    optimizer = 'Lion'
+# if music_gen_version in ('2.2', '2.3'):
+#     optimizer = 'Lion'
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

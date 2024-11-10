@@ -367,7 +367,7 @@ class VideoMusicTransformer_V2(nn.Module):
             # Positional embedding
             self.positional_embedding = nn.Embedding(self.max_seq_chord, self.d_model)
             self.positional_embedding_video = nn.Embedding(self.max_seq_video, self.d_model)
-        elif version_name in ('2.1'):
+        elif version_name in ('2.1', '2.2'):
             RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
 
         self.n_experts = 6

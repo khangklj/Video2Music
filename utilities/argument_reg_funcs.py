@@ -10,7 +10,7 @@ chord_embedding = False
 batch_size = 32
 epochs = 100
 n_layers = 2
-motion_type = 0
+motion_type = 1
 scene_embed = False
 
 def parse_train_args():

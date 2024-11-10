@@ -9,6 +9,7 @@ augmentation = False
 chord_embedding = False
 batch_size = 32
 epochs = 100
+n_layers = 2
 motion_type = 0
 scene_embed = False
 
@@ -37,7 +38,7 @@ def parse_train_args():
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum video sequence to consider")
 
-    parser.add_argument("-n_layers", type=int, default=4, help="Number of layers to use")
+    parser.add_argument("-n_layers", type=int, default=n_layers, help="Number of layers to use")
     parser.add_argument("-d_model", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
@@ -139,7 +140,7 @@ def parse_eval_args():
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum video sequence to consider")
 
-    parser.add_argument("-n_layers", type=int, default=4, help="Number of layers to use")
+    parser.add_argument("-n_layers", type=int, default=n_layers, help="Number of layers to use")
     parser.add_argument("-d_model", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")

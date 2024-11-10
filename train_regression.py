@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 from torch.optim import Adam, AdamW
+from lion_pytorch import Lion
 
 from dataset.vevo_dataset import create_vevo_datasets
 from model.video_regression import VideoRegression
@@ -138,8 +139,9 @@ def main( vm = "" , isPrintArgs = True ):
         lr = args.lr        
 
     ##### Optimizer #####
-    opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
-    
+    # opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    opt = Lion(model.parameters(), lr=lr, betas=(0.95, 0.98), weight_decay=1.0)
+
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)
     else:

@@ -993,8 +993,9 @@ def scaled_dot_product_gqa(
         )
     
     # set up shape vars
-    tgt_len, bsz, embed_dim = query.shape
-    src_len, _, _ = key.shape
+    print(query.shape, key.shape, value.shape)
+    bsz = query.shape[1]
+    src_len = key.shape[0]
     
     key_padding_mask = F._canonical_mask(
         mask=key_padding_mask,

@@ -1031,6 +1031,8 @@ def scaled_dot_product_gqa(
     query = query.permute(1, 2, 0, 3)
     key = key.permute(1, 2, 0, 3)
 
+    print(query.shape, key.shape)
+
     # RoPE here - OUR MODIFY
     query = query.transpose(1, 2)
     key = key.transpose(1, 2)
@@ -1039,6 +1041,8 @@ def scaled_dot_product_gqa(
         key = RoPE.forward(key)
     query = query.transpose(1, 2)
     key = key.transpose(1, 2)
+    
+    print(query.shape, key.shape)
 
     query = query.permute(0, 2, 1, 3)
     key = key.permute(0, 2, 1, 3)

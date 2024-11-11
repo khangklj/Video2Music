@@ -1246,8 +1246,9 @@ class MultiheadGQA(Module):
             q = self.RoPE.forward(q)
             k = self.RoPE.forward(k)
 
-        q = q.view(tgt_len, bsz, num_heads*head_dim)
-        k = k.view(src_len, bsz, self.kv_heads*head_dim)
+        q = q.view(bsz, tgt_len, num_heads*head_dim)
+        k = k.view(bsz, src_len, self.kv_heads*head_dim)
+        v = v.view(bsz, src_len, self.kv_heads*head_dim)
 
         # Unfold 'd' dimension into 'h' separate attention heads.
         q = rearrange(q, "b n (h d) -> b n h d", h=self.query_heads)

@@ -1025,9 +1025,9 @@ def scaled_dot_product_gqa(
     key = rearrange(key, "b s h d -> b h s d")
     value = rearrange(value, "b s h d -> b h s d")
 
-    bq, hq, nq, dq = query.shape
-    bk, hk, nk, dk = key.shape
-    bv, hv, nv, dv = value.shape
+    hq, bq, nq, dq = query.shape
+    hk, bk, nk, dk = key.shape
+    hv, bv, nv, dv = value.shape
     if not (bq == bk == bv and dq == dk == dv):
         raise ValueError(
             "Expected query, key, and value to have the same batch size (dim=0) and "

@@ -174,10 +174,11 @@ def main():
     primer_root = dataset[test_id_idx]["x_root"].to(get_device())
     primer_attr = dataset[test_id_idx]["x_attr"].to(get_device())
     
-    feature_semantic_list = [] 
-    for feature_semantic in dataset[test_id_idx]["semanticList"]:
-        feature_semantic = torch.unsqueeze(feature_semantic, 0)
-        feature_semantic_list.append( feature_semantic.to(get_device()) )
+    # feature_semantic_list = [] 
+    # for feature_semantic in dataset[test_id_idx]["semanticList"]:
+    #     feature_semantic = torch.unsqueeze(feature_semantic, 0)
+    #     feature_semantic_list.append( feature_semantic.to(get_device()) )
+    feature_semantic_list = dataset[test_id_idx]["semanticList"].to(get_device())
 
     feature_scene_offset = dataset[test_id_idx]["scene_offset"].to(get_device())
     feature_motion = dataset[test_id_idx]["motion"].to(get_device())

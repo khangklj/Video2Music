@@ -473,8 +473,9 @@ class Video2music:
         feature_semantic = feature_semantic.to(self.device)
         feature_semantic_list = []
         feature_semantic = torch.unsqueeze(feature_semantic, 0)
-        feature_semantic_list.append( feature_semantic.to(self.device) )
+        # feature_semantic_list.append( feature_semantic.to(self.device) )
         #feature_semantic_list.append( feature_semantic )
+        feature_semantic_list = feature_semantic.to(self.device)
 
         if "major" in key:
             feature_key = torch.tensor([0])

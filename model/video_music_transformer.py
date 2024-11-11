@@ -598,7 +598,7 @@ class VideoMusicTransformer_V2(nn.Module):
         return gen_seq[:, :cur_i]
 
 class VideoMusicTransformer_V3(nn.Module):
-    def __init__(self, version_name='3.1', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
+    def __init__(self, version_name='3.0', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
                  chord_embed=False, dropTokenRate=0.0):
@@ -614,18 +614,27 @@ class VideoMusicTransformer_V3(nn.Module):
         self.max_seq_chord    = max_sequence_chord
         self.scene_embed = scene_embed
         self.dropTokenRate = dropTokenRate
+        self.chord_embed = chord_embed
+        self.version_name = version_name
 
         # Scene offsets embedding
         if self.scene_embed:
             self.scene_embedding = nn.Embedding(SCENE_OFFSET_MAX, self.d_model)
+
+        # Chord embedding
+        if self.chord_embed:
+            chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
+            embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
+            embedding_weights.requires_grad = False
+            self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
 
         # Input embedding for video and music features
         self.embedding = nn.Embedding(CHORD_SIZE, self.d_model)
         self.embedding_root = nn.Embedding(CHORD_ROOT_SIZE, self.d_model)
         self.embedding_attr = nn.Embedding(CHORD_ATTR_SIZE, self.d_model)
         
-        # projection = nn.Linear
-        projection = KANLinear
+        projection = nn.Linear
+        # projection = KANLinear
 
         self.total_vf_dim = total_vf_dim
         self.Linear_vis     = projection(self.total_vf_dim, self.d_model)
@@ -641,34 +650,47 @@ class VideoMusicTransformer_V3(nn.Module):
             norm = nn.LayerNorm(self.d_model)
 
         use_KAN = False
+
         RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+
         self.n_experts = 6
         self.n_experts_per_token = 2
-        expert = GLUExpert(self.d_model, self.d_ff)
-        att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
+
+        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+
+        att = MultiheadGQA(self.d_model, query_heads=self.nhead, kv_heads=self.nhead // 4, 
+                           dropout=self.dropout, RoPE=RoPE)
         
-        # version_name = '3.1'
-        topk_scheduler = None
+        topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        if self.version_name == '2.2':
+            topk_scheduler = None
         temperature_scheduler = None
 
-        if version_name in ('3.1', '3.2'):
-            topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
-        
-        # if version_name == '2.3':
-        #     temperature_scheduler = TemperatureScheduler()
-
+        balancing = False
+        if self.version_name in ('2.3'):
+            balancing = True
+          
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
-                                  topk_scheduler=topk_scheduler, temperature_scheduler=temperature_scheduler,
-                                  use_KAN=use_KAN)
+                                  balancing=balancing, topk_scheduler=topk_scheduler, 
+                                  temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
-        # Encoder
-        encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)
+        swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
+        shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
 
-        # Decoder
-        decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        decoder = TransformerDecoder(decoder_layer, self.nlayers, norm)
+        deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+        deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+
+        rate = 3
+        encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 
+                                [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers-rate)])
+        
+        decoder_layers = nn.ModuleList([copy.deepcopy(shallow_decoder_layer) for _ in range(rate)] + 
+                                [copy.deepcopy(deep_decoder_layer) for _ in range(self.nlayers-rate)])
+        
+        encoder = TransformerEncoderShorter(encoder_layers, norm)
+        decoder = TransformerDecoderShorter(decoder_layers, norm)
 
         # Full model
         self.transformer = nn.Transformer(
@@ -685,7 +707,7 @@ class VideoMusicTransformer_V3(nn.Module):
 
         self.softmax    = nn.Softmax(dim=-1)
 
-        del RoPE, expert, att, moelayer, encoder_layer, decoder_layer
+        del RoPE, expert, att, moelayer
         torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):
@@ -694,13 +716,16 @@ class VideoMusicTransformer_V3(nn.Module):
         else:
             mask = None
         
-        x_root = self.embedding_root(x_root)
-        x_attr = self.embedding_attr(x_attr)
-        x = x_root + x_attr
+        if not self.chord_embed:
+            x_root = self.embedding_root(x_root)
+            x_attr = self.embedding_attr(x_attr)
+            x = x_root + x_attr
+        else:
+            x = self.chord_embedding_model(x)
 
         tmp_list = list()
         for i in range(x.shape[0]):
-            tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item())
+            tmp = torch.full((1, x.shape[1], 1), feature_key[i,0].item() if feature_key.dim() > 1 else feature_key.item())
             tmp_list.append(tmp)
         feature_key_padded = torch.cat(tmp_list, dim=0)
 
@@ -711,9 +736,7 @@ class VideoMusicTransformer_V3(nn.Module):
 
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
         # Semantic
-        vf_concat = feature_semantic_list[0].float()
-        for i in range(1, len(feature_semantic_list)):
-            vf_concat = torch.cat( (vf_concat, feature_semantic_list[i].float()), dim=2)            
+        vf_concat = feature_semantic_list.float() 
         
         # Scene offset
         if not self.scene_embed:
@@ -726,6 +749,7 @@ class VideoMusicTransformer_V3(nn.Module):
             vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
         
         # Emotion
+        get_highest_emotion_indices(feature_emotion)
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         
         # Video embedding

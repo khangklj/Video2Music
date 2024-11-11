@@ -1081,7 +1081,6 @@ def scaled_dot_product_gqa(
     out = einsum(attention, value, "b g h n s, b h s d -> b g h n d")
     # Move head dimension back to axis 2
     out = rearrange(out, "b g h n d -> b n (h g) d")
-    print(out.shape)
 
     attn_weights: Optional[Tensor] = None
     if need_weights:
@@ -1271,6 +1270,7 @@ class MultiheadGQA(Module):
             RoPE=self.RoPE
         )
         x = rearrange(x, "b n h d -> b n (h d)")
+        print(x.shape)
 
         # NOTE: This is different from 'nn.MultiheadAttention'!  We follow the MAGNETO
         # architecture (https://arxiv.org/pdf/2210.06423.pdf), which applies an extra

@@ -1261,7 +1261,7 @@ class MultiheadGQA(Module):
             value=v,
             num_heads=self.query_heads,
             # TODO
-            attn_mask=attn_mask,
+            attn_mask=None,
             key_padding_mask=key_padding_mask,
             is_causal=is_causal,
             need_weights=need_weights,

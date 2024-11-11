@@ -145,7 +145,7 @@ class RotaryPositionalEmbeddings(nn.Module):
         # tensor has shape [b, s, 1, h_d // 2, 2] if packed samples,
         # otherwise has shape [1, s, 1, h_d // 2, 2]
         rope_cache = rope_cache.view(-1, xshaped.size(1), 1, xshaped.size(3), 2)
-        rope_cache = rope_cache[:xshaped.size(0), ...]
+        # rope_cache = rope_cache[:xshaped.size(2), ...]
 
         # tensor has shape [b, s, n_h, h_d // 2, 2]
         x_out = torch.stack(

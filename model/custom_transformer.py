@@ -1245,7 +1245,7 @@ class MultiheadGQA(Module):
         if self.RoPE is not None:
             q = self.RoPE.forward(q)
             k = self.RoPE.forward(k)
-        print(k.shape, v.shape)
+        print(k.shape, q.shape)
 
         q = q.view(bsz, tgt_len, num_heads*head_dim)
         k = k.view(bsz, src_len, self.kv_heads*head_dim)

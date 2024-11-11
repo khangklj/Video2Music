@@ -917,6 +917,8 @@ def custom_multi_head_attention_forward(
         k = k.view(bsz, num_heads, src_len, head_dim)
         v = v.view(bsz, num_heads, src_len, head_dim)
 
+        print(q.shape, k.shape)
+
         # RoPE here - OUR MODIFY
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
@@ -925,6 +927,8 @@ def custom_multi_head_attention_forward(
             k = RoPE.forward(k)
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
+        
+        print(q.shape, k.shape)
 
         attn_output = F.scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal

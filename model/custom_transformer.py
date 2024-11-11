@@ -1270,8 +1270,8 @@ class MultiheadGQA(Module):
             force_grouped=False,
             RoPE=self.RoPE
         )
-        x = rearrange(x, "b n h d -> b n (h d)")
         print(query.shape, x.shape)
+        x = rearrange(x, "b n h d -> b n (h d)")
 
         # NOTE: This is different from 'nn.MultiheadAttention'!  We follow the MAGNETO
         # architecture (https://arxiv.org/pdf/2210.06423.pdf), which applies an extra

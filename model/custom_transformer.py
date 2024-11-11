@@ -1281,7 +1281,6 @@ class MultiheadGQA(Module):
             x = self.norm(x)
         # Linear projection on attention outputs.
         x = self.out_proj(x)
-        print(x.shape)
 
         return x, attn
 
@@ -1313,6 +1312,7 @@ class TransformerEncoderLayer(Module):
             src2 = self.norm2(src)
             src2 = self.ff(src2)
             src = src + src2
+        print(src.shape)
         return src
 
 class TransformerDecoderLayer(Module):

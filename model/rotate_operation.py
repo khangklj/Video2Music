@@ -128,6 +128,8 @@ class RotaryPositionalEmbeddings(nn.Module):
             - n_h: num heads
             - h_d: head dim
         """
+        print(x.shape)
+        
         # input tensor has shape [b, s, n_h, h_d]
         seq_len = x.size(1)
 
@@ -159,4 +161,5 @@ class RotaryPositionalEmbeddings(nn.Module):
 
         # tensor has shape [b, s, n_h, h_d]
         x_out = x_out.flatten(3)
+        print(x_out.shape)
         return x_out.type_as(x)

@@ -917,8 +917,6 @@ def custom_multi_head_attention_forward(
         k = k.view(bsz, num_heads, src_len, head_dim)
         v = v.view(bsz, num_heads, src_len, head_dim)
 
-        print(q.shape, k.shape)
-
         # RoPE here - OUR MODIFY
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
@@ -927,8 +925,6 @@ def custom_multi_head_attention_forward(
             k = RoPE.forward(k)
         q = q.transpose(1, 2)
         k = k.transpose(1, 2)
-        
-        print(q.shape, k.shape)
 
         attn_output = F.scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal
@@ -1035,8 +1031,6 @@ def scaled_dot_product_gqa(
     query = query.permute(1, 2, 0, 3)
     key = key.permute(1, 2, 0, 3)
 
-    print(query.shape, key.shape)
-
     # RoPE here - OUR MODIFY
     query = query.transpose(1, 2)
     key = key.transpose(1, 2)
@@ -1045,8 +1039,6 @@ def scaled_dot_product_gqa(
         key = RoPE.forward(key)
     query = query.transpose(1, 2)
     key = key.transpose(1, 2)
-    
-    print(query.shape, key.shape)
 
     query = query.permute(0, 2, 1, 3)
     key = key.permute(0, 2, 1, 3)

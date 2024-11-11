@@ -1025,9 +1025,9 @@ def scaled_dot_product_gqa(
     key = rearrange(key, "b s h d -> b h s d")
     value = rearrange(value, "b s h d -> b h s d")
 
-    hq, bq, nq, dq = query.shape
-    hk, bk, nk, dk = key.shape
-    hv, bv, nv, dv = value.shape
+    bq, hq, nq, dq = query.shape
+    bk, hk, nk, dk = key.shape
+    bv, hv, nv, dv = value.shape
     if not (bq == bk == bv and dq == dk == dv):
         raise ValueError(
             "Expected query, key, and value to have the same batch size (dim=0) and "
@@ -1048,7 +1048,7 @@ def scaled_dot_product_gqa(
     if scale is None:
         scale = query.size(-1) ** 0.5
     query = query / scale
-
+    print(query.shape, key.shape, value.shape)
     num_head_groups = hq // hk
     query = rearrange(query, "b (h g) n d -> b g h n d", g=num_head_groups)
     similarity = einsum(query, key, "b g h n d, b h s d -> b g h n s")
@@ -1246,9 +1246,9 @@ class MultiheadGQA(Module):
             q = self.RoPE.forward(q)
             k = self.RoPE.forward(k)
 
-        q = q.view(tgt_len, bsz, num_heads*head_dim)
-        k = k.view(src_len, bsz, self.kv_heads*head_dim)
-        v = v.view(src_len, bsz, self.kv_heads*head_dim)
+        q = q.view(bsz, tgt_len, num_heads*head_dim)
+        k = k.view(bsz, src_len, self.kv_heads*head_dim)
+        v = v.view(bsz, src_len, self.kv_heads*head_dim)
 
         print(q.shape, k.shape, v.shape)
 

@@ -375,6 +375,7 @@ class VideoMusicTransformer_V2(nn.Module):
 
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
 
+        print(RoPE)
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         
         topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)

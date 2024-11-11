@@ -1021,10 +1021,6 @@ def scaled_dot_product_gqa(
         else:
             attn_mask = attn_mask + key_padding_mask
 
-    # q = q.view(bsz, num_heads, tgt_len, head_dim)
-    # k = k.view(bsz, num_heads, src_len, head_dim)
-    # v = v.view(bsz, num_heads, src_len, head_dim)
-
     # current shape
     #   len, bsz, nhead, head_dim
     # RoPE need

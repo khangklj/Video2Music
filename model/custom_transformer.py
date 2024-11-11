@@ -1080,8 +1080,8 @@ def scaled_dot_product_gqa(
     # Apply attention matrix to the value Tensor.
     out = einsum(attention, value, "b g h n s, b h s d -> b g h n d")
     # Move head dimension back to axis 2
+    # out = rearrange(out, "b g h n d -> b n (h g) d")
     out = rearrange(out, "b g h n d -> n b (h g) d")
-    # print(out.shape)
 
     attn_weights: Optional[Tensor] = None
     if need_weights:
@@ -1250,8 +1250,6 @@ class MultiheadGQA(Module):
         k = k.view(bsz, src_len, self.kv_heads*head_dim)
         v = v.view(bsz, src_len, self.kv_heads*head_dim)
 
-        # print(q.shape, k.shape, v.shape)
-
         # Unfold 'd' dimension into 'h' separate attention heads.
         q = rearrange(q, "b n (h d) -> b n h d", h=self.query_heads)
         k = rearrange(k, "b n (h d) -> b n h d", h=self.kv_heads)
@@ -1271,7 +1269,6 @@ class MultiheadGQA(Module):
             force_grouped=False,
             RoPE=self.RoPE
         )
-        print(query.shape, x.shape)
         x = rearrange(x, "b n h d -> b n (h d)")
 
         # NOTE: This is different from 'nn.MultiheadAttention'!  We follow the MAGNETO

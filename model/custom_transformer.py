@@ -1282,6 +1282,7 @@ class MultiheadGQA(Module):
             x = self.norm(x)
         # Linear projection on attention outputs.
         x = self.out_proj(x)
+        print(query.shape, x.shape)
 
         return x, attn
 
@@ -1299,7 +1300,7 @@ class TransformerEncoderLayer(Module):
         if self.pre_norm == False:
             src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                                 key_padding_mask=src_key_padding_mask)[0]
-            print(src.shape, src2.shape)
+            # print(src.shape, src2.shape)
             src = src + src2
             src = self.norm1(src)
             src2 = self.ff(src)

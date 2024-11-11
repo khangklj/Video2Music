@@ -763,8 +763,8 @@ def custom_multi_head_attention_forward(
             b_v,
         )
 
-    q = q.view(bsz, tgt_len, num_heads, head_dim)
-    k = k.view(bsz, tgt_len, num_heads, head_dim)
+    q = q.view(num_heads, tgt_len, bsz, head_dim)
+    k = k.view(num_heads, tgt_len, bsz, head_dim)
 
     # RoPE here - OUR MODIFY
     if RoPE is not None:

@@ -1296,6 +1296,7 @@ class TransformerEncoderLayer(Module):
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
+        print(src.shape)
         src = src.transpose(0, 1)
 
         if self.pre_norm == False:

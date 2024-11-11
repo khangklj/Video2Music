@@ -1019,29 +1019,6 @@ def scaled_dot_product_gqa(
         else:
             attn_mask = attn_mask + key_padding_mask
 
-    # current shape
-    #   len, bsz, nhead, head_dim
-    # RoPE need
-    #   bsz, nhead, len, head_dim
-    # GQA need
-    #   bsz, len, nhead, head_dim
-
-    query = query.permute(1, 2, 0, 3)
-    key = key.permute(1, 2, 0, 3)
-
-    # RoPE here - OUR MODIFY
-    query = query.transpose(1, 2)
-    key = key.transpose(1, 2)
-    if RoPE is not None:
-        query = RoPE.forward(query)
-        key = RoPE.forward(key)
-    query = query.transpose(1, 2)
-    key = key.transpose(1, 2)
-
-    query = query.permute(0, 2, 1, 3)
-    key = key.permute(0, 2, 1, 3)
-    value = value.permute(1, 0, 2, 3)
-
     # Move sequence length dimension to axis 2.
     # This makes the attention operations below *much* faster.
     query = rearrange(query, "b n h d -> b h n d")
@@ -1253,6 +1230,23 @@ class MultiheadGQA(Module):
         q: Tensor = self.q_proj(query)
         k: Tensor = self.k_proj(key)
         v: Tensor = self.v_proj(value)
+
+        num_heads = self.query_heads
+        head_dim = self.embed_dim // num_heads
+        bsz = q.shape[0]
+        tgt_len = q.shape[1]
+        src_len = k.shape[1]
+
+        q = q.view(num_heads, tgt_len, bsz, head_dim)
+        k = k.view(self.kv_heads, src_len, bsz, head_dim)
+
+        # RoPE here - OUR MODIFY
+        if self.RoPE is not None:
+            q = self.RoPE.forward(q)
+            k = self.RoPE.forward(k)
+
+        q = q.view(tgt_len, bsz, num_heads*head_dim)
+        k = k.view(src_len, bsz, self.kv_heads*head_dim)
 
         # Unfold 'd' dimension into 'h' separate attention heads.
         q = rearrange(q, "b n (h d) -> b n h d", h=self.query_heads)

@@ -1250,7 +1250,7 @@ class MultiheadGQA(Module):
         k = k.view(bsz, src_len, self.kv_heads*head_dim)
         v = v.view(bsz, src_len, self.kv_heads*head_dim)
 
-        print(q.shape, k.shape, v.shape)
+        # print(q.shape, k.shape, v.shape)
 
         # Unfold 'd' dimension into 'h' separate attention heads.
         q = rearrange(q, "b n (h d) -> b n h d", h=self.query_heads)

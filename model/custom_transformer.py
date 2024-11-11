@@ -1079,9 +1079,9 @@ def scaled_dot_product_gqa(
 
     # Apply attention matrix to the value Tensor.
     out = einsum(attention, value, "b g h n s, b h s d -> b g h n d")
-    print(out.shape)
     # Move head dimension back to axis 2
     out = rearrange(out, "b g h n d -> b n (h g) d")
+    print(out.shape)
 
     attn_weights: Optional[Tensor] = None
     if need_weights:

@@ -1234,12 +1234,11 @@ class MultiheadGQA(Module):
 
         num_heads = self.query_heads
         head_dim = self.embed_dim // num_heads
-        bsz = q.shape[0]
-        tgt_len = q.shape[1]
-        src_len = k.shape[1]
+        bsz = q.shape[1]
+        tgt_len = q.shape[0]
+        src_len = k.shape[0]
 
         q = q.view(num_heads, tgt_len, bsz, head_dim)
-        print(k.shape, v.shape)
         k = k.view(self.kv_heads, src_len, bsz, head_dim)
 
         # RoPE here - OUR MODIFY

@@ -764,7 +764,7 @@ def custom_multi_head_attention_forward(
         )
 
     q = q.view(num_heads, tgt_len, bsz, head_dim)
-    k = k.view(num_heads, tgt_len, bsz, head_dim)
+    k = k.view(num_heads, src_len, bsz, head_dim)
 
     # RoPE here - OUR MODIFY
     if RoPE is not None:
@@ -772,7 +772,7 @@ def custom_multi_head_attention_forward(
         k = RoPE.forward(k)
 
     q = q.view(tgt_len, bsz, num_heads*head_dim)
-    k = k.view(tgt_len, bsz, num_heads*head_dim)
+    k = k.view(src_len, bsz, num_heads*head_dim)
 
     # prep attention mask
 

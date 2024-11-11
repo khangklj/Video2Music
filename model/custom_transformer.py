@@ -945,16 +945,17 @@ def scaled_dot_product_gqa(
     query: Tensor,
     key: Tensor,
     value: Tensor,
+    num_heads: int,
     dropout: float = 0.0,
     scale: Optional[float] = None,
     attn_mask: Optional[Tensor] = None,
+    key_padding_mask = None,
     is_causal: Optional[bool] = None,
     need_weights: bool = False,
     average_attn_weights: bool = False,
     force_grouped: bool = False,
     RoPE=None # OUR MODIFY
 ):
-    mask = attn_mask
     """Scaled dot product attention with support for grouped queries.
 
     Einstein notation:
@@ -981,19 +982,43 @@ def scaled_dot_product_gqa(
         - (Optional) Attention weights with shape (b, h, n, s). Only returned if
           'need_weights' is True.
     """
-    if (mask is not None) and (is_causal is not None):
+    if (attn_mask is not None) and (is_causal is not None):
         raise ValueError(
-            "Only one of 'mask' and 'is_causal' should be provided, but got both."
+            "Only one of 'attn_mask' and 'is_causal' should be provided, but got both."
         )
     elif not query.ndim == key.ndim == value.ndim == 4:
         raise ValueError(
             f"Expected query, key, and value to be 4-dimensional, but got shapes "
             f"{query.shape}, {key.shape}, and {value.shape}."
         )
-
+    
     # set up shape vars
-    # tgt_len, bsz, embed_dim = query.shape
-    # src_len, _, _ = key.shape
+    tgt_len, bsz, embed_dim = query.shape
+    src_len, _, _ = key.shape
+    
+    key_padding_mask = F._canonical_mask(
+        mask=key_padding_mask,
+        mask_name="key_padding_mask",
+        other_type=F._none_or_dtype(attn_mask),
+        other_name="attn_mask",
+        target_type=query.dtype,
+    )
+
+    # merge key padding and attention masks
+    if key_padding_mask is not None:
+        assert key_padding_mask.shape == (
+            bsz,
+            src_len,
+        ), f"expecting key_padding_mask shape of {(bsz, src_len)}, but got {key_padding_mask.shape}"
+        key_padding_mask = (
+            key_padding_mask.view(bsz, 1, 1, src_len)
+            .expand(-1, num_heads, -1, -1)
+            .reshape(bsz * num_heads, 1, src_len)
+        )
+        if attn_mask is None:
+            attn_mask = key_padding_mask
+        else:
+            attn_mask = attn_mask + key_padding_mask
 
     # q = q.view(bsz, num_heads, tgt_len, head_dim)
     # k = k.view(bsz, num_heads, src_len, head_dim)
@@ -1045,9 +1070,9 @@ def scaled_dot_product_gqa(
     if is_causal:
         # Mask out the upper triangular portion of the attention matrix. This prevents
         # the model from attending to tokens in the future.
-        mask = torch.ones((bq, nq, nk), device=query.device, dtype=torch.bool).tril_()
+        attn_mask = torch.ones((bq, nq, nk), device=query.device, dtype=torch.bool).tril_()
 
-    if mask is not None:
+    if attn_mask is not None:
         # Expand mask to match the shape of the attention matrix.
         # If mask is 2D, assume that it is applied to the key/value sequence dimension.
         # Else if mask is 3D, assume that it is applied to the query/key/value sequence
@@ -1056,13 +1081,13 @@ def scaled_dot_product_gqa(
         # Users could also provide a 4D mask, which is applied to the query/key/value
         # sequence dimension for each attention head (though I don't have a particular
         # use case in mind for that).
-        if mask.ndim == 2:
-            mask = rearrange(mask, "b s -> b () () () s")
-        elif mask.ndim == 3:
-            mask = rearrange(mask, "b n s -> b () () n s")
+        if attn_mask.ndim == 2:
+            attn_mask = rearrange(attn_mask, "b s -> b () () () s")
+        elif attn_mask.ndim == 3:
+            attn_mask = rearrange(attn_mask, "b n s -> b () () n s")
         # Mask similarity values by setting them to negative infinity.  This guarantees
         # that they will not contribute to the softmax computation below.
-        similarity.masked_fill_(~mask, torch.finfo(similarity.dtype).min)
+        similarity.masked_fill_(~attn_mask, torch.finfo(similarity.dtype).min)
 
     attention = F.softmax(similarity, dim=-1)
     if dropout > 0.0:
@@ -1205,6 +1230,7 @@ class MultiheadGQA(Module):
         need_weights: bool = False,
         # TODO
         attn_mask: Optional[Tensor] = None,
+        key_padding_mask = None,
         is_causal: bool = False,
         average_attn_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
@@ -1228,8 +1254,10 @@ class MultiheadGQA(Module):
             query=q,
             key=k,
             value=v,
+            num_heads=self.query_heads,
             # TODO
-            mask=attn_mask,
+            attn_mask=attn_mask,
+            key_padding_mask=key_padding_mask,
             is_causal=is_causal,
             need_weights=need_weights,
             average_attn_weights=average_attn_weights,

@@ -867,6 +867,8 @@ def custom_multi_head_attention_forward(
     # (deep breath) calculate attention and out projection
     #
 
+    print(need_weights)
+
     if need_weights:
         B, Nt, E = q.shape
         q_scaled = q * math.sqrt(1.0 / float(E))

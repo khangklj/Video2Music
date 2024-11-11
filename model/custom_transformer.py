@@ -763,6 +763,17 @@ def custom_multi_head_attention_forward(
             b_v,
         )
 
+    q = q.view(bsz, tgt_len, num_heads, head_dim)
+    k = k.view(bsz, tgt_len, num_heads, head_dim)
+
+    # RoPE here - OUR MODIFY
+    if RoPE is not None:
+        q = RoPE.forward(q)
+        k = RoPE.forward(k)
+
+    q = q.view(tgt_len, bsz, num_heads*head_dim)
+    k = k.view(tgt_len, bsz, num_heads*head_dim)
+
     # prep attention mask
 
     if attn_mask is not None:
@@ -867,8 +878,6 @@ def custom_multi_head_attention_forward(
     # (deep breath) calculate attention and out projection
     #
 
-    print(need_weights)
-
     if need_weights:
         B, Nt, E = q.shape
         q_scaled = q * math.sqrt(1.0 / float(E))
@@ -914,19 +923,6 @@ def custom_multi_head_attention_forward(
                 attn_mask = attn_mask.unsqueeze(0)
             else:
                 attn_mask = attn_mask.view(bsz, num_heads, -1, src_len)
-
-        q = q.view(bsz, num_heads, tgt_len, head_dim)
-        k = k.view(bsz, num_heads, src_len, head_dim)
-        v = v.view(bsz, num_heads, src_len, head_dim)
-
-        # RoPE here - OUR MODIFY
-        q = q.transpose(1, 2)
-        k = k.transpose(1, 2)
-        if RoPE is not None:
-            q = RoPE.forward(q)
-            k = RoPE.forward(k)
-        q = q.transpose(1, 2)
-        k = k.transpose(1, 2)
 
         attn_output = F.scaled_dot_product_attention(
             q, k, v, attn_mask, dropout_p, is_causal

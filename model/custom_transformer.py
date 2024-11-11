@@ -1138,6 +1138,7 @@ class MultiheadGQA(Module):
         self.layer_norm = layer_norm
         self.gamma_init = gamma_init
         self.RoPE = copy.deepcopy(RoPE) # OUR MODIFY
+        self.embed_dim = embed_dim
 
         if self.query_heads % self.kv_heads != 0:
             raise ValueError(

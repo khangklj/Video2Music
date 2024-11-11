@@ -128,7 +128,7 @@ class RotaryPositionalEmbeddings(nn.Module):
             - n_h: num heads
             - h_d: head dim
         """        
-        # input tensor has shape [b, s, n_h, h_d]
+        # input tensor has shape [n_h, s, b, h_d]
         seq_len = x.size(1)
 
         # extract the values based on whether input_pos is set or not
@@ -139,7 +139,9 @@ class RotaryPositionalEmbeddings(nn.Module):
         # reshape input; the last dimension is used for computing the output.
         # Cast to float to match the reference implementation
         # tensor has shape [b, s, n_h, h_d // 2, 2]
+        print(x.shape)
         xshaped = x.float().reshape(*x.shape[:-1], -1, 2)
+        print(xshaped.shape)
 
         # reshape the cache for broadcasting
         # tensor has shape [b, s, 1, h_d // 2, 2] if packed samples,

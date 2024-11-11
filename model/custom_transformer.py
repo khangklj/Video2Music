@@ -1239,7 +1239,7 @@ class MultiheadGQA(Module):
         src_len = k.shape[1]
 
         q = q.view(num_heads, tgt_len, bsz, head_dim)
-        print(k.shape)
+        print(k.shape, v.shape)
         k = k.view(self.kv_heads, src_len, bsz, head_dim)
 
         # RoPE here - OUR MODIFY

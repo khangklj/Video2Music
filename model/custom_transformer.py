@@ -1226,9 +1226,6 @@ class MultiheadGQA(Module):
         #   d - embedding dimension
         #
         # Input shape: (b, n, d)
-        query = query.transpose(0, 1)
-        key = key.transpose(0, 1)
-        value = value.transpose(0, 1)
 
         q: Tensor = self.q_proj(query)
         k: Tensor = self.k_proj(key)
@@ -1286,7 +1283,6 @@ class MultiheadGQA(Module):
         # Linear projection on attention outputs.
         x = self.out_proj(x)
 
-        x = x.transpose(0, 1)
         return x, attn
 
 class TransformerEncoderLayer(Module):
@@ -1300,7 +1296,8 @@ class TransformerEncoderLayer(Module):
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
-        print(src.shape)
+        src = src.tranpose(0, 1)
+
         if self.pre_norm == False:
             src2 = self.self_attn(src, src, src, attn_mask=src_mask,
                                 key_padding_mask=src_key_padding_mask)[0]
@@ -1318,6 +1315,8 @@ class TransformerEncoderLayer(Module):
             src2 = self.norm2(src)
             src2 = self.ff(src2)
             src = src + src2
+
+        src = src.tranpose(0, 1)
         return src
 
 class TransformerDecoderLayer(Module):
@@ -1333,6 +1332,7 @@ class TransformerDecoderLayer(Module):
         
     def forward(self, tgt, memory, tgt_mask=None, memory_mask=None,
                 tgt_key_padding_mask=None, memory_key_padding_mask=None):
+        print(tgt.shape, memory.shape)
         if self.pre_norm == False:
             tgt2 = self.self_attn(tgt, tgt, tgt, attn_mask=tgt_mask,
                                 key_padding_mask=tgt_key_padding_mask)[0]

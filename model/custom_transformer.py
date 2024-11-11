@@ -1296,7 +1296,7 @@ class TransformerEncoderLayer(Module):
         # self.dropout1 = Dropout(dropout)
         # self.dropout2 = Dropout(dropout)
     def forward(self, src, src_mask=None, src_key_padding_mask=None, **kwargs):
-        src = src.tranpose(0, 1)
+        src = src.transpose(0, 1)
 
         if self.pre_norm == False:
             src2 = self.self_attn(src, src, src, attn_mask=src_mask,
@@ -1316,7 +1316,7 @@ class TransformerEncoderLayer(Module):
             src2 = self.ff(src2)
             src = src + src2
 
-        src = src.tranpose(0, 1)
+        src = src.transpose(0, 1)
         return src
 
 class TransformerDecoderLayer(Module):

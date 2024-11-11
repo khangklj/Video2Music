@@ -1204,7 +1204,7 @@ class MultiheadGQA(Module):
         value: Tensor,
         need_weights: bool = False,
         # TODO
-        # attn_mask: Optional[Tensor] = None,
+        attn_mask: Optional[Tensor] = None,
         is_causal: bool = False,
         average_attn_weights: bool = False,
     ) -> Tuple[Tensor, Optional[Tensor]]:
@@ -1229,7 +1229,7 @@ class MultiheadGQA(Module):
             key=k,
             value=v,
             # TODO
-            # mask=attn_mask,
+            mask=attn_mask,
             is_causal=is_causal,
             need_weights=need_weights,
             average_attn_weights=average_attn_weights,

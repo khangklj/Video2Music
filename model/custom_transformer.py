@@ -947,13 +947,14 @@ def scaled_dot_product_gqa(
     value: Tensor,
     dropout: float = 0.0,
     scale: Optional[float] = None,
-    mask: Optional[Tensor] = None,
+    attn_mask: Optional[Tensor] = None,
     is_causal: Optional[bool] = None,
     need_weights: bool = False,
     average_attn_weights: bool = False,
     force_grouped: bool = False,
     RoPE=None # OUR MODIFY
 ):
+    mask = attn_mask
     """Scaled dot product attention with support for grouped queries.
 
     Einstein notation:

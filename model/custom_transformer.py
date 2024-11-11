@@ -1051,8 +1051,6 @@ def scaled_dot_product_gqa(
     num_head_groups = hq // hk
     query = rearrange(query, "b (h g) n d -> b g h n d", g=num_head_groups)
     similarity = einsum(query, key, "b g h n d, b h s d -> b g h n s")
-    print(query.shape, key.shape, value.shape, similarity.shape)
-
     if is_causal:
         # Mask out the upper triangular portion of the attention matrix. This prevents
         # the model from attending to tokens in the future.
@@ -1075,6 +1073,7 @@ def scaled_dot_product_gqa(
         # that they will not contribute to the softmax computation below.
         similarity.masked_fill_(~attn_mask, torch.finfo(similarity.dtype).min)
 
+    print(similarity.shape)
     attention = F.softmax(similarity, dim=-1)
     if dropout > 0.0:
         attention = F.dropout(attention, p=dropout)

@@ -1226,6 +1226,10 @@ class MultiheadGQA(Module):
         #   d - embedding dimension
         #
         # Input shape: (b, n, d)
+        query = query.transpose(0, 1)
+        key = key.transpose(0, 1)
+        value = value.transpose(0, 1)
+
         q: Tensor = self.q_proj(query)
         k: Tensor = self.k_proj(key)
         v: Tensor = self.v_proj(value)
@@ -1282,6 +1286,7 @@ class MultiheadGQA(Module):
         # Linear projection on attention outputs.
         x = self.out_proj(x)
 
+        x = x.transpose(0, 1)
         return x, attn
 
 class TransformerEncoderLayer(Module):

@@ -340,9 +340,7 @@ class MultiheadGQA(Module):
             key_padding_mask=key_padding_mask,
             is_causal=is_causal,
             need_weights=need_weights,
-            average_attn_weights=average_attn_weights,
-            force_grouped=False,
-            RoPE=self.RoPE
+            average_attn_weights=average_attn_weights
         )
         x = rearrange(x, "b n h d -> b n (h d)")
 

@@ -1048,10 +1048,10 @@ def scaled_dot_product_gqa(
     if scale is None:
         scale = query.size(-1) ** 0.5
     query = query / scale
-    print(query.shape, key.shape, value.shape)
     num_head_groups = hq // hk
     query = rearrange(query, "b (h g) n d -> b g h n d", g=num_head_groups)
     similarity = einsum(query, key, "b g h n d, b h s d -> b g h n s")
+    print(query.shape, key.shape, value.shape)
 
     if is_causal:
         # Mask out the upper triangular portion of the attention matrix. This prevents

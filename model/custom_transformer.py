@@ -993,7 +993,7 @@ def scaled_dot_product_gqa(
         )
     
     # set up shape vars
-    print(query.shape, key.shape, value.shape)
+    # print(query.shape, key.shape, value.shape)
     bsz = query.shape[1]
     src_len = key.shape[0]
     
@@ -1025,6 +1025,16 @@ def scaled_dot_product_gqa(
     # k = k.view(bsz, num_heads, src_len, head_dim)
     # v = v.view(bsz, num_heads, src_len, head_dim)
 
+    # current shape
+    #   len, bsz, nhead, head_dim
+    # RoPE need
+    #   bsz, nhead, len, head_dim
+    # GQA need
+    #   bsz, len, nhead, head_dim
+
+    query = query.permute(1, 2, 0, 3)
+    key = key.permute(1, 2, 0, 3)
+
     # RoPE here - OUR MODIFY
     query = query.transpose(1, 2)
     key = key.transpose(1, 2)
@@ -1033,6 +1043,10 @@ def scaled_dot_product_gqa(
         key = RoPE.forward(key)
     query = query.transpose(1, 2)
     key = key.transpose(1, 2)
+
+    query = query.permute(0, 2, 1, 3)
+    key = key.permute(0, 2, 1, 3)
+    value = value.permute(1, 0, 2, 3)
 
     # Move sequence length dimension to axis 2.
     # This makes the attention operations below *much* faster.

@@ -1073,7 +1073,7 @@ def scaled_dot_product_gqa(
         # that they will not contribute to the softmax computation below.
         similarity.masked_fill_(~attn_mask, torch.finfo(similarity.dtype).min)
 
-    attention = F.softmax(similarity, dim=-1)\
+    attention = F.softmax(similarity, dim=-1)
     if dropout > 0.0:
         attention = F.dropout(attention, p=dropout)
 

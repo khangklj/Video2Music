@@ -1270,7 +1270,6 @@ class MultiheadGQA(Module):
             RoPE=self.RoPE
         )
         x = rearrange(x, "b n h d -> b n (h d)")
-        print(x.shape)
 
         # NOTE: This is different from 'nn.MultiheadAttention'!  We follow the MAGNETO
         # architecture (https://arxiv.org/pdf/2210.06423.pdf), which applies an extra
@@ -1282,6 +1281,7 @@ class MultiheadGQA(Module):
             x = self.norm(x)
         # Linear projection on attention outputs.
         x = self.out_proj(x)
+        print(x.shape)
 
         return x, attn
 

@@ -990,20 +990,28 @@ def scaled_dot_product_gqa(
             f"{query.shape}, {key.shape}, and {value.shape}."
         )
 
+    # set up shape vars
+    # tgt_len, bsz, embed_dim = query.shape
+    # src_len, _, _ = key.shape
+
+    # q = q.view(bsz, num_heads, tgt_len, head_dim)
+    # k = k.view(bsz, num_heads, src_len, head_dim)
+    # v = v.view(bsz, num_heads, src_len, head_dim)
+
+    # RoPE here - OUR MODIFY
+    query = query.transpose(1, 2)
+    key = key.transpose(1, 2)
+    if RoPE is not None:
+        query = RoPE.forward(query)
+        key = RoPE.forward(key)
+    query = query.transpose(1, 2)
+    key = key.transpose(1, 2)
+
     # Move sequence length dimension to axis 2.
     # This makes the attention operations below *much* faster.
     query = rearrange(query, "b n h d -> b h n d")
     key = rearrange(key, "b s h d -> b h s d")
     value = rearrange(value, "b s h d -> b h s d")
-
-    # RoPE here - OUR MODIFY
-    # q = q.transpose(1, 2)
-    # k = k.transpose(1, 2)
-    # if RoPE is not None:
-    #     q = RoPE.forward(q)
-    #     k = RoPE.forward(k)
-    # q = q.transpose(1, 2)
-    # k = v.transpose(1, 2)
 
     bq, hq, nq, dq = query.shape
     bk, hk, nk, dk = key.shape

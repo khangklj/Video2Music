@@ -259,6 +259,7 @@ class SharedMoELayer(Module):
                 self.bias += self.update_rate * e
             else: # MaxVio
                 maxVio = torch.max(c - c_mean) / c_mean
+                print(f"{torch.max(c - c_mean)} / {c_mean}")
 
                 # Logging maxVio                
                 os.makedirs('./log', exist_ok=True) # Create the directory if it does not exist

@@ -421,6 +421,7 @@ def eval_model(model, dataloader,
                     sum_total_loss += float(total_loss)
 
             # Logging
+            print("Save and reset")
             save_maxvio()
             reset_maxvio()
 

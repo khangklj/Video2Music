@@ -260,6 +260,7 @@ class SharedMoELayer(Module):
                 self.bias += self.update_rate * e
             else:
                 # Logging
+                print("Update maxvio")
                 update_maxvio(c)
         
         # Logging

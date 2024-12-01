@@ -33,6 +33,8 @@ def save_maxvio():
     global is_logging
     global c_patch
     
+    print(is_logging, c_patch)
+    
     if not is_logging or c_patch is None:
         return
     

@@ -23,20 +23,29 @@ from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _
 
 from torch.nn.functional import linear, softmax, dropout
 
-# From torchtune
+# From https://github.com/microsoft/unilm/blob/master/Diff-Transformer/
 class RMSNorm(nn.Module):
-    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+    def __init__(self, dim: int, eps: float = 1e-6, elementwise_affine=True, memory_efficient=False):
         super().__init__()
+        self.dim = dim
         self.eps = eps
-        self.scale = nn.Parameter(torch.ones(dim))
+        self.elementwise_affine = elementwise_affine
+        if self.elementwise_affine:
+            self.weight = nn.Parameter(torch.ones(dim))
+        else:
+            self.register_parameter('weight', None)
 
-    def forward(self, x: Tensor) -> Tensor:
-            # computation is in fp32
-            x_fp32 = x.float()
-            x_normed = (
-                x_fp32 * torch.rsqrt(x_fp32.pow(2).mean(-1, keepdim=True) + self.eps)
-            ).type_as(x)
-            return x_normed * self.scale
+    def _norm(self, x):
+        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+
+    def forward(self, x):
+        output = self._norm(x.float()).type_as(x)
+        if self.weight is not None:
+            output = output * self.weight
+        return output
+
+    def extra_repr(self) -> str:
+        return f'dim={self.dim}, eps={self.eps}, elementwise_affine={self.elementwise_affine}'
 
 # From pytorch and modify RoPE
 class CustomMultiheadAttention(Module):
@@ -130,7 +139,7 @@ class CustomMultiheadAttention(Module):
             average_attn_weights: bool = True,
             is_causal : bool = False) -> Tuple[Tensor, Optional[Tensor]]:
         
-        print(key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
+        # print(key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
         why_not_fast_path = ''
         if ((attn_mask is not None and torch.is_floating_point(attn_mask))
            or (key_padding_mask is not None) and torch.is_floating_point(key_padding_mask)):
@@ -583,14 +592,28 @@ class AngleMultiheadAttention(Module):
         # no attn_mask and no key_padding_mask, returns None, None
         return merged_mask, mask_type
 
+# Source: https://github.com/microsoft/unilm/blob/master/Diff-Transformer/
+def repeat_kv(x: torch.Tensor, n_rep: int) -> torch.Tensor:
+    """torch.repeat_interleave(x, dim=1, repeats=n_rep)"""
+    bs, n_kv_heads, slen, head_dim = x.shape
+    if n_rep == 1:
+        return x
+    return (
+        x[:, :, None, :, :]
+        .expand(bs, n_kv_heads, n_rep, slen, head_dim)
+        .reshape(bs, n_kv_heads * n_rep, slen, head_dim)
+    )
+
+def lambda_init_fn(depth):
+    return 0.8 - 0.6 * math.exp(-0.3 * depth)
+
 class DifferentialMultiheadAttention(Module):
     __constants__ = ['batch_first']
     bias_k: Optional[torch.Tensor]
     bias_v: Optional[torch.Tensor]
 
-    def __init__(self, embed_dim, num_heads, dropout=0., bias=True, add_bias_kv=False, add_zero_attn=False,
-                 kdim=None, vdim=None, batch_first=False, device=None, dtype=None,
-                 RoPE=None # OUR MODIFY
+    def __init__(self, embed_dim, num_heads, dropout=0., batch_first=False, device=None, 
+                 dtype=None, RoPE=None, depth=2 # OUR MODIFY
                  ) -> None:
         if embed_dim <= 0 or num_heads <= 0:
             raise ValueError(
@@ -600,73 +623,36 @@ class DifferentialMultiheadAttention(Module):
         factory_kwargs = {'device': device, 'dtype': dtype}
         super().__init__()
         self.embed_dim = embed_dim
-        self.kdim = kdim if kdim is not None else embed_dim
-        self.vdim = vdim if vdim is not None else embed_dim
-        self._qkv_same_embed_dim = self.kdim == embed_dim and self.vdim == embed_dim
 
         self.num_heads = num_heads
         self.dropout = dropout
         self.batch_first = batch_first
         self.head_dim = embed_dim // num_heads // 2
+        self.scaling = self.head_dim ** -0.5
 
         self.RoPE = copy.deepcopy(RoPE) # OUR MODIFY
 
         assert self.head_dim * num_heads == self.embed_dim, "embed_dim must be divisible by num_heads"
 
-        self.q_proj_weight = Parameter(torch.empty((embed_dim, embed_dim), **factory_kwargs))
-        self.k_proj_weight = Parameter(torch.empty((embed_dim, embed_dim), **factory_kwargs))
-        self.v_proj_weight = Parameter(torch.empty((embed_dim, embed_dim), **factory_kwargs))
-        self.register_parameter('in_proj_weight', None)
-
-        # if not self._qkv_same_embed_dim:
-        #     self.q_proj_weight = Parameter(torch.empty((embed_dim, embed_dim), **factory_kwargs))
-        #     self.k_proj_weight = Parameter(torch.empty((embed_dim, self.kdim), **factory_kwargs))
-        #     self.v_proj_weight = Parameter(torch.empty((embed_dim, self.vdim), **factory_kwargs))
-        #     self.register_parameter('in_proj_weight', None)
-        # else:
-            # self.in_proj_weight = Parameter(torch.empty((3 * embed_dim, embed_dim), **factory_kwargs))
-            # self.register_parameter('q_proj_weight', None)
-            # self.register_parameter('k_proj_weight', None)
-            # self.register_parameter('v_proj_weight', None)
-
-        # if bias:
-        #     self.in_proj_bias = Parameter(torch.empty(3 * embed_dim, **factory_kwargs))
-        # else:
-        #     self.register_parameter('in_proj_bias', None)
-        self.out_proj = NonDynamicallyQuantizableLinear(embed_dim, embed_dim, bias=bias, **factory_kwargs)
-
-        # if add_bias_kv:
-        #     self.bias_k = Parameter(torch.empty((1, 1, embed_dim), **factory_kwargs))
-        #     self.bias_v = Parameter(torch.empty((1, 1, embed_dim), **factory_kwargs))
-        # else:
-            # self.bias_k = self.bias_v = None
-
-        self.add_zero_attn = add_zero_attn
-
+        self.k_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
+        self.q_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
+        self.v_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
+        self.out_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
         self._reset_parameters()
 
+        self.lambda_init = lambda_init_fn(depth)
+        self.lambda_q1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+        self.lambda_k1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+        self.lambda_q2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+        self.lambda_k2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+
+        self.subln = RMSNorm(2 * self.head_dim, eps=1e-5, elementwise_affine=True)
+
     def _reset_parameters(self):
-        if self._qkv_same_embed_dim:
-            xavier_uniform_(self.in_proj_weight)
-        else:
-            xavier_uniform_(self.q_proj_weight)
-            xavier_uniform_(self.k_proj_weight)
-            xavier_uniform_(self.v_proj_weight)
-
-        if self.in_proj_bias is not None:
-            constant_(self.in_proj_bias, 0.)
-            constant_(self.out_proj.bias, 0.)
-        if self.bias_k is not None:
-            xavier_normal_(self.bias_k)
-        if self.bias_v is not None:
-            xavier_normal_(self.bias_v)
-
-    def __setstate__(self, state):
-        # Support loading old MultiheadAttention checkpoints generated by v1.1.0
-        if '_qkv_same_embed_dim' not in state:
-            state['_qkv_same_embed_dim'] = True
-
-        super().__setstate__(state)
+        xavier_uniform_(self.k_proj)
+        xavier_uniform_(self.q_proj)
+        xavier_uniform_(self.v_proj)
+        xavier_uniform_(self.out_proj)
 
     def forward(
             self,
@@ -678,6 +664,8 @@ class DifferentialMultiheadAttention(Module):
             attn_mask: Optional[Tensor] = None,
             average_attn_weights: bool = True,
             is_causal : bool = False) -> Tuple[Tensor, Optional[Tensor]]:
+        
+        # print(key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
         why_not_fast_path = ''
         if ((attn_mask is not None and torch.is_floating_point(attn_mask))
            or (key_padding_mask is not None) and torch.is_floating_point(key_padding_mask)):
@@ -713,27 +701,12 @@ class DifferentialMultiheadAttention(Module):
             # enforce that the dtypes all match or test cases where
             # they don't!
             why_not_fast_path = "non-self attention was used (query, key, and value are not the same Tensor)"
-        elif self.in_proj_bias is not None and query.dtype != self.in_proj_bias.dtype:
-            why_not_fast_path = f"dtypes of query ({query.dtype}) and self.in_proj_bias ({self.in_proj_bias.dtype}) don't match"
-        elif self.in_proj_weight is None:
-            why_not_fast_path = "in_proj_weight was None"
-        elif query.dtype != self.in_proj_weight.dtype:
-            # this case will fail anyway, but at least they'll get a useful error message.
-            why_not_fast_path = f"dtypes of query ({query.dtype}) and self.in_proj_weight ({self.in_proj_weight.dtype}) don't match"
         elif self.training:
             why_not_fast_path = "training is enabled"
         elif (self.num_heads % 2) != 0:
             why_not_fast_path = "self.num_heads is not even"
         elif not self.batch_first:
             why_not_fast_path = "batch_first was not True"
-        elif self.bias_k is not None:
-            why_not_fast_path = "self.bias_k was not None"
-        elif self.bias_v is not None:
-            why_not_fast_path = "self.bias_v was not None"
-        elif self.add_zero_attn:
-            why_not_fast_path = "add_zero_attn was enabled"
-        elif not self._qkv_same_embed_dim:
-            why_not_fast_path = "_qkv_same_embed_dim was not True"
         elif query.is_nested and (key_padding_mask is not None or attn_mask is not None):
             why_not_fast_path = "supplying both src_key_padding_mask and src_mask at the same time \
                                  is not supported with NestedTensor input"
@@ -796,38 +769,67 @@ class DifferentialMultiheadAttention(Module):
             else:
                 query, key, value = (x.transpose(1, 0) for x in (query, key, value))
 
-        if not self._qkv_same_embed_dim:
-            attn_output, attn_output_weights = custom_multi_head_attention_forward(
-                query, key, value, self.embed_dim, self.num_heads,
-                self.in_proj_weight, self.in_proj_bias,
-                self.bias_k, self.bias_v, self.add_zero_attn,
-                self.dropout, self.out_proj.weight, self.out_proj.bias,
-                training=self.training,
-                key_padding_mask=key_padding_mask, need_weights=need_weights,
-                attn_mask=attn_mask,
-                use_separate_proj_weight=True,
-                q_proj_weight=self.q_proj_weight, k_proj_weight=self.k_proj_weight,
-                v_proj_weight=self.v_proj_weight,
-                average_attn_weights=average_attn_weights,
-                is_causal=is_causal,
-                RoPE=self.RoPE)
-        else:
-            attn_output, attn_output_weights = custom_multi_head_attention_forward(
-                query, key, value, self.embed_dim, self.num_heads,
-                self.in_proj_weight, self.in_proj_bias,
-                self.bias_k, self.bias_v, self.add_zero_attn,
-                self.dropout, self.out_proj.weight, self.out_proj.bias,
-                training=self.training,
-                key_padding_mask=key_padding_mask,
-                need_weights=need_weights,
-                attn_mask=attn_mask,
-                average_attn_weights=average_attn_weights,
-                is_causal=is_causal,
-                RoPE=self.RoPE)
+        bsz, tgt_len, embed_dim = query.size()
+        _, src_len, _ = key.size()
+        num_heads = self.num_heads
+        head_dim = self.head_dim
+
+        k = self.k_proj(key)
+        q = self.q_proj(query)
+        v = self.v_proj(value)
+
+
+        q = q.view(2 * num_heads, tgt_len, bsz, head_dim)
+        k = k.view(2 * num_heads, src_len, bsz, head_dim)
+
+        # RoPE here - OUR MODIFY
+        if self.RoPE is not None:
+            q = self.RoPE.forward(q)
+            k = self.RoPE.forward(k)
+        
+        q = q.view(bsz, tgt_len, 2 * num_heads, head_dim)
+        k = k.view(bsz, src_len, 2 * num_heads, head_dim)
+        v = v.view(bsz, src_len, num_heads, 2 * head_dim)
+
+        offset = src_len - tgt_len
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+        q *= self.scaling
+
+        attn_weights = torch.matmul(q, k.transpose(-1, -2))
+        if attn_mask is None:
+            attn_mask = torch.triu(
+                torch.zeros([tgt_len, src_len])
+                .float()
+                .fill_(float("-inf"))
+                .type_as(attn_weights),
+                1 + offset,
+            )
+        attn_weights = torch.nan_to_num(attn_weights)
+        attn_weights += attn_mask   
+        attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).type_as(
+            attn_weights
+        )
+
+        lambda_1 = torch.exp(torch.sum(self.lambda_q1 * self.lambda_k1, dim=-1).float()).type_as(q)
+        lambda_2 = torch.exp(torch.sum(self.lambda_q2 * self.lambda_k2, dim=-1).float()).type_as(q)
+        lambda_full = lambda_1 - lambda_2 + self.lambda_init
+        attn_weights = attn_weights.view(bsz, self.num_heads, 2, tgt_len, src_len)
+        attn_weights = attn_weights[:, :, 0] - lambda_full * attn_weights[:, :, 1]
+        
+        attn = torch.matmul(attn_weights, v)
+
+        attn = self.subln(attn)
+        attn = attn * (1 - self.lambda_init)
+        attn = attn.transpose(1, 2).reshape(bsz, tgt_len, self.num_heads * 2 * self.head_dim)
+
+        attn = self.out_proj(attn)
+
         if self.batch_first and is_batched:
-            return attn_output.transpose(1, 0), attn_output_weights
+            return attn.transpose(1, 0), attn_weights
         else:
-            return attn_output, attn_output_weights
+            return attn, attn_weights
 
     # From pytorch
     def merge_masks(self, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor],

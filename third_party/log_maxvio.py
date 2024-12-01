@@ -48,11 +48,10 @@ def save_maxvio():
     max_vio = torch.max(load - load_mean) / load_mean
 
     max_vio = max_vio.cpu().numpy()
-    max_vio = np.array(max_vio)
     print(max_vio)
     if os.path.exists("log/maxvio.npy"):        
         arr = np.load("log/maxvio.npy")        
-        arr = np.concatenate((arr, max_vio), axis=0)
+        arr = np.hstack((arr, max_vio), axis=0)
     else:
         arr = max_vio
     print("Logging maxvio...")

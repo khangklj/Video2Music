@@ -16,7 +16,6 @@ from datetime import datetime
 import json
 from gensim.models import Word2Vec
 from third_party.log_experts import get_highest_emotion_indices
-from third_party.log_maxvio import change_maxvio_logging_state
 
 chordEmbeddingModelPath = './word2vec_filled.bin'
 
@@ -669,7 +668,6 @@ class VideoMusicTransformer_V3(nn.Module):
         balancing = False
         if self.version_name in ('2.3'):
             balancing = True
-            change_maxvio_logging_state(True)
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

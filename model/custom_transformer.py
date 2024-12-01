@@ -767,8 +767,8 @@ class DifferentialMultiheadAttention(Module):
             else:
                 query, key, value = (x.transpose(1, 0) for x in (query, key, value))
 
-        tgt_len, bsz, embed_dim = query.size()
-        src_len, _, _ = key.size()
+        bsz, tgt_len, embed_dim = query.size()
+        _, src_len, _ = key.size()
         num_heads = self.num_heads
         head_dim = self.head_dim
 

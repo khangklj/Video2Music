@@ -21,7 +21,6 @@ from utilities.lr_scheduling import LrStepTracker, get_lr
 from utilities.argument_funcs import parse_train_args, print_train_args, write_model_params
 
 from utilities.run_model_vevo import train_epoch, eval_model
-from third_party.log_maxvio import change_maxvio_logging_state
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -340,10 +339,8 @@ def main( vm = "" , isPrintArgs = True ):
     return
 
 if __name__ == "__main__":
-    change_maxvio_logging_state(True) # Turn on logging
     if len(VIS_MODELS_ARR) != 0 :
         for vm in VIS_MODELS_ARR:
             main(vm, False)
     else:
         main()
-    change_maxvio_logging_state(False) # Turn off logging

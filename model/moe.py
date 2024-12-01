@@ -18,6 +18,7 @@ from efficient_kan import KANLinear
 import copy
 from utilities.argument_funcs import parse_train_args
 from third_party.log_experts import update_expert_counts
+from third_party.log_maxvio import update_maxvio
 
 import os
 
@@ -257,6 +258,9 @@ class SharedMoELayer(Module):
             if self.training:
                 e = e.unsqueeze(1)
                 self.bias += self.update_rate * e
+            else:
+                # Logging
+                update_maxvio(c)
         
         # Logging
         update_expert_counts(selected_experts)

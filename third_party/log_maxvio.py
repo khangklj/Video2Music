@@ -51,9 +51,9 @@ def save_maxvio():
     print(max_vio)
     if os.path.exists("log/maxvio.npy"):        
         arr = np.load("log/maxvio.npy")        
-        arr = np.hstack((arr, max_vio), axis=0)
+        arr = np.hstack((arr, max_vio))
     else:
-        arr = max_vio
+        arr = np.array([max_vio])
     print("Logging maxvio...")
     np.save("log/maxvio.npy", arr)
         

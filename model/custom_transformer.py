@@ -632,10 +632,10 @@ class DifferentialMultiheadAttention(Module):
 
         self.RoPE = copy.deepcopy(RoPE)
 
-        self.k_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
-        self.q_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
-        self.v_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
-        self.out_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
+        self.k_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.q_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.v_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.out_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
         self._reset_parameters()
 
         self.lambda_init = lambda_init_fn(depth)
@@ -647,10 +647,10 @@ class DifferentialMultiheadAttention(Module):
         self.subln = RMSNorm(2 * self.head_dim, eps=1e-5, elementwise_affine=True)
 
     def _reset_parameters(self):
-        xavier_uniform_(self.k_proj)
-        xavier_uniform_(self.q_proj)
-        xavier_uniform_(self.v_proj)
-        xavier_uniform_(self.out_proj)
+        xavier_uniform_(self.k_proj.weight)
+        xavier_uniform_(self.q_proj.weight)
+        xavier_uniform_(self.v_proj.weight)
+        xavier_uniform_(self.out_proj.weight)
 
     def forward(
             self,

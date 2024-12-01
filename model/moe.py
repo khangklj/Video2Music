@@ -257,19 +257,7 @@ class SharedMoELayer(Module):
             if self.training:
                 e = e.unsqueeze(1)
                 self.bias += self.update_rate * e
-            else: # MaxVio
-                maxVio = torch.max(c - c_mean) / c_mean
-                print(f"{torch.max(c - c_mean)} / {c_mean}")
-
-                # Logging maxVio                
-                os.makedirs('./log', exist_ok=True) # Create the directory if it does not exist
-                if not os.path.exists('./log/maxvio.txt'):
-                    with open('./log/maxvio.txt', 'w') as f:
-                        f.write(f"{maxVio.item()}\n")
-                else:
-                    with open('./log/maxvio.txt', 'a') as f:
-                        f.write(f"{maxVio.item()}\n")
-
+        
         # Logging
         update_expert_counts(selected_experts)
 

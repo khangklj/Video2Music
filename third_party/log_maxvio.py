@@ -33,7 +33,7 @@ def save_maxvio():
     global is_logging
     global c_patch
     
-    if not is_logging:
+    if not is_logging or c_patch is None:
         return
     
     if not os.path.exists("log/"):
@@ -48,6 +48,7 @@ def save_maxvio():
         arr = np.load("log/maxvio.npy")
         arr = np.concatenate((arr, max_vio), axis=0)
     else:
-        arr = max_vio   
+        arr = max_vio
+    print("Logging maxvio...")
     np.save("log/maxvio.npy", arr)
         

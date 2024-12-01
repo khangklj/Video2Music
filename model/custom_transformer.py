@@ -767,8 +767,8 @@ class DifferentialMultiheadAttention(Module):
             else:
                 query, key, value = (x.transpose(1, 0) for x in (query, key, value))
 
-        bsz, tgt_len, embed_dim = query.size()
-        _, src_len, _ = key.size()
+        tgt_len, bsz, embed_dim = query.size()
+        src_len, _, _ = key.size()
         num_heads = self.num_heads
         head_dim = self.head_dim
 
@@ -776,8 +776,8 @@ class DifferentialMultiheadAttention(Module):
         q = self.q_proj(query)
         v = self.v_proj(value)
 
-        print(query.shape, key.shape)
-        print(q.shape, k.shape)
+        # print(query.shape, key.shape)
+        # print(q.shape, k.shape)
         q = q.view(2 * num_heads, tgt_len, bsz, head_dim)
         k = k.view(2 * num_heads, src_len, bsz, head_dim)
 

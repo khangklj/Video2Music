@@ -105,43 +105,43 @@ class ShannonEntropy(Module):
         return entropy.mean()
 
 # Self-Balance Routing Network
-class SBRN(Module):
-    def __init__(self, router, n_experts=8, n_experts_per_token=2):
-        super(SBRN, self).__init__()
-        self.n_experts = n_experts
-        self.n_experts_per_token = n_experts_per_token
-        self.router = copy.deepcopy(router)
-        self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01, maximize=True)
-        self.loss_func = ShannonEntropy()
-        self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
+# class SBRN(Module):
+#     def __init__(self, router, n_experts=8, n_experts_per_token=2):
+#         super(SBRN, self).__init__()
+#         self.n_experts = n_experts
+#         self.n_experts_per_token = n_experts_per_token
+#         self.router = copy.deepcopy(router)
+#         self.optim = AdamW(self.router.parameters(), lr=0.005, weight_decay=0.01, maximize=True)
+#         self.loss_func = ShannonEntropy()
+#         self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
 
-    def _routing(self, x, k=2):
-        gate_logits = self.router(x)
-        weights, selected_experts = torch.topk(gate_logits, k)
-        return weights, selected_experts
+#     def _routing(self, x, k=2):
+#         gate_logits = self.router(x)
+#         weights, selected_experts = torch.topk(gate_logits, k)
+#         return weights, selected_experts
 
-    def forward(self, x, k=2, t=1.0):
-        weights, selected_experts = self._routing(x, k)
-        weights = F.softmax(weights / t, dim=1, dtype=torch.float).to(get_device())
-        return weights, selected_experts
+#     def forward(self, x, k=2, t=1.0):
+#         weights, selected_experts = self._routing(x, k)
+#         weights = F.softmax(weights / t, dim=1, dtype=torch.float).to(get_device())
+#         return weights, selected_experts
     
-    def reset_count(self):
-        self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
+#     def reset_count(self):
+#         self.count = torch.zeros((1, self.n_experts), requires_grad=False).to(get_device())
 
-    def count_experts(self, x, k=2):
-        _, selected_experts = self._routing(x, k)
+#     def count_experts(self, x, k=2):
+#         _, selected_experts = self._routing(x, k)
         
-        for i in range(self.n_experts):
-            self.count[0, i] += (selected_experts == i).sum().item()
+#         for i in range(self.n_experts):
+#             self.count[0, i] += (selected_experts == i).sum().item()
     
-    def step(self, x, k=2):
-        self.count_experts(x, k)
+#     def step(self, x, k=2):
+#         self.count_experts(x, k)
 
-        loss = torch.autograd.Variable(self.loss_func(self.count), requires_grad=True)
-        loss.backward()
-        self.optim.step()
+#         loss = torch.autograd.Variable(self.loss_func(self.count), requires_grad=True)
+#         loss.backward()
+#         self.optim.step()
 
-        self.optim.zero_grad()
+#         self.optim.zero_grad()
 
 # Source: https://www.facebook.com/photo?fbid=122146963988123211&set=pcb.122146964084123211
 class MoELayer(Module):
@@ -250,7 +250,7 @@ class SharedMoELayer(Module):
 
             c_mean = torch.mean(c)
 
-            e = c - c_mean
+            e = c_mean - c
 
             if self.training:
                 e = e.unsqueeze(1)
@@ -274,76 +274,76 @@ class SharedMoELayer(Module):
         out += 1.0 / k * self.shared_expert(x)
         return out
 
-class SelfBalanceSharedMoELayer(Module):
-    def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
-        super(SelfBalanceSharedMoELayer, self).__init__()
-        self.n_experts = n_experts
-        self.n_experts_per_token = n_experts_per_token
-        self.d_model = d_model
-        self.dropout = nn.Dropout(dropout)
-        self.experts = _get_clones(expert, n_experts)
+# class SelfBalanceSharedMoELayer(Module):
+#     def __init__(self, expert, d_model, n_experts=8, n_experts_per_token=2, dropout=0.1, topk_scheduler=None, temperature_scheduler=None, use_KAN=False):
+#         super(SelfBalanceSharedMoELayer, self).__init__()
+#         self.n_experts = n_experts
+#         self.n_experts_per_token = n_experts_per_token
+#         self.d_model = d_model
+#         self.dropout = nn.Dropout(dropout)
+#         self.experts = _get_clones(expert, n_experts)
 
-        # If has topk scheduler then no need n_experts and n_experts_per_token
-        if topk_scheduler is not None:
-            self.topk_scheduler = topk_scheduler
+#         # If has topk scheduler then no need n_experts and n_experts_per_token
+#         if topk_scheduler is not None:
+#             self.topk_scheduler = topk_scheduler
         
-        if temperature_scheduler is not None:
-            self.temperature_scheduler = temperature_scheduler
+#         if temperature_scheduler is not None:
+#             self.temperature_scheduler = temperature_scheduler
 
-        if not use_KAN:
-            router = nn.Linear(d_model, n_experts)
-        else:
-            router = KANLinear(d_model, n_experts)
+#         if not use_KAN:
+#             router = nn.Linear(d_model, n_experts)
+#         else:
+#             router = KANLinear(d_model, n_experts)
 
-        self.shared_expert = _get_clones(expert, 1)[0]
-        self.gate = SBRN(router, n_experts, n_experts_per_token)
-        self.state = 'training'
+#         self.shared_expert = _get_clones(expert, 1)[0]
+#         self.gate = SBRN(router, n_experts, n_experts_per_token)
+#         self.state = 'training'
 
-    def forward(self, x):
-        if hasattr(self, 'topk_scheduler') and self.training:
-            self.topk_scheduler.step()
-            k = self.topk_scheduler.getK()
-        else:
-            k = self.n_experts_per_token
+#     def forward(self, x):
+#         if hasattr(self, 'topk_scheduler') and self.training:
+#             self.topk_scheduler.step()
+#             k = self.topk_scheduler.getK()
+#         else:
+#             k = self.n_experts_per_token
 
-        if hasattr(self, 'temperature_scheduler'):
-            self.temperature_scheduler.step()
-            t = self.temperature_scheduler.getT()
-        else:
-            t = 1.0
+#         if hasattr(self, 'temperature_scheduler'):
+#             self.temperature_scheduler.step()
+#             t = self.temperature_scheduler.getT()
+#         else:
+#             t = 1.0
 
-        if self.training:
-            # self.gate.reset_count()
-            self.gate.step(x, k)
-        else:
-            self.gate.count_experts(x, k)
+#         if self.training:
+#             # self.gate.reset_count()
+#             self.gate.step(x, k)
+#         else:
+#             self.gate.count_experts(x, k)
 
-        if self.training and self.state == 'evaluating':
-            self.state = 'training'
-            print(round(self.gate.count.std().item()), end='\t')
-            print(self.gate.count.min().item(), self.gate.count.max().item(), sep='\t', end='\t')
-            # print(self.gate.count[0])
-            self.gate.reset_count()
+#         if self.training and self.state == 'evaluating':
+#             self.state = 'training'
+#             print(round(self.gate.count.std().item()), end='\t')
+#             print(self.gate.count.min().item(), self.gate.count.max().item(), sep='\t', end='\t')
+#             # print(self.gate.count[0])
+#             self.gate.reset_count()
             
-        if not self.training and self.state == 'training':
-            self.state = 'evaluating'
-            self.gate.reset_count()
+#         if not self.training and self.state == 'training':
+#             self.state = 'evaluating'
+#             self.gate.reset_count()
         
-        weights, selected_experts = self.gate(x, k, t)
+#         weights, selected_experts = self.gate(x, k, t)
 
-        # Logging
-        update_expert_counts(selected_experts)
+#         # Logging
+#         update_expert_counts(selected_experts)
 
-        out = torch.zeros_like(x)
-        for i, expert in enumerate(self.experts):
-            token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
+#         out = torch.zeros_like(x)
+#         for i, expert in enumerate(self.experts):
+#             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)
             
-            if token_idx.shape[0] == 0:
-                continue
+#             if token_idx.shape[0] == 0:
+#                 continue
 
-            weight = weights[token_idx, batch_idx, topk_idx]
-            out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
+#             weight = weights[token_idx, batch_idx, topk_idx]
+#             out[token_idx, batch_idx] += weight.unsqueeze(1) * self.dropout(expert(x[token_idx, batch_idx]))
 
-        # Sharing
-        out += 1.0 / k * self.shared_expert(x)
-        return out
+#         # Sharing
+#         out += 1.0 / k * self.shared_expert(x)
+#         return out

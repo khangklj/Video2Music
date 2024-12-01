@@ -27,7 +27,7 @@ class VevoDataset(Dataset):
         self.motion_type = motion_type
         self.augmentation = augmentation
 
-        self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
+        self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
         
         if self.motion_type == 0:
@@ -481,10 +481,13 @@ class VevoDataset(Dataset):
 
         return { "x":x, 
                 "tgt":tgt, 
+                "chord":feature_chord,
                 "x_root":x_root, 
                 "tgt_root":tgt_root, 
+                "chord_root":feature_chordRoot,
                 "x_attr":x_attr, 
                 "tgt_attr":tgt_attr,
+                "chord_attr":feature_chordAttr,
                 "semanticList": feature_semantic_list, 
                 "key": feature_key,
                 "scene_offset": feature_scene_offset,

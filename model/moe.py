@@ -250,7 +250,7 @@ class SharedMoELayer(Module):
 
             c_mean = torch.mean(c)
 
-            e = c - c_mean
+            e = c_mean - c
 
             if self.training:
                 e = e.unsqueeze(1)

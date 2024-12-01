@@ -630,9 +630,7 @@ class DifferentialMultiheadAttention(Module):
         self.head_dim = embed_dim // num_heads // 2
         self.scaling = self.head_dim ** -0.5
 
-        self.RoPE = copy.deepcopy(RoPE) # OUR MODIFY
-
-        assert self.head_dim * num_heads == self.embed_dim, "embed_dim must be divisible by num_heads"
+        self.RoPE = copy.deepcopy(RoPE)
 
         self.k_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)
         self.q_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs)

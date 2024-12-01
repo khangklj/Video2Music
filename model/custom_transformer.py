@@ -767,8 +767,8 @@ class DifferentialMultiheadAttention(Module):
             else:
                 query, key, value = (x.transpose(1, 0) for x in (query, key, value))
 
-        bsz, tgt_len, embed_dim = query.size()
-        _, src_len, _ = key.size()
+        tgt_len, bsz, embed_dim = query.size()
+        src_len, _, _ = key.size()
         num_heads = self.num_heads
         head_dim = self.head_dim
 
@@ -821,7 +821,7 @@ class DifferentialMultiheadAttention(Module):
 
         attn = self.subln(attn)
         attn = attn * (1 - self.lambda_init)
-        attn = attn.transpose(1, 2).reshape(bsz, tgt_len, self.num_heads * 2 * self.head_dim)
+        attn = attn.transpose(1, 2).reshape(tgt_len, bsz, self.num_heads * 2 * self.head_dim)
 
         attn = self.out_proj(attn)
 

@@ -699,11 +699,13 @@ class VideoMusicTransformer_V3(nn.Module):
         
         decoder_layers = nn.ModuleList([
             TransformerDecoderLayer(att_list[i], 
+                                    att_list[i],
                                     swiglu, 
                                     pre_norm=False, 
                                     norm=norm, 
                                     dropout=self.dropout) for i in range(rate)] + [
             TransformerDecoderLayer(att_list[i], 
+                                    att_list[i], 
                                     moelayer, 
                                     pre_norm=False, 
                                     norm=norm, 

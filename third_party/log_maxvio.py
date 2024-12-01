@@ -34,8 +34,6 @@ def save_maxvio():
     global is_logging
     global c_patch
     
-    print(is_logging, c_patch)
-    
     if not is_logging or c_patch is None:
         return
     
@@ -48,12 +46,12 @@ def save_maxvio():
     max_vio = torch.max(load - load_mean) / load_mean
 
     max_vio = max_vio.cpu().numpy()
-    print(max_vio)
+
     if os.path.exists("log/maxvio.npy"):        
         arr = np.load("log/maxvio.npy")        
         arr = np.hstack((arr, max_vio))
     else:
         arr = np.array([max_vio])
-    print("Logging maxvio...")
+        
     np.save("log/maxvio.npy", arr)
         

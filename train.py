@@ -341,6 +341,9 @@ def main( vm = "" , isPrintArgs = True ):
     if(not args.no_tensorboard):
         tensorboard_summary.flush()
 
+    # Turn off logging
+    change_maxvio_logging_state(False)
+
     return
 
 if __name__ == "__main__":

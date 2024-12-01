@@ -52,7 +52,7 @@ def save_maxvio():
     print(max_vio)
     if os.path.exists("log/maxvio.npy"):        
         arr = np.load("log/maxvio.npy")        
-        arr = np.concatenate((arr, ), axis=0)
+        arr = np.concatenate((arr, max_vio), axis=0)
     else:
         arr = max_vio
     print("Logging maxvio...")

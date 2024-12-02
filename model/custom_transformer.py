@@ -797,7 +797,7 @@ class DifferentialMultiheadAttention(Module):
         attn_weights = torch.matmul(q, k.transpose(-1, -2))
         attn_weights = torch.nan_to_num(attn_weights)
         
-        if attn_mask:
+        if attn_mask != None:
             attn_mask = torch.triu(
                 torch.zeros([tgt_len, src_len])
                 .float()

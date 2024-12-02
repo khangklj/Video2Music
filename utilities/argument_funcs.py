@@ -5,7 +5,7 @@ version = VERSION
 rpr = True
 augmentation = False
 chord_embed = True
-music_gen_version = '3.2'
+music_gen_version = '3.0'
 batch_size = 20
 epochs = 50
 motion_type = 1
@@ -14,7 +14,7 @@ split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'AdamW' # Adam / AdamW / Lion
+optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
 # if music_gen_version in ('2.2', '2.3'):
 #     optimizer = 'Lion'
 

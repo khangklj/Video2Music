@@ -795,16 +795,18 @@ class DifferentialMultiheadAttention(Module):
         q *= self.scaling
 
         attn_weights = torch.matmul(q, k.transpose(-1, -2))
-        # if attn_mask is None:
-        attn_mask = torch.triu(
-            torch.zeros([tgt_len, src_len])
-            .float()
-            .fill_(float("-inf"))
-            .type_as(attn_weights),
-            1 + offset,
-        )
         attn_weights = torch.nan_to_num(attn_weights)
-        attn_weights += attn_mask   
+        
+        if attn_mask:
+            attn_mask = torch.triu(
+                torch.zeros([tgt_len, src_len])
+                .float()
+                .fill_(float("-inf"))
+                .type_as(attn_weights),
+                1 + offset,
+            )
+            attn_weights += attn_mask
+        
         attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).type_as(
             attn_weights
         )

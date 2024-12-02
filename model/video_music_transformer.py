@@ -678,24 +678,27 @@ class VideoMusicTransformer_V3(nn.Module):
                                   temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
         swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)
-        # shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
+        att = CustomMultiheadAttention(self.d_model, self.nhead, dropout=self.dropout, RoPE=RoPE)
+        shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
         # shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
 
-        # deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+        deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
         # deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
 
         rate = 3
-        encoder_layers = nn.ModuleList([
-            TransformerEncoderLayer(att_list[i], 
-                                    swiglu, 
-                                    pre_norm=False, 
-                                    norm=norm, 
-                                    dropout=self.dropout) for i in range(rate)] + [
-            TransformerEncoderLayer(att_list[i], 
-                                    moelayer, 
-                                    pre_norm=False, 
-                                    norm=norm, 
-                                    dropout=self.dropout) for i in range(rate, self.nlayers)])
+        encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] +
+                                       [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers - rate)])
+        # encoder_layers = nn.ModuleList([
+        #     TransformerEncoderLayer(att_list[i], 
+        #                             swiglu, 
+        #                             pre_norm=False, 
+        #                             norm=norm, 
+        #                             dropout=self.dropout) for i in range(rate)] + [
+        #     TransformerEncoderLayer(att_list[i], 
+        #                             moelayer, 
+        #                             pre_norm=False, 
+        #                             norm=norm, 
+        #                             dropout=self.dropout) for i in range(rate, self.nlayers)])
         
         decoder_layers = nn.ModuleList([
             TransformerDecoderLayer(att_list[i], 

@@ -681,22 +681,24 @@ class VideoMusicTransformer_V3(nn.Module):
 
         rate = 3
 
+        pre_norm = True if version_name == '3.2' else False
+
         if version_name == '3.0':
-            shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
-            deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+            shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
+            deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
             
             encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] +
                                           [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers - rate)])
-        else:
+        elif version_name in ('3.1', '3.2'):
             encoder_layers = nn.ModuleList([
                 TransformerEncoderLayer(difatt_list[i], 
                                         swiglu, 
-                                        pre_norm=False, 
+                                        pre_norm=pre_norm, 
                                         norm=norm, 
                                         dropout=self.dropout) for i in range(rate)] + [
                 TransformerEncoderLayer(difatt_list[i], 
                                         moelayer, 
-                                        pre_norm=False, 
+                                        pre_norm=pre_norm, 
                                         norm=norm, 
                                         dropout=self.dropout) for i in range(rate, self.nlayers)])
         
@@ -704,13 +706,13 @@ class VideoMusicTransformer_V3(nn.Module):
             TransformerDecoderLayer(difatt_list[i], 
                                     difatt_list[i],
                                     swiglu, 
-                                    pre_norm=False, 
+                                    pre_norm=pre_norm, 
                                     norm=norm, 
                                     dropout=self.dropout) for i in range(rate)] + [
             TransformerDecoderLayer(difatt_list[i], 
                                     difatt_list[i], 
                                     moelayer, 
-                                    pre_norm=False, 
+                                    pre_norm=pre_norm, 
                                     norm=norm, 
                                     dropout=self.dropout) for i in range(rate, self.nlayers)])
         

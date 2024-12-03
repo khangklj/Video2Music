@@ -260,14 +260,16 @@ class SharedMoELayer(Module):
                 self.bias += self.update_rate * e
                 print("------START-----")
                 # print(f"x shape: {x.shape}")
-                print(f"gate_logits shape: {gate_logits.shape}")
-                print(f"c: {c}, {c.shape}; c_mean: {c_mean}")
-                print(f"selected_experts shape: {selected_experts.shape}")   
-                print(f"selected_experts: {selected_experts.flatten()[:20]}")
-                print(f"first 20 count: {torch.bincount(selected_experts.flatten()[:20], minlength=6).to(self.bias.dtype)}") 
+                # print(f"gate_logits shape: {gate_logits.shape}")
+                # print(f"selected_experts shape: {selected_experts.shape}")                 
+
+                print(f"gate_logits: {gate_logits[:20]}")
+                tmp = gate_logits + b
+                print(f"gate_logits + b: {tmp[:20]}")
+                print(f"c: {c}; c_mean: {c_mean}")                
                 print(f"count: {torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)}")            
                 # print(f"e: {e}, {e.shape}")
-                print(f"bias: {self.bias}, {self.bias.shape}")                
+                print(f"bias: {self.bias}")                
                 print("------END-------")
             else:
                 # Logging

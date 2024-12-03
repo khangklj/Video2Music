@@ -21,6 +21,7 @@ from third_party.log_experts import update_expert_counts
 from third_party.log_maxvio import update_maxvio
 
 import os
+import numpy as np
 
 class KANExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
@@ -258,7 +259,8 @@ class SharedMoELayer(Module):
 
             if self.training:                
                 e = e.unsqueeze(1)
-                self.bias += self.update_rate * e
+                # self.bias += self.update_rate * e
+                self.bias += self.update_rate * np.sign(e)
                 print("------START-----")
                 # print(f"x shape: {x.shape}")
                 # print(f"gate_logits shape: {gate_logits.shape}")

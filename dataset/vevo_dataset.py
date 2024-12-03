@@ -27,7 +27,7 @@ class VevoDataset(Dataset):
         self.motion_type = motion_type
         self.augmentation = augmentation
 
-        self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2", "all")
+        self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
         
         if self.motion_type == 0:

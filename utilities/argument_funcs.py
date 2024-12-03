@@ -14,7 +14,7 @@ split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
+optimizer = 'RAdamW' # Adam / AdamW / RAdamW / Lion
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

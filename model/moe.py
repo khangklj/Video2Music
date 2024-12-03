@@ -258,10 +258,10 @@ class SharedMoELayer(Module):
             e = c_mean - c
 
             if self.training:                
-                # e = e.unsqueeze(1)
+                e = e.unsqueeze(1)
                 # self.bias += self.update_rate * e
-                
-                self.bias += self.update_rate * np.sign(e)
+
+                self.bias += self.update_rate * np.sign(e.detach().cpu().numpy())
 
                 print("------START-----")
                 # print(f"x shape: {x.shape}")

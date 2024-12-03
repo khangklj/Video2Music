@@ -259,10 +259,11 @@ class SharedMoELayer(Module):
                 e = e.unsqueeze(1)
                 self.bias += self.update_rate * e
                 print("------START-----")
-                print(f"c: {c}, {c.shape}")
+                print(f"x shape: {x.shape}")
+                print(f"gate_logits shape: {gate_logits.shape}")
+                print(f"c: {c}, {c.shape}; c_mean: {c_mean}")                
                 print(f"e: {e}, {e.shape}")
-                print(f"bias: {self.bias}, {self.bias.shape}")
-                print(f"gate_logits + b: {gate_logits + b}, {b.shape}")               
+                print(f"bias: {self.bias}, {self.bias.shape}")                
                 print("------END-------")
             else:
                 # Logging

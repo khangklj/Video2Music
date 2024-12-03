@@ -219,11 +219,13 @@ class SharedMoELayer(Module):
 
         if self.balancing:
             self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
+            print(f"self.bias init: {self.bias}")
             self.update_rate = 0.01
 
         self.shared_expert = _get_clones(expert, 1)[0]
 
     def forward(self, x):
+        print("self.bias forward: ", self.bias)
         if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
             k = self.topk_scheduler.getK()
@@ -255,13 +257,10 @@ class SharedMoELayer(Module):
 
             e = c_mean - c
 
-            if self.training:
-                print("------START-----")
+            if self.training:                
                 e = e.unsqueeze(1)
-
-                print("Before update bias: ", self.bias)
                 self.bias += self.update_rate * e
-                
+                print("------START-----")
                 # print(f"x shape: {x.shape}")
                 # print(f"gate_logits shape: {gate_logits.shape}")
                 # print(f"selected_experts shape: {selected_experts.shape}")      

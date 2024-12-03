@@ -8,7 +8,6 @@ c_patch = None
 def change_maxvio_logging_state(state):
     global is_logging
     is_logging = state
-    print("Changing state to ", is_logging)
 
 def update_maxvio(c):
     global is_logging

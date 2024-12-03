@@ -259,24 +259,7 @@ class SharedMoELayer(Module):
             if self.training:                
                 e = e.unsqueeze(1)
                 # self.bias += self.update_rate * e
-                self.bias += self.update_rate * torch.sign(e)
-
-                print("------START-----")
-                # print(f"x shape: {x.shape}")
-                # print(f"gate_logits shape: {gate_logits.shape}")
-                # print(f"selected_experts shape: {selected_experts.shape}")      
-                                
-                # _, a = torch.topk(gate_logits[0][:20], k)
-                # _, b = torch.topk(tmp[0][:20], k)
-                # c_a = torch.bincount(a.flatten(), minlength=6).to(self.bias.dtype)
-                # c_b = torch.bincount(b.flatten(), minlength=6).to(self.bias.dtype)                
-                # print(f"a: {a}; b: {b}")
-                # print(f"c_a: {c_a}; c_b: {c_b}")
-
-                print(f"c: {c}; c_mean: {c_mean}")
-                print(f"e: {e}")                                
-                print(f"bias: {self.bias}")                
-                print("------END-------")
+                self.bias += self.update_rate * torch.sign(e)                
             else:
                 # Logging
                 update_maxvio(c)

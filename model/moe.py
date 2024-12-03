@@ -271,6 +271,7 @@ class SharedMoELayer(Module):
                 _, b = torch.topk(tmp[0][:20], k)
                 c_a = torch.bincount(a.flatten(), minlength=6).to(self.bias.dtype)
                 c_b = torch.bincount(b.flatten(), minlength=6).to(self.bias.dtype)
+                print(f"a: {a}; b: {b}")
                 print(f"c_a: {c_a}; c_b: {c_b}")
 
                 # print(f"c: {c}; c_mean: {c_mean}")                                

@@ -261,14 +261,10 @@ class SharedMoELayer(Module):
                 print("------START-----")
                 # print(f"x shape: {x.shape}")
                 # print(f"gate_logits shape: {gate_logits.shape}")
-                # print(f"selected_experts shape: {selected_experts.shape}")                 
+                # print(f"selected_experts shape: {selected_experts.shape}")                
 
-                print(f"gate_logits: {gate_logits[:20]}")
-                tmp = gate_logits + b
-                print(f"gate_logits + b: {tmp[:20]}")
                 print(f"c: {c}; c_mean: {c_mean}")                
-                print(f"count: {torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)}")            
-                # print(f"e: {e}, {e.shape}")
+                print(f"count: {torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)}")                            
                 print(f"bias: {self.bias}")                
                 print("------END-------")
             else:

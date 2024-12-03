@@ -259,10 +259,12 @@ class SharedMoELayer(Module):
                 e = e.unsqueeze(1)
                 self.bias += self.update_rate * e
                 print("------START-----")
-                print(f"x shape: {x.shape}")
+                # print(f"x shape: {x.shape}")
                 print(f"gate_logits shape: {gate_logits.shape}")
-                print(f"c: {c}, {c.shape}; c_mean: {c_mean}")                
-                print(f"e: {e}, {e.shape}")
+                print(f"c: {c}, {c.shape}; c_mean: {c_mean}")   
+                print(f"selected_experts: {selected_experts.flatten()[:10]}") 
+                print(f"count: {torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)}")            
+                # print(f"e: {e}, {e.shape}")
                 print(f"bias: {self.bias}, {self.bias.shape}")                
                 print("------END-------")
             else:

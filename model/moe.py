@@ -261,8 +261,12 @@ class SharedMoELayer(Module):
                 print("------START-----")
                 # print(f"x shape: {x.shape}")
                 # print(f"gate_logits shape: {gate_logits.shape}")
-                # print(f"selected_experts shape: {selected_experts.shape}")                
-                                
+                # print(f"selected_experts shape: {selected_experts.shape}")
+
+                print(f"k = {k}")
+                print(f"n_experts = {self.n_experts}")
+                print(f"n_experts_per_token = {self.n_experts_per_token}")                
+                
                 print(f"gate_logits: {gate_logits[0][:20]}")
                 tmp = gate_logits + b
                 print(f"tmp: {tmp[0][:20]}")

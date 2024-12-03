@@ -656,7 +656,8 @@ class VideoMusicTransformer_V3(nn.Module):
 
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
         
-        topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        # topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        topk_scheduler = None
         temperature_scheduler = None
 
         balancing = False

@@ -648,8 +648,8 @@ class VideoMusicTransformer_V3(nn.Module):
         use_KAN = False
 
         RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
-        norm = RMSNorm(self.d_model, elementwise_affine=True)
-        # norm = nn.LayerNorm(self.d_model)
+        # norm = RMSNorm(self.d_model, elementwise_affine=True)
+        norm = nn.LayerNorm(self.d_model)
 
         self.n_experts = 6
         self.n_experts_per_token = 2

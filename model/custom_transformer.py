@@ -821,7 +821,7 @@ class DifferentialMultiheadAttention(Module):
 
         attn = self.subln(attn)
         attn = attn * (1 - self.lambda_init)
-        attn = attn.transpose(1, 2).reshape(tgt_len, bsz, self.num_heads * 2 * self.head_dim)
+        attn = attn.view(tgt_len, bsz, self.num_heads * 2 * self.head_dim)
 
         attn = self.out_proj(attn)
 

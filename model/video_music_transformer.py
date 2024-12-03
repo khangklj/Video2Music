@@ -384,8 +384,6 @@ class VideoMusicTransformer_V2(nn.Module):
         temperature_scheduler = None
 
         balancing = False
-        if self.version_name in ('2.3'):
-            balancing = True
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

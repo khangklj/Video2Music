@@ -218,16 +218,13 @@ class SharedMoELayer(Module):
             self.gate = KANLinear(d_model, n_experts)
 
         if self.balancing:
-            self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
-            # self.bias = torch.zeros((n_experts, 1)).to(get_device())
+            # self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
+            self.bias = torch.zeros((n_experts, 1)).to(get_device())
             self.update_rate = 0.01
 
         self.shared_expert = _get_clones(expert, 1)[0]
 
     def forward(self, x):
-        # Set grad to None
-        self.bias.grad = None
-
         if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
             k = self.topk_scheduler.getK()
@@ -263,7 +260,6 @@ class SharedMoELayer(Module):
                 e = e.unsqueeze(1)
                 # self.bias += self.update_rate * e
                 self.bias += self.update_rate * torch.sign(e)
-                print(self.bias)                
             else:
                 # Logging
                 update_maxvio(c)

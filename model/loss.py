@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.modules.loss import _Loss
 
+from utilities.device import get_device, use_cuda
+
 # Borrowed from https://github.com/jason9693/MusicTransformer-pytorch/blob/5f183374833ff6b7e17f3a24e3594dedd93a5fe5/custom/criterion.py#L28
 class SmoothCrossEntropyLoss(_Loss):
     """
@@ -56,8 +58,8 @@ class FocalLoss(_Loss):
         self.reduction = reduction
 
     def forward(self, input, target):
-        mask = (target == self.ignore_index).unsqueeze(-1)
-        target_one_hot = F.one_hot(target, num_classes=self.vocab_size).float()
+        mask = (target == self.ignore_index).unsqueeze(-1).to(get_device())
+        target_one_hot = F.one_hot(target, num_classes=self.vocab_size).float().to(get_device())
         target_one_hot = target_one_hot.masked_fill(mask, 0)
 
         log_prob = F.log_softmax(input, dim=-1)
@@ -83,8 +85,8 @@ class TopKAuxiliaryLoss(_Loss):
         self.vocab_size = vocab_size
 
     def forward(self, input, target):
-        mask = (target == self.ignore_index).unsqueeze(-1)
-        q = F.one_hot(target.long(), self.vocab_size).type(torch.float32)
+        mask = (target == self.ignore_index).unsqueeze(-1).to(get_device())
+        q = F.one_hot(target.long(), self.vocab_size).type(torch.float32).to(get_device())
         q = q.masked_fill(mask, 0)
 
         loss = self.loss_with_logits(q, input, self.k)

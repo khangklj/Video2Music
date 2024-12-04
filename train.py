@@ -197,14 +197,15 @@ def main( vm = "" , isPrintArgs = True ):
     elif args.ce_smoothing is not None:
         # FLAG
         # train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
-        train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
-    elif args.auxiliary_loss:
-        train_loss_func = CombinedLoss([
-            nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-            # FocalLoss(weight=LOSS_LAMBDA, alpha=0.25, gamma=2.0, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-            TopKAuxiliaryLoss(k=3, weight=LOSS_LAMBDA * 0.6, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
-            TopKAuxiliaryLoss(k=5, weight=LOSS_LAMBDA * 0.3, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
-        ])
+        if not args.auxiliary_loss:
+            train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
+        else:
+            train_loss_func = CombinedLoss([
+                nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                # FocalLoss(weight=LOSS_LAMBDA, alpha=0.25, gamma=2.0, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                TopKAuxiliaryLoss(k=3, weight=LOSS_LAMBDA * 0.6, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
+                TopKAuxiliaryLoss(k=5, weight=LOSS_LAMBDA * 0.3, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
+            ])
 
     eval_loss_emotion_func = nn.BCEWithLogitsLoss()
     train_loss_emotion_func = eval_loss_emotion_func

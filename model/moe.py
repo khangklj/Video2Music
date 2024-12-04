@@ -219,7 +219,10 @@ class SharedMoELayer(Module):
 
         if self.balancing:
             # self.bias = nn.Parameter(torch.zeros((n_experts, 1)), requires_grad=False)
-            self.bias = torch.zeros((n_experts, 1)).to(get_device())
+            # self.bias = torch.zeros((n_experts, 1)).to(get_device())
+            self.register_buffer("bias", torch.zeros((n_experts, 1)))
+            self.bias = self.bias.to(get_device())
+            print(f"self.bias: {self.bias}")
             self.update_rate = 0.01
 
         self.shared_expert = _get_clones(expert, 1)[0]

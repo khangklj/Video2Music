@@ -45,6 +45,35 @@ class SmoothCrossEntropyLoss(_Loss):
     def cross_entropy_with_logits(self, p, q):
         return -torch.sum(p * (q - q.logsumexp(dim=-1, keepdim=True)), dim=-1)
 
+class FocalLoss(_Loss):
+    def __init__(self, weight=0.1, alpha=0.25, gamma=2.0, vocab_size=100, ignore_index=-100, reduction='mean'):
+        super(FocalLoss, self).__init__()
+        self.weight = weight
+        self.alpha = alpha
+        self.gamma = gamma
+        self.vocab_size = vocab_size
+        self.ignore_index = ignore_index
+        self.reduction = reduction
+
+    def forward(self, input, target):
+        mask = (target == self.ignore_index).unsqueeze(-1)
+        target_one_hot = F.one_hot(target, num_classes=self.vocab_size).float()
+        target_one_hot = target_one_hot.masked_fill(mask, 0)
+
+        log_prob = F.log_softmax(input, dim=-1)
+        prob = log_prob.exp()
+
+        focal_factor = (1 - prob) ** self.gamma
+        loss = -self.alpha * focal_factor * log_prob * target_one_hot
+
+        if self.reduction == 'mean':
+            length = torch.sum(target != self.ignore_index)
+            return loss.sum() / length * self.weight
+        elif self.reduction == 'sum':
+            return loss.sum() * self.weight
+        else:
+            raise NotImplementedError
+
 class TopKAuxiliaryLoss(_Loss):
     def __init__(self, k=3, weight=0.1, vocab_size=100, ignore_index=-100, reduction='mean'):
         super().__init__(reduction=reduction)
@@ -60,8 +89,8 @@ class TopKAuxiliaryLoss(_Loss):
 
         loss = self.loss_with_logits(q, input, self.k)
         if self.reduction == 'mean':
-            lengths = torch.sum(target != self.ignore_index)
-            return loss.sum() / lengths * self.weight
+            length = torch.sum(target != self.ignore_index)
+            return loss.sum() / length * self.weight
         elif self.reduction == 'sum':
             return loss.sum() * self.weight
         else:

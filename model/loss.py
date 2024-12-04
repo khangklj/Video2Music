@@ -116,7 +116,7 @@ class CombinedLoss(_Loss):
         self.lossFunctionList = nn.ModuleList(lossFunctionList)
 
     def forward(self, input, target):
-        loss = torch.tensor(0).to(get_device())
+        loss = torch.tensor(0.0).to(get_device())
         for lossFunction in self.lossFunctionList:
             print(loss)
             loss += lossFunction(input, target)

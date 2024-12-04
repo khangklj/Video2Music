@@ -13,7 +13,7 @@ from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 from model.music_transformer import MusicTransformer
 from model.video_music_transformer import *
 
-from model.loss import SmoothCrossEntropyLoss
+from model.loss import *
 
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
@@ -21,6 +21,7 @@ from utilities.lr_scheduling import LrStepTracker, get_lr
 from utilities.argument_funcs import parse_train_args, print_train_args, write_model_params
 
 from utilities.run_model_vevo import train_epoch, eval_model
+from utilities.constants import *
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -191,12 +192,18 @@ def main( vm = "" , isPrintArgs = True ):
     eval_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD)
 
     ##### SmoothCrossEntropyLoss or CrossEntropyLoss for training #####
-    if(args.ce_smoothing is None):
+    if args.ce_smoothing is None:
         train_loss_func = eval_loss_func
-    else:
+    elif args.ce_smoothing is not None:
         # FLAG
         # train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
         train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
+    elif args.auxiliary_loss:
+        train_loss_func = CombinedLoss([
+            nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+            TopKAuxiliaryLoss(k=3, weight=LOSS_LAMBDA * 0.75, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
+            TopKAuxiliaryLoss(k=5, weight=LOSS_LAMBDA * 0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
+        ])
 
     eval_loss_emotion_func = nn.BCEWithLogitsLoss()
     train_loss_emotion_func = eval_loss_emotion_func

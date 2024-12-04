@@ -225,7 +225,6 @@ class SharedMoELayer(Module):
         self.shared_expert = _get_clones(expert, 1)[0]
 
     def forward(self, x):
-        print(f"self.bias: {self.bias.T}")
         if hasattr(self, 'topk_scheduler') and self.training:
             self.topk_scheduler.step()
             k = self.topk_scheduler.getK()

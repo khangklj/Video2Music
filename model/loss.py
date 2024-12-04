@@ -107,6 +107,7 @@ class TopKAuxiliaryLoss(_Loss):
 
         lowest_top3_scores = topk_scores[:, -1]
 
+        print(lowest_top3_scores.shape, true_scores.shape)
         return F.relu(lowest_top3_scores - true_scores)
 
 class CombinedLoss(_Loss):

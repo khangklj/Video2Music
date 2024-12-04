@@ -99,15 +99,13 @@ class TopKAuxiliaryLoss(_Loss):
             raise NotImplementedError
         
     def loss_with_logits(self, truth, pred, k):
-        # print(truth.shape, pred.shape)
-        # print(truth.dtype, pred.dtype)
         topk_scores, topk_indices = torch.topk(pred, k=k, dim=1)
 
         true_scores = pred.gather(1, truth.long())
 
-        lowest_top3_scores = topk_scores[:, -1].unsqueeze(1).float()
+        lowest_top3_scores = topk_scores[:, -1].unsqueeze(-1).float()
 
-        print(lowest_top3_scores.shape, true_scores.shape)
+        # print(lowest_top3_scores.shape, true_scores.shape)
         return F.relu(lowest_top3_scores - true_scores)
 
 class CombinedLoss(_Loss):

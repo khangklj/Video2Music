@@ -310,7 +310,7 @@ def eval_model(model, dataloader,
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 
-                    print(loss_chord, total_loss)
+                    # print(loss_chord, total_loss)
                     sum_loss_chord += float(loss_chord)
                     sum_loss_emotion += float(loss_emotion)
                     sum_total_loss += float(total_loss)

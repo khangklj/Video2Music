@@ -65,13 +65,11 @@ class FocalLoss(_Loss):
         if target_one_hot.shape != input.shape:
             input = input.reshape(target_one_hot.shape)
 
-        print(input.shape)
         log_prob = F.log_softmax(input, dim=-1)
         prob = log_prob.exp()
 
         focal_factor = (1 - prob) ** self.gamma
 
-        # print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
         loss = -focal_factor * log_prob * target_one_hot
         loss = loss.sum(dim=-1)
         # print(loss.shape, '\n', loss)

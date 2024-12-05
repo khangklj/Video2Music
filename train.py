@@ -199,9 +199,9 @@ def main( vm = "" , isPrintArgs = True ):
         else:
             train_loss_func = CombinedLoss([
                 # nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-                FocalLoss(weight=LOSS_LAMBDA, alpha=0.25, gamma=2.0, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-                TopKAuxiliaryLoss(k=3, weight=LOSS_LAMBDA * 0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
-                TopKAuxiliaryLoss(k=5, weight=LOSS_LAMBDA * 0.2, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
+                FocalLoss(weight=1.0, alpha=0.25, gamma=2.0, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                TopKAuxiliaryLoss(k=3, weight=0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
+                TopKAuxiliaryLoss(k=5, weight=0.2, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
             ])
 
     eval_loss_func = train_loss_func

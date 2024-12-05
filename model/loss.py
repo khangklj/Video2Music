@@ -94,8 +94,8 @@ class TopKAuxiliaryLoss(_Loss):
         target_one_hot = target_one_hot.masked_fill(mask, 0)
 
         if target_one_hot.shape != input.shape:
-            pred = input.reshape(target_one_hot.shape)
-        pred = F.softmax(pred, dim=-1)
+            input = input.reshape(target_one_hot.shape)
+        pred = F.softmax(input, dim=-1)
 
         loss = self.loss_with_logits(target_one_hot, pred, self.k)
         loss = loss.masked_fill(mask.squeeze(), 0)

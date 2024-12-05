@@ -95,7 +95,7 @@ class TopKAuxiliaryLoss(_Loss):
         pred = F.softmax(input)
 
         loss = self.loss_with_logits(t, pred, self.k)
-        loss = loss.masked_fill(mask, 0)
+        loss = loss.masked_fill(mask.squeeze(), 0)
         print(loss)
         if self.reduction == 'mean':
             length = torch.sum(target != self.ignore_index)

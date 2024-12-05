@@ -96,7 +96,7 @@ class TopKAuxiliaryLoss(_Loss):
 
         loss = self.loss_with_logits(t, pred, self.k)
         loss = loss.masked_fill(mask, 0)
-        print(loss)
+        # print(loss)
         if self.reduction == 'mean':
             length = torch.sum(target != self.ignore_index)
             return loss.sum() / length * self.weight
@@ -111,6 +111,8 @@ class TopKAuxiliaryLoss(_Loss):
         true_scores = torch.sum(pred * truth, dim=-1)
 
         lowest_topk_scores = topk_scores[:, -1].unsqueeze(-1).float()
+
+        print(lowest_topk_scores.shape, true_scores.shape)
 
         return F.relu(lowest_topk_scores - true_scores)
 

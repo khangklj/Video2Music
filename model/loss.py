@@ -73,7 +73,7 @@ class FocalLoss(_Loss):
         # print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
         loss = -self.alpha * focal_factor * log_prob * target_one_hot
         loss = loss.sum(dim=-1)
-        print(loss.shape, '\n', loss)
+        # print(loss.shape, '\n', loss)
 
         if self.reduction == 'mean':
             length = torch.sum(target != self.ignore_index)

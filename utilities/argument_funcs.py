@@ -14,7 +14,7 @@ split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'RAdamW' # Adam / AdamW / RAdamW / Lion
+optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
 auxiliary_loss = True # False / True
 
 def parse_train_args():

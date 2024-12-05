@@ -62,6 +62,7 @@ class FocalLoss(_Loss):
         target_one_hot = F.one_hot(target, num_classes=self.vocab_size).float().to(get_device())
         target_one_hot = target_one_hot.masked_fill(mask, 0)
 
+        print(input.shape)
         log_prob = F.log_softmax(input, dim=-1)
         prob = log_prob.exp()
 
@@ -71,7 +72,7 @@ class FocalLoss(_Loss):
             focal_factor = focal_factor.reshape(target_one_hot.shape)
 
         # print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
-        loss = -self.alpha * focal_factor * log_prob * target_one_hot
+        loss = -focal_factor * log_prob * target_one_hot
         loss = loss.sum(dim=-1)
         # print(loss.shape, '\n', loss)
 

@@ -66,10 +66,10 @@ class FocalLoss(_Loss):
         prob = log_prob.exp()
 
         focal_factor = (1 - prob) ** self.gamma
-        if target_one_hot.shape != log_prob.shape:
-            target_one_hot = target_one_hot.reshape(log_prob.shape)
+        # if target_one_hot.shape != log_prob.shape:
+        #     target_one_hot = target_one_hot.reshape(log_prob.shape)
 
-        # print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
+        print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
         loss = -self.alpha * focal_factor * log_prob * target_one_hot
 
         if self.reduction == 'mean':
@@ -99,7 +99,6 @@ class TopKAuxiliaryLoss(_Loss):
 
         loss = self.loss_with_logits(target_one_hot, pred, self.k)
         loss = loss.masked_fill(mask.squeeze(), 0)
-        print(loss.shape, loss[0])
         if self.reduction == 'mean':
             length = torch.sum(target != self.ignore_index)
             return loss.sum() / length * self.weight

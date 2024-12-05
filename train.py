@@ -204,6 +204,7 @@ def main( vm = "" , isPrintArgs = True ):
             chord_count[item] += 1
     
     chord_weight = torch.tensor(1.0 / chord_count).float().to(get_device())
+    print(chord_weight)
 
     ##### SmoothCrossEntropyLoss or CrossEntropyLoss for training #####
     if args.ce_smoothing is None:

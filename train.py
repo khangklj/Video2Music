@@ -89,7 +89,7 @@ def main( vm = "" , isPrintArgs = True ):
         tensorboad_dir = os.path.join(args.output_dir, version, "tensorboard")
         tensorboard_summary = SummaryWriter(log_dir=tensorboad_dir)
         
-    train_dataset, val_dataset, _ = create_vevo_datasets(
+    train_dataset, val_dataset, test_dataset = create_vevo_datasets(
         dataset_root = "./dataset/", 
         max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 
@@ -188,6 +188,23 @@ def main( vm = "" , isPrintArgs = True ):
     else:
         lr = args.lr
 
+    # Chord weights
+    chord_count = np.array([1 for _ in range(CHORD_SIZE)]) # Including PAD and EOS
+
+    for data in train_dataset:
+        for item in data['chord']:
+            chord_count[item] += 1
+
+    for data in val_dataset:
+        for item in data['chord']:
+            chord_count[item] += 1
+
+    for data in test_dataset:
+        for item in data['chord']:
+            chord_count[item] += 1
+    
+    chord_weight = 1.0 / chord_count
+
     ##### SmoothCrossEntropyLoss or CrossEntropyLoss for training #####
     if args.ce_smoothing is None:
         train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD)
@@ -198,10 +215,10 @@ def main( vm = "" , isPrintArgs = True ):
             train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
         else:
             train_loss_func = CombinedLoss([
-                # nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-                FocalLoss(weight=1.0, alpha=0.1, gamma=2.0, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
-                # TopKAuxiliaryLoss(k=3, weight=0.8, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
-                # TopKAuxiliaryLoss(k=5, weight=0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
+                nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                # nn.CrossEntropyLoss(weight=chord_weight, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                TopKAuxiliaryLoss(k=3, weight=0.8, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
+                TopKAuxiliaryLoss(k=5, weight=0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
             ])
 
     eval_loss_func = train_loss_func

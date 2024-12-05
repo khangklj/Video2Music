@@ -66,11 +66,12 @@ class FocalLoss(_Loss):
         prob = log_prob.exp()
 
         focal_factor = (1 - prob) ** self.gamma
-        # if target_one_hot.shape != log_prob.shape:
-        #     target_one_hot = target_one_hot.reshape(log_prob.shape)
+        if target_one_hot.shape != log_prob.shape:
+            target_one_hot = target_one_hot.reshape(log_prob.shape)
 
-        print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
+        # print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
         loss = -self.alpha * focal_factor * log_prob * target_one_hot
+        print(loss.shape, loss)
 
         if self.reduction == 'mean':
             length = torch.sum(target != self.ignore_index)

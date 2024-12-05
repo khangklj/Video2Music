@@ -112,7 +112,7 @@ class TopKAuxiliaryLoss(_Loss):
 
         lowest_topk_scores = topk_scores[:, -1].unsqueeze(-1).float()
 
-        print(pred, true_scores)
+        print(topk_scores[:, -1])
 
         return F.relu(lowest_topk_scores - true_scores)
 

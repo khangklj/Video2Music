@@ -92,6 +92,8 @@ class TopKAuxiliaryLoss(_Loss):
         mask = (target == self.ignore_index).unsqueeze(-1).to(get_device())
         q = F.one_hot(target.long(), self.vocab_size).type(torch.float32).to(get_device())
         q = q.masked_fill(mask, 0)
+        print(target)
+        print(q)
 
         loss = self.loss_with_logits(q, input, self.k)
         print(loss)

@@ -66,6 +66,7 @@ class FocalLoss(_Loss):
         prob = log_prob.exp()
 
         focal_factor = (1 - prob) ** self.gamma
+        print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
         loss = -self.alpha * focal_factor * log_prob * target_one_hot
 
         if self.reduction == 'mean':

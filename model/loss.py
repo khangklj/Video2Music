@@ -60,12 +60,15 @@ class FocalLoss(_Loss):
     def forward(self, input, target):
         mask = (target == self.ignore_index).unsqueeze(-1).to(get_device())
         target_one_hot = F.one_hot(target, num_classes=self.vocab_size).float().to(get_device())
-        target_one_hot = target_one_hot.masked_fill(mask, 0).transpose(-2, -1)
+        target_one_hot = target_one_hot.masked_fill(mask, 0)
 
         log_prob = F.log_softmax(input, dim=-1)
         prob = log_prob.exp()
 
         focal_factor = (1 - prob) ** self.gamma
+        if target_one_hot.shape != log_prob.shape:
+            target_one_hot = target_one_hot.reshape(log_prob.shape)
+            
         print(focal_factor.shape, log_prob.shape, target_one_hot.shape)
         loss = -self.alpha * focal_factor * log_prob * target_one_hot
 

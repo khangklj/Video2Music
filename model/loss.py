@@ -92,8 +92,9 @@ class TopKAuxiliaryLoss(_Loss):
         mask = (target == self.ignore_index).unsqueeze(-1).to(get_device())
         t = F.one_hot(target.long(), self.vocab_size).type(torch.float32).to(get_device())
         t = t.masked_fill(mask, 0)
+        pred = F.softmax(input)
 
-        loss = self.loss_with_logits(t, input, self.k)
+        loss = self.loss_with_logits(t, pred, self.k)
         loss = loss.masked_fill(mask, 0)
         # print(loss)
         if self.reduction == 'mean':

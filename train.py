@@ -204,7 +204,7 @@ def main( vm = "" , isPrintArgs = True ):
             chord_count[item] += 1
     
     chord_weight = torch.tensor(1.0 / chord_count).float().to(get_device())
-    print(chord_weight)
+    # print(chord_weight)
 
     ##### SmoothCrossEntropyLoss or CrossEntropyLoss for training #####
     if args.ce_smoothing is None:
@@ -216,8 +216,8 @@ def main( vm = "" , isPrintArgs = True ):
             train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
         else:
             train_loss_func = CombinedLoss([
-                # nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-                nn.CrossEntropyLoss(weight=chord_weight, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                # nn.CrossEntropyLoss(weight=chord_weight, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
                 TopKAuxiliaryLoss(k=3, weight=0.8, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
                 TopKAuxiliaryLoss(k=5, weight=0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
             ])

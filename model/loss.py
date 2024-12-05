@@ -90,10 +90,10 @@ class TopKAuxiliaryLoss(_Loss):
 
     def forward(self, input, target):
         mask = (target == self.ignore_index).unsqueeze(-1).to(get_device())
-        q = F.one_hot(target.long(), self.vocab_size).type(torch.float32).to(get_device())
-        q = q.masked_fill(mask, 0)
+        t = F.one_hot(target.long(), self.vocab_size).type(torch.float32).to(get_device())
+        t = t.masked_fill(mask, 0)
 
-        loss = self.loss_with_logits(q, input, self.k)
+        loss = self.loss_with_logits(t, input, self.k)
         loss = loss.masked_fill(mask, 0)
         # print(loss)
         if self.reduction == 'mean':
@@ -111,7 +111,7 @@ class TopKAuxiliaryLoss(_Loss):
 
         lowest_topk_scores = topk_scores[:, -1].unsqueeze(-1).float()
 
-        print(topk_scores[:, -1], true_scores)
+        print(pred, true_scores)
 
         return F.relu(lowest_topk_scores - true_scores)
 

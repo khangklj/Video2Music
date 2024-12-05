@@ -95,7 +95,7 @@ class TopKAuxiliaryLoss(_Loss):
 
         loss = self.loss_with_logits(q, input, self.k)
         loss = loss.masked_fill(mask, 0)
-        print(loss)
+        # print(loss)
         if self.reduction == 'mean':
             return loss.mean() * self.weight
         elif self.reduction == 'sum':
@@ -109,6 +109,8 @@ class TopKAuxiliaryLoss(_Loss):
         true_scores = pred.gather(1, truth.long())
 
         lowest_topk_scores = topk_scores[:, -1].unsqueeze(-1).float()
+
+        print(lowest_topk_scores, true_scores)
 
         return F.relu(lowest_topk_scores - true_scores)
 

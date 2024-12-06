@@ -20,8 +20,8 @@ def train_epoch(cur_epoch, model, dataloader,
     loss_chord = -1
     loss_emotion = -1
     model.train()
-    opt.zero_grad()
     for batch_num, batch in enumerate(dataloader):
+        opt.zero_grad()
         time_before = time.time()
 
         x   = batch["x"].to(get_device())
@@ -96,17 +96,16 @@ def train_epoch(cur_epoch, model, dataloader,
                 # ====
                 loss_chord = train_loss_func.forward(y.permute(0,2,1), tgt)
                 loss_emotion = train_loss_emotion_func.forward(y.permute(0,2,1), tgt_emotion.permute(0,2,1))
-                y = y.reshape(y.shape[0] * y.shape[1], -1)
-                tgt = tgt.flatten()
-                tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1) # Fix bug
+                # y = y.reshape(y.shape[0] * y.shape[1], -1)
+                # tgt = tgt.flatten()
+                # tgt_emotion = tgt_emotion.reshape(tgt_emotion.shape[0] * tgt_emotion.shape[1], -1) # Fix bug
                 # print(y.shape, tgt.shape, tgt[:10], tgt_emotion.shape)
-                tgt_emotion = tgt_emotion.squeeze()
-                loss_chord = train_loss_func.forward(y, tgt)
-                loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
+                # tgt_emotion = tgt_emotion.squeeze()
+                # loss_chord = train_loss_func.forward(y, tgt)
+                # loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
                 total_loss.backward()
                 opt.step()
-                opt.zero_grad()
                 if(lr_scheduler is not None):
                     lr_scheduler.step()
                 
@@ -313,6 +312,7 @@ def eval_model(model, dataloader,
                     loss_emotion = eval_loss_emotion_func.forward(y, tgt_emotion)
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 
+                    # print(loss_chord, total_loss)
                     sum_loss_chord += float(loss_chord)
                     sum_loss_emotion += float(loss_emotion)
                     sum_total_loss += float(total_loss)

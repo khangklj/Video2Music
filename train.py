@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR, CosineAnnealingLR
 from torch.utils.data import DataLoader
-from torch.optim import Adam, AdamW
+from torch.optim import Adam, AdamW, RAdam
 from lion_pytorch import Lion
 
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
@@ -13,7 +13,7 @@ from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
 from model.music_transformer import MusicTransformer
 from model.video_music_transformer import *
 
-from model.loss import SmoothCrossEntropyLoss
+from model.loss import *
 
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
@@ -22,6 +22,7 @@ from utilities.argument_funcs import parse_train_args, print_train_args, write_m
 
 from utilities.run_model_vevo import train_epoch, eval_model
 from third_party.log_maxvio import change_maxvio_logging_state
+from utilities.constants import *
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -93,7 +94,7 @@ def main( vm = "" , isPrintArgs = True ):
         tensorboad_dir = os.path.join(args.output_dir, version, "tensorboard")
         tensorboard_summary = SummaryWriter(log_dir=tensorboad_dir)
         
-    train_dataset, val_dataset, _ = create_vevo_datasets(
+    train_dataset, val_dataset, test_dataset = create_vevo_datasets(
         dataset_root = "./dataset/", 
         max_seq_chord = args.max_sequence_chord, 
         max_seq_video = args.max_sequence_video, 
@@ -192,16 +193,41 @@ def main( vm = "" , isPrintArgs = True ):
     else:
         lr = args.lr
 
-    ##### Not smoothing evaluation loss #####
-    eval_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD)
+    # Chord weights
+    chord_count = np.array([1 for _ in range(CHORD_SIZE)]) # Including PAD and EOS
+
+    for data in train_dataset:
+        for item in data['chord']:
+            chord_count[item] += 1
+
+    for data in val_dataset:
+        for item in data['chord']:
+            chord_count[item] += 1
+
+    for data in test_dataset:
+        for item in data['chord']:
+            chord_count[item] += 1
+    
+    chord_weight = torch.tensor(1.0 / chord_count).float().to(get_device())
+    # print(chord_weight)
 
     ##### SmoothCrossEntropyLoss or CrossEntropyLoss for training #####
-    if(args.ce_smoothing is None):
-        train_loss_func = eval_loss_func
-    else:
+    if args.ce_smoothing is None:
+        train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD)
+    elif args.ce_smoothing is not None:
         # FLAG
         # train_loss_func = SmoothCrossEntropyLoss(args.ce_smoothing, CHORD_SIZE, ignore_index=CHORD_PAD)
-        train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
+        if not args.auxiliary_loss:
+            train_loss_func = nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing)
+        else:
+            train_loss_func = CombinedLoss([
+                nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                # nn.CrossEntropyLoss(weight=chord_weight, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
+                TopKAuxiliaryLoss(k=3, weight=0.8, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
+                TopKAuxiliaryLoss(k=5, weight=0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
+            ])
+
+    eval_loss_func = train_loss_func
 
     eval_loss_emotion_func = nn.BCEWithLogitsLoss()
     train_loss_emotion_func = eval_loss_emotion_func
@@ -211,6 +237,9 @@ def main( vm = "" , isPrintArgs = True ):
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.optimizer == 'AdamW':
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
+    elif args.optimizer == 'RAdamW':
+        opt = RAdam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON,
+                    weight_decay=0.01, decoupled_weight_decay=True)
     elif args.optimizer == 'Lion':
         opt = Lion(model.parameters(), lr=lr / 4, betas=(0.95, 0.98), weight_decay=1.0)
 

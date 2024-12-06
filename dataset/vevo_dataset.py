@@ -481,10 +481,13 @@ class VevoDataset(Dataset):
 
         return { "x":x, 
                 "tgt":tgt, 
+                "chord":feature_chord,
                 "x_root":x_root, 
                 "tgt_root":tgt_root, 
+                "chord_root":feature_chordRoot,
                 "x_attr":x_attr, 
                 "tgt_attr":tgt_attr,
+                "chord_attr":feature_chordAttr,
                 "semanticList": feature_semantic_list, 
                 "key": feature_key,
                 "scene_offset": feature_scene_offset,

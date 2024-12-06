@@ -384,8 +384,6 @@ class VideoMusicTransformer_V2(nn.Module):
         temperature_scheduler = None
 
         balancing = False
-        if self.version_name in ('2.3'):
-            balancing = True
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
@@ -645,29 +643,24 @@ class VideoMusicTransformer_V3(nn.Module):
         self.condition_linear = projection(1, self.d_model)
         
         # Transformer
-        if rms_norm:
-            norm = RMSNorm(self.d_model)
-        else:
-            norm = nn.LayerNorm(self.d_model)
-
         use_KAN = False
 
         RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+        # norm = RMSNorm(self.d_model, elementwise_affine=True)
+        norm = nn.LayerNorm(self.d_model)
 
         self.n_experts = 6
         self.n_experts_per_token = 2
 
         expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
-
-        att = MultiheadGQA(self.d_model, query_heads=self.nhead, kv_heads=self.nhead // 4, 
-                           dropout=self.dropout, RoPE=RoPE)
         
-        topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        # topk_scheduler = TopKScheduler(n_experts=self.n_experts, min_n_experts_per_token=self.n_experts_per_token, update_step=32)
+        topk_scheduler = None
         temperature_scheduler = None
 
         balancing = False
-        if self.version_name in ('2.3'):
-            balancing = True
+        # if self.version_name in ('2.3'):
+        #     balancing = True
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 
@@ -675,18 +668,52 @@ class VideoMusicTransformer_V3(nn.Module):
                                   temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
         swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)
-        shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
-        shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
-
-        deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+        att = CustomMultiheadAttention(self.d_model, self.nhead, dropout=self.dropout, RoPE=RoPE)
+        difatt_list = [
+            DifferentialMultiheadAttention(self.d_model, 
+                                           self.nhead, 
+                                           dropout=self.dropout, 
+                                           RoPE=RoPE, 
+                                           depth=d) 
+                for d in range(self.nlayers)
+        ]
 
         rate = 3
-        encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 
-                                [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers-rate)])
+
+        pre_norm = True if version_name == '3.2' else False
+
+        if version_name == '3.0':
+            shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
+            deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
+            
+            encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] +
+                                          [copy.deepcopy(deep_encoder_layer) for _ in range(self.nlayers - rate)])
+        elif version_name in ('3.1', '3.2'):
+            encoder_layers = nn.ModuleList([
+                TransformerEncoderLayer(difatt_list[i], 
+                                        swiglu, 
+                                        pre_norm=pre_norm, 
+                                        norm=norm, 
+                                        dropout=self.dropout) for i in range(rate)] + [
+                TransformerEncoderLayer(difatt_list[i], 
+                                        moelayer, 
+                                        pre_norm=pre_norm, 
+                                        norm=norm, 
+                                        dropout=self.dropout) for i in range(rate, self.nlayers)])
         
-        decoder_layers = nn.ModuleList([copy.deepcopy(shallow_decoder_layer) for _ in range(rate)] + 
-                                [copy.deepcopy(deep_decoder_layer) for _ in range(self.nlayers-rate)])
+        decoder_layers = nn.ModuleList([
+            TransformerDecoderLayer(difatt_list[i], 
+                                    difatt_list[i],
+                                    swiglu, 
+                                    pre_norm=pre_norm, 
+                                    norm=norm, 
+                                    dropout=self.dropout) for i in range(rate)] + [
+            TransformerDecoderLayer(difatt_list[i], 
+                                    difatt_list[i], 
+                                    moelayer, 
+                                    pre_norm=pre_norm, 
+                                    norm=norm, 
+                                    dropout=self.dropout) for i in range(rate, self.nlayers)])
         
         encoder = TransformerEncoderShorter(encoder_layers, norm)
         decoder = TransformerDecoderShorter(decoder_layers, norm)
@@ -706,7 +733,7 @@ class VideoMusicTransformer_V3(nn.Module):
 
         self.softmax    = nn.Softmax(dim=-1)
 
-        del RoPE, expert, att, moelayer
+        del RoPE, expert, difatt_list, att, swiglu, moelayer
         torch.cuda.empty_cache()
 
     def forward(self, x, x_root, x_attr, feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion, mask=True):

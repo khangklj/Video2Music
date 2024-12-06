@@ -5,18 +5,17 @@ version = VERSION
 rpr = True
 augmentation = False
 chord_embed = True
-music_gen_version = '2.3'
+music_gen_version = '2.2'
 batch_size = 24
-epochs = 50
+epochs = 100
 motion_type = 1
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'AdamW' # Adam / AdamW / Lion
-# if music_gen_version in ('2.2', '2.3'):
-#     optimizer = 'Lion'
+optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
+auxiliary_loss = True # False / True
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -67,6 +66,7 @@ def parse_train_args():
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     parser.add_argument("-droptoken", type=float, default=droptoken, help="Drop Token rate")
     parser.add_argument("-optimizer", type=str, default=optimizer, help="Choose optimizer")
+    parser.add_argument("-auxiliary_loss", type=bool, default=auxiliary_loss, help="False / True")
     return parser.parse_known_args()
 
 def print_train_args(args):
@@ -116,6 +116,7 @@ def print_train_args(args):
     print("augmentation:", args.augmentation)
     print("droptoken:", args.droptoken)
     print("optimizer:", args.optimizer)
+    print("auxiliary_loss:", args.auxiliary_loss)
 
     print(SEPERATOR)
     print("")
@@ -232,5 +233,6 @@ def write_model_params(args, output_file):
     o_stream.write("input_dir_music: " + str(args.input_dir_music) + "\n")
     o_stream.write("input_dir_video: " + str(args.input_dir_video) + "\n")
     o_stream.write("optimizer: " + str(args.optimizer) + "\n")
+    o_stream.write("auxiliary_loss: " + str(args.auxiliary_loss) + "\n")
 
     o_stream.close()

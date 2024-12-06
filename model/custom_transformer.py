@@ -23,20 +23,29 @@ from torch.nn.modules.activation import _check_arg_device, _arg_requires_grad, _
 
 from torch.nn.functional import linear, softmax, dropout
 
-# From torchtune
+# From https://github.com/microsoft/unilm/blob/master/Diff-Transformer/
 class RMSNorm(nn.Module):
-    def __init__(self, dim: int, eps: float = 1e-6) -> None:
+    def __init__(self, dim: int, eps: float = 1e-6, elementwise_affine=True, memory_efficient=False):
         super().__init__()
+        self.dim = dim
         self.eps = eps
-        self.scale = nn.Parameter(torch.ones(dim))
+        self.elementwise_affine = elementwise_affine
+        if self.elementwise_affine:
+            self.weight = nn.Parameter(torch.ones(dim))
+        else:
+            self.register_parameter('weight', None)
 
-    def forward(self, x: Tensor) -> Tensor:
-            # computation is in fp32
-            x_fp32 = x.float()
-            x_normed = (
-                x_fp32 * torch.rsqrt(x_fp32.pow(2).mean(-1, keepdim=True) + self.eps)
-            ).type_as(x)
-            return x_normed * self.scale
+    def _norm(self, x):
+        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+
+    def forward(self, x):
+        output = self._norm(x.float()).type_as(x)
+        if self.weight is not None:
+            output = output * self.weight
+        return output
+
+    def extra_repr(self) -> str:
+        return f'dim={self.dim}, eps={self.eps}, elementwise_affine={self.elementwise_affine}'
 
 # From pytorch and modify RoPE
 class CustomMultiheadAttention(Module):
@@ -129,6 +138,8 @@ class CustomMultiheadAttention(Module):
             attn_mask: Optional[Tensor] = None,
             average_attn_weights: bool = True,
             is_causal : bool = False) -> Tuple[Tensor, Optional[Tensor]]:
+        
+        # print(key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
         why_not_fast_path = ''
         if ((attn_mask is not None and torch.is_floating_point(attn_mask))
            or (key_padding_mask is not None) and torch.is_floating_point(key_padding_mask)):
@@ -551,6 +562,273 @@ class AngleMultiheadAttention(Module):
             return attn_output.transpose(1, 0), attn_output_weights
         else:
             return attn_output, attn_output_weights
+
+    # From pytorch
+    def merge_masks(self, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor],
+                    query: Tensor) -> Tuple[Optional[Tensor], Optional[int]]:
+        mask_type: Optional[int] = None
+        merged_mask: Optional[Tensor] = None
+
+        if key_padding_mask is not None:
+            mask_type = 1
+            merged_mask = key_padding_mask
+
+        if attn_mask is not None:
+            # In this branch query can't be a nested tensor, so it has a shape
+            batch_size, seq_len, _ = query.shape
+            mask_type = 2
+
+            # Always expands attn_mask to 4D
+            if attn_mask.dim() == 3:
+                attn_mask_expanded = attn_mask.view(batch_size, -1, seq_len, seq_len)
+            else:  # attn_mask.dim() == 2:
+                attn_mask_expanded = attn_mask.view(1, 1, seq_len, seq_len).expand(batch_size, self.num_heads, -1, -1)
+            merged_mask = attn_mask_expanded
+
+            if key_padding_mask is not None:
+                key_padding_mask_expanded = key_padding_mask.view(batch_size, 1, 1, seq_len).expand(-1, self.num_heads, -1, -1)
+                merged_mask = attn_mask_expanded + key_padding_mask_expanded
+
+        # no attn_mask and no key_padding_mask, returns None, None
+        return merged_mask, mask_type
+
+# Source: https://github.com/microsoft/unilm/blob/master/Diff-Transformer/
+def repeat_kv(x: torch.Tensor, n_rep: int) -> torch.Tensor:
+    """torch.repeat_interleave(x, dim=1, repeats=n_rep)"""
+    bs, n_kv_heads, slen, head_dim = x.shape
+    if n_rep == 1:
+        return x
+    return (
+        x[:, :, None, :, :]
+        .expand(bs, n_kv_heads, n_rep, slen, head_dim)
+        .reshape(bs, n_kv_heads * n_rep, slen, head_dim)
+    )
+
+def lambda_init_fn(depth):
+    return 0.8 - 0.6 * math.exp(-0.3 * depth)
+
+class DifferentialMultiheadAttention(Module):
+    __constants__ = ['batch_first']
+    bias_k: Optional[torch.Tensor]
+    bias_v: Optional[torch.Tensor]
+
+    def __init__(self, embed_dim, num_heads, dropout=0., batch_first=False, device=None, 
+                 dtype=None, RoPE=None, depth=2 # OUR MODIFY
+                 ) -> None:
+        if embed_dim <= 0 or num_heads <= 0:
+            raise ValueError(
+                f"embed_dim and num_heads must be greater than 0,"
+                f" got embed_dim={embed_dim} and num_heads={num_heads} instead"
+            )
+        factory_kwargs = {'device': device, 'dtype': dtype}
+        super().__init__()
+        self.embed_dim = embed_dim
+
+        self.num_heads = num_heads
+        self.dropout = dropout
+        self.batch_first = batch_first
+        self.head_dim = embed_dim // num_heads // 2
+        self.scaling = self.head_dim ** -0.5
+
+        self.RoPE = copy.deepcopy(RoPE)
+
+        self.k_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.q_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.v_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.out_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self._reset_parameters()
+
+        self.lambda_init = lambda_init_fn(depth)
+        self.lambda_q1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+        self.lambda_k1 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+        self.lambda_q2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+        self.lambda_k2 = nn.Parameter(torch.zeros(self.head_dim, dtype=torch.float32).normal_(mean=0,std=0.1))
+
+        self.subln = RMSNorm(2 * self.head_dim, eps=1e-5, elementwise_affine=True)
+
+    def _reset_parameters(self):
+        xavier_uniform_(self.k_proj.weight)
+        xavier_uniform_(self.q_proj.weight)
+        xavier_uniform_(self.v_proj.weight)
+        xavier_uniform_(self.out_proj.weight)
+
+    def forward(
+            self,
+            query: Tensor,
+            key: Tensor,
+            value: Tensor,
+            key_padding_mask: Optional[Tensor] = None,
+            need_weights: bool = True,
+            attn_mask: Optional[Tensor] = None,
+            average_attn_weights: bool = True,
+            is_causal : bool = False) -> Tuple[Tensor, Optional[Tensor]]:
+        
+        # print(key_padding_mask, need_weights, attn_mask, average_attn_weights, is_causal)
+        why_not_fast_path = ''
+        if ((attn_mask is not None and torch.is_floating_point(attn_mask))
+           or (key_padding_mask is not None) and torch.is_floating_point(key_padding_mask)):
+            why_not_fast_path = "floating-point masks are not supported for fast path."
+
+        is_batched = query.dim() == 3
+
+        key_padding_mask = F._canonical_mask(
+            mask=key_padding_mask,
+            mask_name="key_padding_mask",
+            other_type=F._none_or_dtype(attn_mask),
+            other_name="attn_mask",
+            target_type=query.dtype
+        )
+
+        attn_mask = F._canonical_mask(
+            mask=attn_mask,
+            mask_name="attn_mask",
+            other_type=None,
+            other_name="",
+            target_type=query.dtype,
+            check_other=False,
+        )
+
+        is_fastpath_enabled = torch.backends.mha.get_fastpath_enabled()
+
+        if not is_fastpath_enabled:
+            why_not_fast_path = "torch.backends.mha.get_fastpath_enabled() was not True"
+        elif not is_batched:
+            why_not_fast_path = f"input not batched; expected query.dim() of 3 but got {query.dim()}"
+        elif query is not key or key is not value:
+            # When lifting this restriction, don't forget to either
+            # enforce that the dtypes all match or test cases where
+            # they don't!
+            why_not_fast_path = "non-self attention was used (query, key, and value are not the same Tensor)"
+        elif self.training:
+            why_not_fast_path = "training is enabled"
+        elif (self.num_heads % 2) != 0:
+            why_not_fast_path = "self.num_heads is not even"
+        elif not self.batch_first:
+            why_not_fast_path = "batch_first was not True"
+        elif query.is_nested and (key_padding_mask is not None or attn_mask is not None):
+            why_not_fast_path = "supplying both src_key_padding_mask and src_mask at the same time \
+                                 is not supported with NestedTensor input"
+        elif torch.is_autocast_enabled():
+            why_not_fast_path = "autocast is enabled"
+
+        if not why_not_fast_path:
+            tensor_args = (
+                query,
+                key,
+                value,
+                self.in_proj_weight,
+                self.in_proj_bias,
+                self.out_proj.weight,
+                self.out_proj.bias,
+            )
+            # We have to use list comprehensions below because TorchScript does not support
+            # generator expressions.
+            if torch.overrides.has_torch_function(tensor_args):
+                why_not_fast_path = "some Tensor argument has_torch_function"
+            elif _is_make_fx_tracing():
+                why_not_fast_path = "we are running make_fx tracing"
+            elif not all(_check_arg_device(x) for x in tensor_args):
+                why_not_fast_path = ("some Tensor argument's device is neither one of "
+                                     f"cpu, cuda or {torch.utils.backend_registration._privateuse1_backend_name}")
+            elif torch.is_grad_enabled() and any(_arg_requires_grad(x) for x in tensor_args):
+                why_not_fast_path = ("grad is enabled and at least one of query or the "
+                                     "input/output projection weights or biases requires_grad")
+            if not why_not_fast_path:
+                merged_mask, mask_type = self.merge_masks(attn_mask, key_padding_mask, query)
+
+                if self.in_proj_bias is not None and self.in_proj_weight is not None:
+                    return torch._native_multi_head_attention(
+                        query,
+                        key,
+                        value,
+                        self.embed_dim,
+                        self.num_heads,
+                        self.in_proj_weight,
+                        self.in_proj_bias,
+                        self.out_proj.weight,
+                        self.out_proj.bias,
+                        merged_mask,
+                        need_weights,
+                        average_attn_weights,
+                        mask_type)
+
+        any_nested = query.is_nested or key.is_nested or value.is_nested
+        assert not any_nested, ("MultiheadAttention does not support NestedTensor outside of its fast path. " +
+                                f"The fast path was not hit because {why_not_fast_path}")
+
+        if self.batch_first and is_batched:
+            # make sure that the transpose op does not affect the "is" property
+            if key is value:
+                if query is key:
+                    query = key = value = query.transpose(1, 0)
+                else:
+                    query, key = (x.transpose(1, 0) for x in (query, key))
+                    value = key
+            else:
+                query, key, value = (x.transpose(1, 0) for x in (query, key, value))
+
+        tgt_len, bsz, embed_dim = query.size()
+        src_len, _, _ = key.size()
+        num_heads = self.num_heads
+        head_dim = self.head_dim
+
+        k = self.k_proj(key)
+        q = self.q_proj(query)
+        v = self.v_proj(value)
+
+        q = q.view(2 * num_heads, tgt_len, bsz, head_dim)
+        k = k.view(2 * num_heads, src_len, bsz, head_dim)
+
+        # RoPE here - OUR MODIFY
+        if self.RoPE is not None:
+            q = self.RoPE.forward(q)
+            k = self.RoPE.forward(k)
+        
+        q = q.view(bsz, tgt_len, 2 * num_heads, head_dim)
+        k = k.view(bsz, src_len, 2 * num_heads, head_dim)
+        v = v.view(bsz, src_len, num_heads, 2 * head_dim)
+
+        offset = src_len - tgt_len
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+        q *= self.scaling
+
+        attn_weights = torch.matmul(q, k.transpose(-1, -2))
+        attn_weights = torch.nan_to_num(attn_weights)
+        
+        if attn_mask != None:
+            attn_mask = torch.triu(
+                torch.zeros([tgt_len, src_len])
+                .float()
+                .fill_(float("-inf"))
+                .type_as(attn_weights),
+                1 + offset,
+            )
+            attn_weights += attn_mask
+        
+        attn_weights = F.softmax(attn_weights, dim=-1, dtype=torch.float32).type_as(
+            attn_weights
+        )
+
+        lambda_1 = torch.exp(torch.sum(self.lambda_q1 * self.lambda_k1, dim=-1).float()).type_as(q)
+        lambda_2 = torch.exp(torch.sum(self.lambda_q2 * self.lambda_k2, dim=-1).float()).type_as(q)
+        lambda_full = lambda_1 - lambda_2 + self.lambda_init
+        attn_weights = attn_weights.view(bsz, self.num_heads, 2, tgt_len, src_len)
+        attn_weights = attn_weights[:, :, 0] - lambda_full * attn_weights[:, :, 1]
+        
+        attn = torch.matmul(attn_weights, v)
+
+        attn = self.subln(attn)
+        attn = attn * (1 - self.lambda_init)
+        attn = attn.view(tgt_len, bsz, self.num_heads * 2 * self.head_dim)
+
+        attn = self.out_proj(attn)
+
+        if self.batch_first and is_batched:
+            return attn.transpose(1, 0), attn_weights
+        else:
+            return attn, attn_weights
 
     # From pytorch
     def merge_masks(self, attn_mask: Optional[Tensor], key_padding_mask: Optional[Tensor],

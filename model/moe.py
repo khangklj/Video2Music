@@ -18,6 +18,9 @@ from efficient_kan import KANLinear
 import copy
 from utilities.argument_funcs import parse_train_args
 from third_party.log_experts import update_expert_counts
+from third_party.log_maxvio import update_maxvio
+
+import os
 
 class KANExpert(Module):
     def __init__(self, d_model, d_ff=2048, dropout=0.1):
@@ -253,10 +256,14 @@ class SharedMoELayer(Module):
 
             e = c_mean - c
 
-            if self.training:
+            if self.training:                
                 e = e.unsqueeze(1)
-                self.bias += self.update_rate * e
-
+                # self.bias += self.update_rate * e
+                self.bias += self.update_rate * torch.sign(e)
+            else:
+                # Logging
+                update_maxvio(c)
+        
         # Logging
         update_expert_counts(selected_experts)
 

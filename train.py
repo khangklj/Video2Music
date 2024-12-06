@@ -21,6 +21,7 @@ from utilities.lr_scheduling import LrStepTracker, get_lr
 from utilities.argument_funcs import parse_train_args, print_train_args, write_model_params
 
 from utilities.run_model_vevo import train_epoch, eval_model
+from third_party.log_maxvio import change_maxvio_logging_state
 from utilities.constants import *
 
 torch.autograd.set_detect_anomaly(True)
@@ -43,6 +44,10 @@ VIS_MODELS_ARR = [
 # main
 def main( vm = "" , isPrintArgs = True ):
     args = parse_train_args()[0]
+
+    # Logging
+    if args.music_gen_version in ('2.3'):
+        change_maxvio_logging_state(True)
 
     if isPrintArgs:
         print_train_args(args)
@@ -364,6 +369,9 @@ def main( vm = "" , isPrintArgs = True ):
     # Sanity check just to make sure everything is gone
     if(not args.no_tensorboard):
         tensorboard_summary.flush()
+
+    # Turn off logging
+    change_maxvio_logging_state(False)
 
     return
 

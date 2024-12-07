@@ -11,6 +11,8 @@ import json
 
 from dataset.vevo_dataset import compute_vevo_accuracy, compute_vevo_correspondence, compute_hits_k, compute_hits_k_root_attr, compute_vevo_accuracy_root_attr, compute_vevo_correspondence_root_attr
 
+from third_party.log_maxvio import save_maxvio, reset_maxvio
+
 def train_epoch(cur_epoch, model, dataloader, 
                 train_loss_func, train_loss_emotion_func,
                 opt, lr_scheduler=None, print_modulus=1, isVideo=True):
@@ -417,6 +419,10 @@ def eval_model(model, dataloader,
                     sum_loss_chord += float(loss_chord)
                     sum_loss_emotion += float(loss_emotion)
                     sum_total_loss += float(total_loss)
+
+            # Logging
+            save_maxvio()
+            reset_maxvio()
 
         avg_loss_chord    = sum_loss_chord / n_test
         avg_loss_emotion    = sum_loss_emotion / n_test

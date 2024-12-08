@@ -15,7 +15,7 @@ dropout = 0.2
 droptoken = 0.0
 lr = None
 optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
-auxiliary_loss = True # False / True
+auxiliary_loss = False # False / True
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

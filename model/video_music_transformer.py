@@ -383,7 +383,7 @@ class VideoMusicTransformer_V2(nn.Module):
             topk_scheduler = None
         temperature_scheduler = None
 
-        balancing = True
+        balancing = False
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

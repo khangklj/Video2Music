@@ -299,7 +299,7 @@ class VevoDataset(Dataset):
             feature_key = torch.tensor([0])
         else:
             feature_key = torch.tensor([1])
-        feature_key_v2 = torch.from_numpy(key_dic[key_v2])
+        feature_key_v2 = torch.tensor(key_dic[key_v2])
         feature_key_v2 = feature_key_v2.to(torch.long)
 
         feature_chord = torch.from_numpy(feature_chord)

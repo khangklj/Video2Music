@@ -22,7 +22,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_note_density = batch["note_density"].to(get_device())
         feature_loudness = batch["loudness"].to(get_device())
 
-        feature_key_v2 = batch["feature_key_v2"].to(get_device())
+        feature_key_v2 = batch["key_v2"].to(get_device())
 
         y, y_key = model(
                   feature_semantic_list, 
@@ -84,8 +84,8 @@ def eval_model(model, dataloader, loss):
             feature_loudness = batch["loudness"].to(get_device())
             feature_note_density = batch["note_density"].to(get_device())
 
-            feature_key_v2 = batch["feature_key_v2"].to(get_device())
-            
+            feature_key_v2 = batch["key_v2"].to(get_device())
+
             y, y_key = model(
                     feature_semantic_list, 
                     feature_scene_offset,

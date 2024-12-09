@@ -306,6 +306,7 @@ class VevoDataset(Dataset):
         elif "minor" in key_v2:
             feature_key_v2 = torch.tensor(key_dic["A minor"])        
         # feature_key_v2 = torch.tensor(key_dic[key_v2] if key_v2 in key_di)
+        print(key_v2, feature_key_v2)
         feature_key_v2 = feature_key_v2.to(torch.long)
 
         feature_chord = torch.from_numpy(feature_chord)

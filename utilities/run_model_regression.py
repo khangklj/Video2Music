@@ -85,7 +85,7 @@ def eval_model(model, dataloader, loss):
             feature_note_density = batch["note_density"].to(get_device())
 
             feature_key_v2 = batch["feature_key_v2"].to(get_device())
-            print(feature_key_v2)
+            
             y, y_key = model(
                     feature_semantic_list, 
                     feature_scene_offset,

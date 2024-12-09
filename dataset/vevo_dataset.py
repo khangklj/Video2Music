@@ -20,6 +20,34 @@ SEQUENCE_START = 0
 # filename = ''
 # chord_embedding = Word2Vec.load(filename)
 
+
+key_dic = {
+    'F major' : -7,
+    'Gb major' : -6,
+    'G major' : -5,
+    'Ab major' : -4,
+    'A major' : -3,
+    'Bb major' : -2,
+    'B major' : -1,
+    'C major' : 0,
+    'Db major' : 1,
+    'D major' : 2,
+    'Eb major' : 3,
+    'E major' : 4,
+    'D minor' : -7,
+    'Eb minor' : -6,
+    'E minor' : -5,
+    'F minor' : -4,
+    'F# minor' : -3,
+    'G minor' : -2,
+    'G# minor' : -1,
+    'A minor' : 0,
+    'Bb minor' : 1,
+    'B minor' : 2,
+    'C minor' : 3,
+    'C# minor' : 4
+}
+
 class VevoDataset(Dataset):
     def __init__(self, dataset_root = "./dataset/", split="train", split_ver="v1", vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, max_seq_chord=300, max_seq_video=300, random_seq=True, is_video = True, augmentation=False):
         
@@ -28,6 +56,7 @@ class VevoDataset(Dataset):
         self.augmentation = augmentation
 
         self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
+        self.vevo_chord_root_v2 = os.path.join( dataset_root, "vevo_chord", "lab_v2", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
         
         if self.motion_type == 0:
@@ -65,7 +94,8 @@ class VevoDataset(Dataset):
             for line in f:
                 self.id_list.append(line.strip())
         
-        self.data_files_chord = []      
+        self.data_files_chord = []
+        self.data_files_chord_v2 = []      
         self.data_files_emotion = []
         self.data_files_motion = []
         self.data_files_scene_offset = []
@@ -79,6 +109,7 @@ class VevoDataset(Dataset):
 
         for fid in self.id_list:
             fpath_chord = os.path.join( self.vevo_chord_root, fid + ".lab" )
+            fpath_chord_v2 = os.path.join ( self.vevo_chord_root_v2, fid + ".lab" )
             fpath_emotion = os.path.join( self.vevo_emotion_root, fid + ".lab" )
             
             if self.motion_type == 0:
@@ -113,6 +144,7 @@ class VevoDataset(Dataset):
                 and checkFile_scene_offset and checkFile_semantic and checkFile_loudness and checkFile_note_density :
 
                 self.data_files_chord.append(fpath_chord)
+                self.data_files_chord_v2.append(fpath_chord_v2)
                 self.data_files_emotion.append(fpath_emotion)
                 self.data_files_motion.append(fpath_motion)
                 self.data_files_scene_offset.append(fpath_scene_offset)
@@ -217,6 +249,15 @@ class VevoDataset(Dataset):
         feature_chordAttr = np.empty(self.max_seq_chord)
         feature_chordAttr.fill(CHORD_ATTR_PAD)
 
+        key_v2 = ""
+        with open(self.data_files_chord_v2[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                if line_arr[0] == "key":
+                    key_v2 = line_arr[1] + " "+ line_arr[2]
+                    continue
+
         key = ""
         with open(self.data_files_chord[idx], encoding = 'utf-8') as f:
             for line in f:
@@ -258,6 +299,8 @@ class VevoDataset(Dataset):
             feature_key = torch.tensor([0])
         else:
             feature_key = torch.tensor([1])
+        feature_key_v2 = torch.from_numpy(key_dic[key_v2])
+        feature_key_v2 = feature_key_v2.to(torch.long)
 
         feature_chord = torch.from_numpy(feature_chord)
         feature_chord = feature_chord.to(torch.long)
@@ -490,6 +533,7 @@ class VevoDataset(Dataset):
                 "chord_attr":feature_chordAttr,
                 "semanticList": feature_semantic_list, 
                 "key": feature_key,
+                "key_v2": feature_key_v2,
                 "scene_offset": feature_scene_offset,
                 "motion": feature_motion,
                 "emotion": feature_emotion,

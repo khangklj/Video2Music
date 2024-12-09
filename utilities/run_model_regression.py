@@ -22,7 +22,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_note_density = batch["note_density"].to(get_device())
         feature_loudness = batch["loudness"].to(get_device())
 
-        y = model(
+        feature_key_v2 = batch["feature_key_v2"].to(get_device())
+
+        y, y_key = model(
                   feature_semantic_list, 
                   feature_scene_offset,
                   feature_motion,
@@ -35,6 +37,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
 
         out = loss.forward(y, feature_combined)
+        out_key = loss.forward(y_key, feature_key_v2)
+        out = out + out_key
+
         out.backward()
         opt.step()
         
@@ -78,8 +83,10 @@ def eval_model(model, dataloader, loss):
             feature_emotion = batch["emotion"].to(get_device())
             feature_loudness = batch["loudness"].to(get_device())
             feature_note_density = batch["note_density"].to(get_device())
+
+            feature_key_v2 = batch["feature_key_v2"].to(get_device())
             
-            y = model(
+            y, y_key = model(
                     feature_semantic_list, 
                     feature_scene_offset,
                     feature_motion,
@@ -106,6 +113,8 @@ def eval_model(model, dataloader, loss):
             sum_rmse_loudness += float(rmse_loudness)
 
             out = loss.forward(y, feature_combined)
+            out_key = loss.forward(y_key, feature_key_v2)
+            out = out + out_key
             sum_loss += float(out)
             
         avg_loss    = sum_loss / n_test

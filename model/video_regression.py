@@ -141,6 +141,7 @@ class VideoRegression(nn.Module):
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)
+            self.fc5 = nn.Linear(self.d_model, 1)
         elif self.regModel == 'minGRULM':
             self.fc = nn.Linear(self.total_vf_dim, 2)            
 
@@ -198,8 +199,10 @@ class VideoRegression(nn.Module):
 
             out = self.dropout(out)
             out = self.fc4(out)
+            out_key = self.fc5(out[:, -1, :])
+            out_key = torch.round(torch.clamp(out_key, min=-7, max=4))
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
             out = self.dropout(out)
             out = self.fc(out)        
-        return out
+        return out, out_key

@@ -198,9 +198,14 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
 
             out = self.dropout(out)
-            out = self.fc4(out)
+
+            # Key
             out_key = self.fc5(out[:, -1, :])
             out_key = torch.round(torch.clamp(out_key, min=-7, max=4))
+
+            out = self.fc4(out)
+            
+            
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
             out = self.dropout(out)

@@ -126,10 +126,15 @@ class CombinedLoss(_Loss):
 
     def forward(self, input, target):
         loss = torch.tensor(0.0).to(get_device())
+
+        count = 0
         for lossFunction in self.lossFunctionList:
-            loss += lossFunction(input, target)
+            l = lossFunction(input, target)
+            if l > 1e-10:
+                count += 1
+            loss += l
 
         if self.type_ == 'sum':
             return loss
       
-        return loss / len(self.lossFunctionList)
+        return loss / count

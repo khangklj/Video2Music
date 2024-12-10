@@ -102,6 +102,11 @@ def eval_model(model, dataloader, loss):
             rmse = torch.sqrt(mse)
             sum_rmse += float(rmse)
 
+            # Key RMSE loss
+            mse_key = F.mse_loss(y_key, feature_key_v2)
+            rmse_key = torch.sqrt(mse_key)
+            sum_rmse_key += float(rmse_key)
+
             y_note_density, y_loudness = torch.split(y, split_size_or_sections=1, dim=1)
 
             mse_note_density = F.mse_loss(y_note_density, feature_note_density)
@@ -121,5 +126,6 @@ def eval_model(model, dataloader, loss):
         avg_rmse     = sum_rmse / n_test
         avg_rmse_note_density     = sum_rmse_note_density / n_test
         avg_rmse_loudness     = sum_rmse_loudness / n_test
+        avg_rmse_key     = sum_rmse_key / n_test # Key Avg RMSE loss
 
-    return avg_loss, avg_rmse, avg_rmse_note_density, avg_rmse_loudness
+    return avg_loss, avg_rmse, avg_rmse_note_density, avg_rmse_loudness, avg_rmse_key

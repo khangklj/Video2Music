@@ -223,9 +223,9 @@ def main( vm = "" , isPrintArgs = True ):
             train_loss_func = CombinedLoss([
                 nn.CrossEntropyLoss(ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
                 # nn.CrossEntropyLoss(weight=chord_weight, ignore_index=CHORD_PAD, label_smoothing=args.ce_smoothing),
-                TopKAuxiliaryLoss(k=3, weight=0.8, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
-                TopKAuxiliaryLoss(k=5, weight=0.5, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
-            ])
+                TopKAuxiliaryLoss(k=3, weight=1.0, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD),
+                TopKAuxiliaryLoss(k=5, weight=1.0, vocab_size=CHORD_SIZE, ignore_index=CHORD_PAD)
+            ], type='avg')
 
     eval_loss_func = train_loss_func
 

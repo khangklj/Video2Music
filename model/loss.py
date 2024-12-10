@@ -119,13 +119,17 @@ class TopKAuxiliaryLoss(_Loss):
         return F.relu(lowest_topk_scores - true_scores)
 
 class CombinedLoss(_Loss):
-    def __init__(self, lossFunctionList=[]):
+    def __init__(self, lossFunctionList=[], type='sum'):
         super().__init__()
         self.lossFunctionList = nn.ModuleList(lossFunctionList)
+        self.type_ = type
 
     def forward(self, input, target):
         loss = torch.tensor(0.0).to(get_device())
         for lossFunction in self.lossFunctionList:
             loss += lossFunction(input, target)
 
-        return loss
+        if self.type_ == 'sum':
+            return loss
+      
+        return loss / len(self.lossFunctionList)

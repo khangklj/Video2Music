@@ -579,7 +579,7 @@ class Video2music:
                                               max_conseq_N= max_conseq_N,
                                               max_conseq_chord = max_conseq_chord)
             
-            y = self.modelReg(
+            y, y_key = self.modelReg(
                         feature_semantic_list, 
                         feature_scene_offset,
                         feature_motion,
@@ -639,7 +639,10 @@ class Video2music:
                 else:
                     midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
             midi_chords = voice(midi_chords_orginal)
-            trans = traspose_key_dic[key]
+            # FLAG
+            # trans = traspose_key_dic[key]
+            trans = int(y_key.item()) 
+
 
             for i, chord in enumerate(midi_chords):
                 if densitylist[i] == 0:

@@ -232,8 +232,8 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, 
-                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness])
+            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key, 
+                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key]) 
     return
 
 if __name__ == "__main__":

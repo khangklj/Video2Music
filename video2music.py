@@ -412,7 +412,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer, key):
+    def generate(self, video, primer, key=None):
 
         feature_dir = Path("./feature")
         output_dir = Path("./output")
@@ -640,8 +640,11 @@ class Video2music:
                     midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
             midi_chords = voice(midi_chords_orginal)
             # FLAG
-            # trans = traspose_key_dic[key]
-            trans = int(y_key.item()) 
+            if key is None:
+                trans = int(y_key.item())
+            else:
+                trans = traspose_key_dic[key]
+             
 
 
             for i, chord in enumerate(midi_chords):

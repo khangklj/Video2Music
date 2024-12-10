@@ -72,6 +72,7 @@ def eval_model(model, dataloader, loss):
         sum_loss   = 0.0
         
         sum_rmse    = 0.0
+        sum_rmse_key = 0.0 # Key
         sum_rmse_note_density = 0.0
         sum_rmse_loudness = 0.0
 

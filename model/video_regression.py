@@ -134,6 +134,7 @@ class VideoRegression(nn.Module):
             
         if self.regModel in ('bigru', 'bilstm'):
             self.bifc = nn.Linear(self.d_model * 2, 2)
+            self.fc_key = projection(self.d_model * 2, 1)
         
         projection = nn.Linear
         # projection = KANLinear
@@ -141,7 +142,7 @@ class VideoRegression(nn.Module):
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)
-            self.fc5 = nn.Linear(self.d_model, 1)
+            self.fc_key = projection(self.d_model, 1)
         elif self.regModel == 'minGRULM':
             self.fc = nn.Linear(self.total_vf_dim, 2)            
 
@@ -176,6 +177,11 @@ class VideoRegression(nn.Module):
         elif self.regModel == "bigru":
             out, _ = self.bigru(vf_concat)
             out = out.permute(1,0,2)
+
+            # Key
+            out_key = self.fc_key(out[:, -1, :])
+            out_key = torch.round(torch.clamp(out_key, min=-7, max=4))
+
             out = self.bifc(out)
         elif self.regModel == "lstm":
             out, _ = self.lstm(vf_concat)
@@ -186,21 +192,22 @@ class VideoRegression(nn.Module):
             out = out.permute(1,0,2)
             out = self.fc(out)
         elif self.regModel in ("mamba", "moemamba", "mamba+"):            
-            vf_concat = self.fc3(vf_concat)
-            
+            vf_concat = self.fc3(vf_concat)            
             out = self.model(vf_concat)
+            out = self.dropout(out)       
 
-            out = self.dropout(out)           
+            # Key
+            out_key = self.fc_key(out[:, -1, :])
+            out_key = torch.round(torch.clamp(out_key, min=-7, max=4))
+
             out = self.fc4(out)
         elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
-            vf_concat = self.fc3(vf_concat)
-            
+            vf_concat = self.fc3(vf_concat)            
             out = self.model(vf_concat)
-
             out = self.dropout(out)
 
             # Key
-            out_key = self.fc5(out[:, -1, :])
+            out_key = self.fc_key(out[:, -1, :])
             out_key = torch.round(torch.clamp(out_key, min=-7, max=4))
 
             out = self.fc4(out)

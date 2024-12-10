@@ -104,6 +104,8 @@ def eval_model(model, dataloader, loss):
             sum_rmse += float(rmse)
 
             # Key RMSE loss
+            print(y_key)
+            print(feature_key_v2)
             mse_key = F.mse_loss(y_key, feature_key_v2)
             rmse_key = torch.sqrt(mse_key)
             sum_rmse_key += float(rmse_key)

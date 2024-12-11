@@ -645,7 +645,7 @@ class VideoMusicTransformer_V3(nn.Module):
         # Transformer
         use_KAN = False
 
-        RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+        RoPE = RotaryPositionalEmbeddings(self.d_model * 2, max_sequence_video)
         # norm = RMSNorm(self.d_model, elementwise_affine=True)
         norm = nn.LayerNorm(self.d_model)
 

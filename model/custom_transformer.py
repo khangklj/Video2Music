@@ -779,7 +779,6 @@ class DifferentialMultiheadAttention(Module):
         q = q.view(2 * num_heads, tgt_len, bsz, head_dim)
         k = k.view(2 * num_heads, src_len, bsz, head_dim)
 
-        print(q.shape, k.shape)
         # RoPE here - OUR MODIFY
         if self.RoPE is not None:
             q = self.RoPE.forward(q)

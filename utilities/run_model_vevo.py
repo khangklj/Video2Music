@@ -3,15 +3,19 @@ import time
 
 from .constants import *
 from utilities.device import get_device
+from utilities.argument_funcs import parse_train_args
 from .lr_scheduling import get_lr
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 import json
+import random
 
 from dataset.vevo_dataset import compute_vevo_accuracy, compute_vevo_correspondence, compute_hits_k, compute_hits_k_root_attr, compute_vevo_accuracy_root_attr, compute_vevo_correspondence_root_attr
 
 from third_party.log_maxvio import save_maxvio, reset_maxvio
+
+args = parse_train_args()[0]
 
 def train_epoch(cur_epoch, model, dataloader, 
                 train_loss_func, train_loss_emotion_func,
@@ -103,7 +107,17 @@ def train_epoch(cur_epoch, model, dataloader,
                 # tgt_emotion = tgt_emotion.squeeze()
                 # loss_chord = train_loss_func.forward(y, tgt)
                 # loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
-                total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
+                if args.droploss:
+                    p = random.random()
+                    if p < 0.5:
+                        total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
+                    elif p < 0.75:
+                        total_loss = loss_chord
+                    else:
+                        total_loss = loss_emotion
+                else:
+                    total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
+                    
                 total_loss.backward()
                 opt.step()
                 if(lr_scheduler is not None):

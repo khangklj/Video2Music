@@ -132,6 +132,7 @@ class CombinedLoss(_Loss):
             l = lossFunction(input, target)
             if l > 1e-10:
                 count += 1
+                print(l)
             loss += l
 
         if self.type_ == 'sum':

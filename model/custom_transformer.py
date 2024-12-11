@@ -627,13 +627,13 @@ class DifferentialMultiheadAttention(Module):
         self.num_heads = num_heads
         self.dropout = dropout
         self.batch_first = batch_first
-        self.head_dim = embed_dim // num_heads // 2
+        self.head_dim = embed_dim // num_heads
         self.scaling = self.head_dim ** -0.5
 
         self.RoPE = copy.deepcopy(RoPE)
 
-        self.k_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
-        self.q_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
+        self.k_proj = nn.Linear(embed_dim, embed_dim * 2, **factory_kwargs, bias=False)
+        self.q_proj = nn.Linear(embed_dim, embed_dim * 2, **factory_kwargs, bias=False)
         self.v_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
         self.out_proj = nn.Linear(embed_dim, embed_dim, **factory_kwargs, bias=False)
         self._reset_parameters()
@@ -786,7 +786,7 @@ class DifferentialMultiheadAttention(Module):
         
         q = q.view(bsz, tgt_len, 2 * num_heads, head_dim)
         k = k.view(bsz, src_len, 2 * num_heads, head_dim)
-        v = v.view(bsz, src_len, num_heads, 2 * head_dim)
+        v = v.view(bsz, src_len, num_heads, head_dim)
 
         offset = src_len - tgt_len
         q = q.transpose(1, 2)

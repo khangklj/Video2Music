@@ -140,6 +140,7 @@ class RotaryPositionalEmbeddings(nn.Module):
         # Cast to float to match the reference implementation
         # tensor has shape [b, s, n_h, h_d // 2, 2]
         xshaped = x.float().reshape(*x.shape[:-1], -1, 2)
+        xshaped = xshaped.permute(2, 1, 0, 3, 4)
 
         # reshape the cache for broadcasting
         # tensor has shape [b, s, 1, h_d // 2, 2] if packed samples,

@@ -145,11 +145,8 @@ class RotaryPositionalEmbeddings(nn.Module):
         # reshape the cache for broadcasting
         # tensor has shape [b, s, 1, h_d // 2, 2] if packed samples,
         # otherwise has shape [1, s, 1, h_d // 2, 2]
-        print(rope_cache.shape)
         rope_cache = rope_cache.view(-1, xshaped.size(1), 1, xshaped.size(3), 2)
-        print(rope_cache.shape)
         rope_cache = rope_cache[:xshaped.size(0), ...]
-        print(x.shape, xshaped.shape, rope_cache.shape)
 
         # tensor has shape [b, s, n_h, h_d // 2, 2]
         x_out = torch.stack(

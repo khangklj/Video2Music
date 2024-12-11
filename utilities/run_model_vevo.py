@@ -107,7 +107,7 @@ def train_epoch(cur_epoch, model, dataloader,
                 # tgt_emotion = tgt_emotion.squeeze()
                 # loss_chord = train_loss_func.forward(y, tgt)
                 # loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
-                if args.droploss:
+                if args.drop_loss:
                     p = random.random()
                     if p < 0.5:
                         total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
@@ -117,7 +117,7 @@ def train_epoch(cur_epoch, model, dataloader,
                         total_loss = loss_emotion
                 else:
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
-                    
+
                 total_loss.backward()
                 opt.step()
                 if(lr_scheduler is not None):

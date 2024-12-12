@@ -625,7 +625,7 @@ class DifferentialMultiheadAttention(Module):
         self.embed_dim = embed_dim
 
         self.num_heads = num_heads
-        self.dropout = dropout
+        self.dropout = nn.Dropout(dropout)
         self.batch_first = batch_first
         self.head_dim = embed_dim // num_heads
         self.scaling = self.head_dim ** -0.5
@@ -816,6 +816,7 @@ class DifferentialMultiheadAttention(Module):
         lambda_full = lambda_1 - lambda_2 + self.lambda_init
         attn_weights = attn_weights.view(bsz, self.num_heads, 2, tgt_len, src_len)
         attn_weights = attn_weights[:, :, 0] - lambda_full * attn_weights[:, :, 1]
+        attn_weights = self.dropout(attn_weights)
         
         attn = torch.matmul(attn_weights, v)
 

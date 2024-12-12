@@ -109,12 +109,21 @@ def train_epoch(cur_epoch, model, dataloader,
                 # loss_emotion = train_loss_emotion_func.forward(y, tgt_emotion)
                 if args.drop_loss:
                     p = random.random()
-                    if p < 0.6:
-                        total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
-                    elif p < 0.8:
-                        total_loss = loss_chord
+                    if cur_epoch < 35:
+                        if p < 0.6:
+                            total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
+                        elif p < 0.8:
+                            total_loss = loss_chord
+                        else:
+                            total_loss = loss_emotion
                     else:
-                        total_loss = loss_emotion
+                        t = 1.2
+                        if p < 0.6:
+                            total_loss = t*LOSS_LAMBDA * loss_chord + (1-t*LOSS_LAMBDA) * loss_emotion
+                        elif p < 0.8:
+                            total_loss = loss_chord
+                        else:
+                            total_loss = loss_emotion
                 else:
                     total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 

@@ -356,10 +356,12 @@ class VideoMusicTransformer_V2(nn.Module):
         self.condition_linear = projection(1, self.d_model)
         
         # Transformer
-        if rms_norm:
-            norm = RMSNorm(self.d_model)
-        else:
-            norm = nn.LayerNorm(self.d_model)
+        # if rms_norm:
+        #     norm = RMSNorm(self.d_model)
+        # else:
+        #     norm = nn.LayerNorm(self.d_model)
+        norm = RMSNorm(self.d_model)
+        pre_norm = True
 
         use_KAN = False
 
@@ -391,11 +393,11 @@ class VideoMusicTransformer_V2(nn.Module):
                                   temperature_scheduler=temperature_scheduler, use_KAN=use_KAN)
 
         swiglu = GLUExpert(self.d_model, self.d_ff, self.dropout)
-        shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
-        shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=False, norm=norm, dropout=self.dropout)
+        shallow_encoder_layer = TransformerEncoderLayer(att, swiglu, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
+        shallow_decoder_layer = TransformerDecoderLayer(att, att, swiglu, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
 
-        deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
-        deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
+        deep_encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
+        deep_decoder_layer = TransformerDecoderLayer(att, att, moelayer, pre_norm=pre_norm, norm=norm, dropout=self.dropout)
 
         rate = 3
         encoder_layers = nn.ModuleList([copy.deepcopy(shallow_encoder_layer) for _ in range(rate)] + 

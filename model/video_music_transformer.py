@@ -646,8 +646,8 @@ class VideoMusicTransformer_V3(nn.Module):
         use_KAN = False
 
         RoPE = RotaryPositionalEmbeddings(self.d_model * 2, max_sequence_video)
-        # norm = RMSNorm(self.d_model, elementwise_affine=True)
-        norm = nn.LayerNorm(self.d_model)
+        norm = RMSNorm(self.d_model, elementwise_affine=True)
+        # norm = nn.LayerNorm(self.d_model)
 
         self.n_experts = 6
         self.n_experts_per_token = 2
@@ -658,9 +658,7 @@ class VideoMusicTransformer_V3(nn.Module):
         topk_scheduler = None
         temperature_scheduler = None
 
-        balancing = False
-        # if self.version_name in ('2.3'):
-        #     balancing = True
+        balancing = True
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

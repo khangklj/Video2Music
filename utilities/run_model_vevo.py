@@ -115,23 +115,16 @@ def train_epoch(cur_epoch, model, dataloader,
                         total_loss = loss_chord
                     else:
                         total_loss = loss_emotion
-                    # if cur_epoch < 35:
-                    #     if p < 0.6:
-                    #         total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
-                    #     elif p < 0.8:
-                    #         total_loss = loss_chord
-                    #     else:
-                    #         total_loss = loss_emotion
-                    # else:
-                    #     t = 1.2
-                    #     if p < 0.6:
-                    #         total_loss = t*LOSS_LAMBDA * loss_chord + (1-t*LOSS_LAMBDA) * loss_emotion
-                    #     elif p < 0.8:
-                    #         total_loss = loss_chord
-                    #     else:
-                    #         total_loss = loss_emotion
                 else:
-                    total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
+                    if cur_epoch < 30:
+                        total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
+                    else:
+                        if loss_chord > 1.0:
+                            total_loss = loss_chord
+                        elif loss_emotion > 0.41:
+                            total_loss = loss_emotion
+                        else:
+                            total_loss = LOSS_LAMBDA * loss_chord + (1-LOSS_LAMBDA) * loss_emotion
 
                 total_loss.backward()
                 opt.step()

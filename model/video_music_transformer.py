@@ -360,8 +360,10 @@ class VideoMusicTransformer_V2(nn.Module):
         #     norm = RMSNorm(self.d_model)
         # else:
         #     norm = nn.LayerNorm(self.d_model)
-        norm = RMSNorm(self.d_model)
-        pre_norm = True
+        # norm = RMSNorm(self.d_model)
+        # pre_norm = True
+        norm = nn.LayerNorm(self.d_model)
+        pre_norm = False
 
         use_KAN = False
 
@@ -385,7 +387,7 @@ class VideoMusicTransformer_V2(nn.Module):
             topk_scheduler = None
         temperature_scheduler = None
 
-        balancing = False
+        balancing = True
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

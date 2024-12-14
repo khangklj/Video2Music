@@ -363,7 +363,7 @@ class VideoMusicTransformer_V2(nn.Module):
         # norm = RMSNorm(self.d_model)
         # pre_norm = True
         norm = nn.LayerNorm(self.d_model)
-        pre_norm = False
+        pre_norm = True
 
         use_KAN = False
 

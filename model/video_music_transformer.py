@@ -313,7 +313,7 @@ class VideoMusicTransformer_V2(nn.Module):
     def __init__(self, version_name='2.0', n_layers=6, num_heads=8, d_model=512, dim_feedforward=1024,
                  dropout=0.1, max_sequence_midi =2048, max_sequence_video=300, 
                  max_sequence_chord=300, total_vf_dim=0, rms_norm=False, scene_embed=False,
-                 chord_embed=False, dropTokenRate=0.0):
+                 chord_embed=False, dropTokenRate=0.0, balancing=False):
         super(VideoMusicTransformer_V2, self).__init__()
 
         self.nlayers    = n_layers
@@ -360,10 +360,10 @@ class VideoMusicTransformer_V2(nn.Module):
         #     norm = RMSNorm(self.d_model)
         # else:
         #     norm = nn.LayerNorm(self.d_model)
-        norm = RMSNorm(self.d_model)
+        # norm = RMSNorm(self.d_model)
         # pre_norm = True
-        # norm = nn.LayerNorm(self.d_model)
-        pre_norm = True
+        norm = nn.LayerNorm(self.d_model)
+        pre_norm = False
 
         use_KAN = False
 
@@ -387,7 +387,7 @@ class VideoMusicTransformer_V2(nn.Module):
             topk_scheduler = None
         temperature_scheduler = None
 
-        balancing = True
+        balancing = balancing
           
         moelayer = SharedMoELayer(expert=expert, d_model=self.d_model, n_experts=self.n_experts, 
                                   n_experts_per_token=self.n_experts_per_token, dropout=self.dropout, 

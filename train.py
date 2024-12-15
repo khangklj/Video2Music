@@ -157,7 +157,7 @@ def main( vm = "" , isPrintArgs = True ):
                     max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                     max_sequence_chord=args.max_sequence_chord, total_vf_dim=total_vf_dim,
                     rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed,
-                    dropTokenRate=args.droptoken).to(get_device())
+                    dropTokenRate=args.droptoken, balancing=args.balancing).to(get_device())
     elif args.music_gen_version.startswith('3.'):
         model = VideoMusicTransformer_V3(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                     d_model=args.d_model, dim_feedforward=args.dim_feedforward, dropout=args.dropout,

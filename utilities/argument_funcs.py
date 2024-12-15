@@ -5,7 +5,7 @@ version = VERSION
 rpr = True
 augmentation = False
 chord_embed = True
-music_gen_version = '2.1'
+music_gen_version = '2.0'
 batch_size = 24
 epochs = 50
 motion_type = 1
@@ -14,9 +14,10 @@ split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'RAdamW' # Adam / AdamW / RAdamW / Lion
+optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
 auxiliary_loss = True # False / True
-drop_loss = True # False / True
+drop_loss = False # False / True
+balancing = False # True / False
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -69,6 +70,8 @@ def parse_train_args():
     parser.add_argument("-optimizer", type=str, default=optimizer, help="Choose optimizer")
     parser.add_argument("-auxiliary_loss", type=bool, default=auxiliary_loss, help="False / True")
     parser.add_argument("-drop_loss", type=bool, default=drop_loss, help="False / True")
+    parser.add_argument("-balancing", type=bool, default=balancing, help="False / True")
+
     return parser.parse_known_args()
 
 def print_train_args(args):
@@ -120,6 +123,7 @@ def print_train_args(args):
     print("optimizer:", args.optimizer)
     print("auxiliary_loss:", args.auxiliary_loss)
     print("drop_loss:", args.drop_loss)
+    print("balancing:", args.balancing)
 
     print(SEPERATOR)
     print("")
@@ -166,6 +170,7 @@ def parse_eval_args():
     parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
     parser.add_argument("-chord_embed", type=bool, default=chord_embed, help="Use chord embedding or not")
     parser.add_argument("-rpr", type=bool, default=rpr, help="...")
+    parser.add_argument("-balancing", type=bool, default=balancing, help="False / True")
     return parser.parse_known_args()
 
 def print_eval_args(args):
@@ -196,6 +201,7 @@ def print_eval_args(args):
     print("scene embedding:", args.scene_embed)
     print("chord embedding:", args.chord_embed)
     print("music_gen_version:", args.music_gen_version)
+    print("balancing:", args.balancing)
 
     print(SEPERATOR)
     print("")
@@ -235,5 +241,6 @@ def write_model_params(args, output_file):
     o_stream.write("optimizer: " + str(args.optimizer) + "\n")
     o_stream.write("auxiliary_loss: " + str(args.auxiliary_loss) + "\n")
     o_stream.write("drop_loss: " + str(args.drop_loss) + "\n")
+    o_stream.write("balancing: " + str(args.balancing) + "\n")
 
     o_stream.close()

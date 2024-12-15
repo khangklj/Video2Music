@@ -16,7 +16,7 @@ droptoken = 0.0
 lr = None
 optimizer = 'AdamW' # Adam / AdamW / RAdamW / Lion
 auxiliary_loss = True # False / True
-drop_loss = False # False / True
+drop_loss = True # False / True
 balancing = False # True / False
 
 def parse_train_args():

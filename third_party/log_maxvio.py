@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import os
 
-is_logging = False
+is_logging = True
 c_patch = None
 
 def change_maxvio_logging_state(state):

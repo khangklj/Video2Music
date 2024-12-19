@@ -40,7 +40,6 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
 
-        print(key_pred[:5], key_val[:5])
         out = loss.forward(y_pred, feature_combined) + loss.forward(key_pred, key_val)
         out.backward()
         opt.step()
@@ -129,6 +128,7 @@ def eval_model(model, dataloader, loss):
 
             precision_key = torch.sum((torch.round(key_pred) == key_val).float())
             sum_precision_key += float(precision_key)
+            print(key_pred[:5], key_val[:5])
             
         avg_loss    = sum_loss / n_test
         avg_rmse     = sum_rmse / n_test

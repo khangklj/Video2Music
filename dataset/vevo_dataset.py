@@ -52,6 +52,7 @@ class VevoDataset(Dataset):
         self.augmentation = augmentation
 
         self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
+        self.vevo_chord_root_no_norm = os.path.join( dataset_root, "vevo_chord", "lab_v2", "all")
         self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
         
         if self.motion_type == 0:
@@ -89,7 +90,8 @@ class VevoDataset(Dataset):
             for line in f:
                 self.id_list.append(line.strip())
         
-        self.data_files_chord = []      
+        self.data_files_chord = []
+        self.data_files_chord_no_norm = []
         self.data_files_emotion = []
         self.data_files_motion = []
         self.data_files_scene_offset = []
@@ -103,6 +105,7 @@ class VevoDataset(Dataset):
 
         for fid in self.id_list:
             fpath_chord = os.path.join( self.vevo_chord_root, fid + ".lab" )
+            fpath_chord_no_norm = os.path.join( self.vevo_chord_root_no_norm, fid + ".lab" )
             fpath_emotion = os.path.join( self.vevo_emotion_root, fid + ".lab" )
             
             if self.motion_type == 0:
@@ -126,6 +129,7 @@ class VevoDataset(Dataset):
                     checkFile_semantic = False
             
             checkFile_chord = os.path.exists(fpath_chord)
+            checkFile_chord_no_norm = os.path.exists(fpath_chord_no_norm)
             checkFile_emotion = os.path.exists(fpath_emotion)
             checkFile_motion = os.path.exists(fpath_motion)
             checkFile_scene_offset = os.path.exists(fpath_scene_offset)
@@ -133,10 +137,11 @@ class VevoDataset(Dataset):
             checkFile_loudness = os.path.exists(fpath_loudness)
             checkFile_note_density = os.path.exists(fpath_note_density)
 
-            if checkFile_chord and checkFile_emotion and checkFile_motion \
+            if checkFile_chord and checkFile_chord_no_norm and checkFile_emotion and checkFile_motion \
                 and checkFile_scene_offset and checkFile_semantic and checkFile_loudness and checkFile_note_density :
 
                 self.data_files_chord.append(fpath_chord)
+                self.data_files_chord_no_norm.append(fpath_chord_no_norm)
                 self.data_files_emotion.append(fpath_emotion)
                 self.data_files_motion.append(fpath_motion)
                 self.data_files_scene_offset.append(fpath_scene_offset)
@@ -283,8 +288,16 @@ class VevoDataset(Dataset):
         else:
             feature_key = torch.tensor([1])
 
-        if key in key_dic:
-            key_val = torch.tensor([key_dic[key]])
+        with open(self.data_files_chord_no_norm[idx], encoding = 'utf-8') as f:
+            for line in f:
+                line = line.strip()
+                line_arr = line.split(" ")
+                if line_arr[0] == "key":
+                    original_key = line_arr[1] + " "+ line_arr[2]
+                    break
+
+        if original_key in key_dic:
+            key_val = torch.tensor([key_dic[original_key]])
 
         feature_chord = torch.from_numpy(feature_chord)
         feature_chord = feature_chord.to(torch.long)

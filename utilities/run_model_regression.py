@@ -99,7 +99,7 @@ def eval_model(model, dataloader, loss):
             # Scale key_pred from (-1, 1) to (-7.25, 4.25) Note: This value will be rounded at inference
             old_min, old_max = -1.0, 1.0
             new_min, new_max = -7.25, 4.25
-            key_pred = new_min  + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
+            key_pred = new_min + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
 
             feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
             feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
@@ -134,6 +134,6 @@ def eval_model(model, dataloader, loss):
         avg_rmse_note_density     = sum_rmse_note_density / n_test
         avg_rmse_loudness     = sum_rmse_loudness / n_test
         avg_rmse_key     = sum_rmse_key / n_test
-        acc_key = sum_precision_key / n_test
+        acc_key = sum_precision_key / (n_test * batch["semanticList"].shape[0])
 
     return avg_loss, avg_rmse, avg_rmse_note_density, avg_rmse_loudness, avg_rmse_key, acc_key

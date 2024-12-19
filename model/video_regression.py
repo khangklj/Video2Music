@@ -208,10 +208,10 @@ class VideoRegression(nn.Module):
             
             out = self.model(vf_concat)
 
-            loudness_notedensity = self.bifc(out[:, :-1, :])
+            loudness_notedensity = self.fc4(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
-            loudness_notedensity = self.bifc(out[:, :-1, :])
+            loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         return (loudness_notedensity, key)

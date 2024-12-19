@@ -108,7 +108,7 @@ def main( vm = "" , isPrintArgs = True ):
         total_vf_dim += 5
 
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, num_workers=args.n_workers, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, num_workers=args.n_workers)
+    val_loader = DataLoader(val_dataset, batch_size=args.batch_size, num_workers=args.n_workers)
     
     model = VideoRegression(n_layers=args.n_layers, d_model=args.d_model, d_hidden=args.dim_feedforward, dropout=args.dropout, use_KAN=args.use_KAN, max_sequence_video=args.max_sequence_video, total_vf_dim=total_vf_dim, regModel=args.regModel).to(get_device())
     

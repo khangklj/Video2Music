@@ -146,12 +146,12 @@ class VideoRegression(nn.Module):
         if self.regModel in ('bigru', 'bilstm'):
             self.key_regressor = nn.Sequential(
                 projection(self.d_model * 2, 1),
-                nn.Tanh()
+                # nn.Tanh()
             )
         else:
             self.key_regressor = nn.Sequential(
                 projection(self.d_model, 1),
-                nn.Tanh()
+                # nn.Tanh()
             )
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):

@@ -21,7 +21,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
 
         feature_note_density = batch["note_density"].to(get_device())
         feature_loudness = batch["loudness"].to(get_device())
-        key_val = batch["key_val"].to(get_device())
+        key_val = batch["key_val"].to(get_device()).to(torch.float)
 
         # Loudness_notedensity and Key
         y_pred, key_pred = model(
@@ -32,9 +32,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         
         y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
         # Scale key_pred from (-1, 1) to (-7.25, 4.25) Note: This value will be rounded at inference
-        old_min, old_max = -1, 1
+        old_min, old_max = -1.0, 1.0
         new_min, new_max = -7.25, 4.25
-        key_pred = new_min  + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
+        key_pred = new_min + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
         
         feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
@@ -86,7 +86,7 @@ def eval_model(model, dataloader, loss):
             feature_emotion = batch["emotion"].to(get_device())
             feature_loudness = batch["loudness"].to(get_device())
             feature_note_density = batch["note_density"].to(get_device())
-            key_val = batch["key_val"].to(get_device())
+            key_val = batch["key_val"].to(get_device()).to(torch.float)
 
             # Loudness_notedensity and Key
             y_pred, key_pred = model(
@@ -97,7 +97,7 @@ def eval_model(model, dataloader, loss):
             
             y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
             # Scale key_pred from (-1, 1) to (-7.25, 4.25) Note: This value will be rounded at inference
-            old_min, old_max = -1, 1
+            old_min, old_max = -1.0, 1.0
             new_min, new_max = -7.25, 4.25
             key_pred = new_min  + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
 

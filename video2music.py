@@ -412,7 +412,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer, key):
+    def generate(self, video, primer):
 
         feature_dir = Path("./feature")
         output_dir = Path("./output")
@@ -477,11 +477,12 @@ class Video2music:
         #feature_semantic_list.append( feature_semantic )
         feature_semantic_list = feature_semantic.to(self.device)
 
-        if "major" in key:
-            feature_key = torch.tensor([0])
-            feature_key = feature_key.float()
-        elif "minor" in key:
+        emotion_idx = torch.argmax(feature_emotion.mean(dim=0))
+        if emotion_idx in (1, 2, 3): # Minor
             feature_key = torch.tensor([1])
+            feature_key = feature_key.float()
+        else: # Major
+            feature_key = torch.tensor([0])
             feature_key = feature_key.float()
         
         feature_key = feature_key.to(self.device)
@@ -497,10 +498,10 @@ class Video2music:
 
         primer = primer.strip()
         if primer.strip() == "":
-            if "major" in key:
-                primer = "C"
-            else:
+            if emotion_idx in (1, 2, 3):
                 primer = "Am"
+            else:
+                primer = "C"
         
         pChordList = primer.split()
 
@@ -579,7 +580,7 @@ class Video2music:
                                               max_conseq_N= max_conseq_N,
                                               max_conseq_chord = max_conseq_chord)
             
-            y = self.modelReg(
+            y, key_pred = self.modelReg(
                         feature_semantic_list, 
                         feature_scene_offset,
                         feature_motion,
@@ -639,7 +640,7 @@ class Video2music:
                 else:
                     midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
             midi_chords = voice(midi_chords_orginal)
-            trans = traspose_key_dic[key]
+            trans = torch.round(key_pred).item()
 
             for i, chord in enumerate(midi_chords):
                 if densitylist[i] == 0:

@@ -9,9 +9,9 @@ augmentation = False
 chord_embedding = False
 batch_size = 32
 epochs = 100
-n_layers = 2
+n_layers = 4
 motion_type = 1
-lr = None
+lr = 0.01
 scene_embed = False
 optimizer = 'RAdamW' # Adam / AdamW / RAdamW
 

@@ -194,21 +194,21 @@ def main( vm = "" , isPrintArgs = True ):
         lr = args.lr
 
     # Chord weights
-    chord_count = np.array([1 for _ in range(CHORD_SIZE)]) # Including PAD and EOS
+    # chord_count = np.array([1 for _ in range(CHORD_SIZE)]) # Including PAD and EOS
 
-    for data in train_dataset:
-        for item in data['chord']:
-            chord_count[item] += 1
+    # for data in train_dataset:
+    #     for item in data['chord']:
+    #         chord_count[item] += 1
 
-    for data in val_dataset:
-        for item in data['chord']:
-            chord_count[item] += 1
+    # for data in val_dataset:
+    #     for item in data['chord']:
+    #         chord_count[item] += 1
 
-    for data in test_dataset:
-        for item in data['chord']:
-            chord_count[item] += 1
+    # for data in test_dataset:
+    #     for item in data['chord']:
+    #         chord_count[item] += 1
     
-    chord_weight = torch.tensor(1.0 / chord_count).float().to(get_device())
+    # chord_weight = torch.tensor(1.0 / chord_count).float().to(get_device())
     # print(chord_weight)
 
     ##### SmoothCrossEntropyLoss or CrossEntropyLoss for training #####

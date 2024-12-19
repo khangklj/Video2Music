@@ -4,14 +4,16 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'mamba+'
+regModel = 'bimamba+'
 augmentation = False
 chord_embedding = False
 batch_size = 32
 epochs = 100
 n_layers = 2
 motion_type = 1
+lr = None
 scene_embed = False
+optimizer = 'RAdamW' # Adam / AdamW / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()
@@ -30,8 +32,8 @@ def parse_train_args():
     parser.add_argument("--no_tensorboard", type=bool, default=True, help="Turns off tensorboard result reporting")
     parser.add_argument("-continue_weights", type=str, default=None, help="Model weights to continue training based on")
     parser.add_argument("-continue_epoch", type=int, default=None, help="Epoch the continue_weights model was at")
-    parser.add_argument("-lr", type=float, default=None, help="Constant learn rate. Leave as None for a custom scheduler.")
-    parser.add_argument("-batch_size", type=int, default=32, help="Batch size to use")
+    parser.add_argument("-lr", type=float, default=lr, help="Constant learn rate. Leave as None for a custom scheduler.")
+    parser.add_argument("-batch_size", type=int, default=batch_size, help="Batch size to use")
     parser.add_argument("-epochs", type=int, default=epochs, help="Number of epochs to use")
 
     parser.add_argument("-max_sequence_midi", type=int, default=2048, help="Maximum midi sequence to consider")
@@ -68,6 +70,7 @@ def parse_train_args():
     parser.add_argument("-augmentation", type=bool, default=augmentation, help="Use data augmentation or not")
     parser.add_argument("-motion_type", type=int, default=motion_type, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-scene_embed", type=bool, default=scene_embed, help="Use scene offset embedding or not")
+    parser.add_argument("-optimizer", type=str, default=optimizer, help="optimizer")
 
     return parser.parse_known_args()
 
@@ -112,6 +115,7 @@ def print_train_args(args):
     print("motion_type:", args.motion_type)
     print("scene embedding:", args.scene_embed)
     print("augmentation:", args.augmentation)
+    print("optimizer:", args.optimizer)
 
     print(SEPERATOR)
     print("")
@@ -229,5 +233,6 @@ def write_model_params(args, output_file):
     o_stream.write("motion_type: " + str(args.motion_type) + "\n")
     o_stream.write("scene_embed: " + str(args.scene_embed) + "\n")
     o_stream.write("augmentation: " + str(args.augmentation) + "\n")
+    o_stream.write("optimizer: " + str(args.optimizer) + "\n")
 
     o_stream.close()

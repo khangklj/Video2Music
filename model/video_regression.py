@@ -130,22 +130,29 @@ class VideoRegression(nn.Module):
     
         projection = nn.Linear
         # projection = KANLinear
-        
+
         if self.regModel in ('gru', 'lstm'):
             self.fc = projection(self.d_model, 2)
-            self.key_regressor = projection(self.d_model, 1)
             
         if self.regModel in ('bigru', 'bilstm'):
             self.bifc = projection(self.d_model * 2, 2)
-            self.key_regressor = projection(self.d_model * 2, 1)
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)
-            self.key_regressor = projection(self.d_model, 1)
         elif self.regModel == 'minGRULM':
             self.fc = projection(self.total_vf_dim, 2)
-            self.key_regressor = projection(self.d_model, 1)       
+
+        if self.regModel in ('bigru', 'bilstm'):
+            self.key_regressor = nn.Sequential(
+                projection(self.d_model * 2, 1),
+                nn.Tanh()
+            )
+        else:
+            self.key_regressor = nn.Sequential(
+                projection(self.d_model, 1),
+                nn.Tanh()
+            )
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###

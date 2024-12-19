@@ -128,6 +128,7 @@ def eval_model(model, dataloader, loss):
             sum_rmse_key += float(rmse_key)
 
             precision_key = torch.sum((torch.round(key_pred) == key_val).float())
+            print(precision_key)
             sum_precision_key += float(precision_key)
             
         avg_loss    = sum_loss / n_test
@@ -135,6 +136,6 @@ def eval_model(model, dataloader, loss):
         avg_rmse_note_density     = sum_rmse_note_density / n_test
         avg_rmse_loudness     = sum_rmse_loudness / n_test
         avg_rmse_key     = sum_rmse_key / n_test
-        acc_key = sum_precision_key / (n_test * batch["semanticList"].shape[0])
+        acc_key = sum_precision_key / (n_test * batch["semanticList"].shape[0] * batch["semanticList"].shape[1])
 
     return avg_loss, avg_rmse, avg_rmse_note_density, avg_rmse_loudness, avg_rmse_key, acc_key

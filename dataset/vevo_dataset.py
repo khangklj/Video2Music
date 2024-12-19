@@ -298,6 +298,8 @@ class VevoDataset(Dataset):
 
         if original_key in key_dic:
             key_val = torch.tensor([key_dic[original_key]])
+        else:
+            print(original_key)
 
         feature_chord = torch.from_numpy(feature_chord)
         feature_chord = feature_chord.to(torch.long)

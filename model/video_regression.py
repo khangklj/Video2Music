@@ -86,12 +86,14 @@ class VideoRegression(nn.Module):
 
         # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
+        if self.regModel in ("lstm", "gru", "bilstm", "bigru"):
+            self.key_cls = nn.Parameter(torch.zeros(1, self.total_vf_dim))
+        else:
+            self.key_cls = nn.Parameter(torch.zeros(1, self.d_model))
+
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
         elif self.regModel == "bigru":
-            # ORIGIN
-            # self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
-            # MODIFY
             self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True, dropout=dropout)
         elif self.regModel == "lstm":
             self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers)
@@ -131,9 +133,11 @@ class VideoRegression(nn.Module):
     
         if self.regModel in ('gru', 'lstm'):
             self.fc = nn.Linear(self.d_model, 2)
+            self.key_regressor = nn.Linear(self.d_model, 1)
             
         if self.regModel in ('bigru', 'bilstm'):
             self.bifc = nn.Linear(self.d_model * 2, 2)
+            self.key_regressor = nn.Linear(self.d_model * 2, 1)
         
         projection = nn.Linear
         # projection = KANLinear
@@ -141,6 +145,7 @@ class VideoRegression(nn.Module):
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)
+            self.key_regressor = nn.Linear(self.d_model, 1)
         elif self.regModel == 'minGRULM':
             self.fc = nn.Linear(self.total_vf_dim, 2)            
 
@@ -150,8 +155,7 @@ class VideoRegression(nn.Module):
         vf_concat = feature_semantic_list.float() 
         
         # Scene offset
-        if not self.scene_embed:
-            vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
 
         # Motion
         try:
@@ -162,6 +166,7 @@ class VideoRegression(nn.Module):
         # Emotion
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
         
+        print(vf_concat.shape)
         # Video embedding
         # if not self.scene_embed:
         #     vf_concat = self.Linear_vis(vf_concat)
@@ -189,17 +194,14 @@ class VideoRegression(nn.Module):
             
             out = self.model(vf_concat)
 
-            out = self.dropout(out)           
             out = self.fc4(out)
         elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
-            out = self.dropout(out)
             out = self.fc4(out)
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
-            out = self.dropout(out)
             out = self.fc(out)        
         return out

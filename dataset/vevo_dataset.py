@@ -490,6 +490,7 @@ class VevoDataset(Dataset):
                 "chord_attr":feature_chordAttr,
                 "semanticList": feature_semantic_list, 
                 "key": feature_key,
+                "key_name": key,
                 "scene_offset": feature_scene_offset,
                 "motion": feature_motion,
                 "emotion": feature_emotion,

@@ -86,7 +86,7 @@ class VideoRegression(nn.Module):
 
         # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
-        self.key_cls = nn.Parameter(torch.zeros(1, self.total_vf_dim))
+        self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
 
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)

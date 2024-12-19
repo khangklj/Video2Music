@@ -19,29 +19,39 @@ SEQUENCE_START = 0
 
 key_dic = {
     'F major' : -7,
+    'F# major' : -6,
     'Gb major' : -6,
     'G major' : -5,
+    'G# major' : -4,
     'Ab major' : -4,
     'A major' : -3,
+    'A# major' : -2,
     'Bb major' : -2,
     'B major' : -1,
     'C major' : 0,
+    'C# major' : 1,
     'Db major' : 1,
     'D major' : 2,
+    'D# major' : 3,
     'Eb major' : 3,
     'E major' : 4,
     'D minor' : -7,
+    'D# minor' : -6,
     'Eb minor' : -6,
     'E minor' : -5,
     'F minor' : -4,
     'F# minor' : -3,
+    'Gb minor' : -3,
     'G minor' : -2,
     'G# minor' : -1,
+    'Ab minor' : -1,
     'A minor' : 0,
+    'A# minor' : 1,
     'Bb minor' : 1,
     'B minor' : 2,
     'C minor' : 3,
-    'C# minor' : 4
+    'C# minor' : 4,
+    'Db minor' : 4
 }
 
 class VevoDataset(Dataset):

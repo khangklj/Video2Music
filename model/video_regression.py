@@ -86,10 +86,7 @@ class VideoRegression(nn.Module):
 
         # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
-        if self.regModel in ("lstm", "gru", "bilstm", "bigru"):
-            self.key_cls = nn.Parameter(torch.zeros(1, self.total_vf_dim))
-        else:
-            self.key_cls = nn.Parameter(torch.zeros(1, self.d_model))
+        self.key_cls = nn.Parameter(torch.zeros(1, self.total_vf_dim))
 
         if self.regModel == "bilstm":
             self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
@@ -131,23 +128,24 @@ class VideoRegression(nn.Module):
         elif self.regModel == 'minGRULM':            
             self.model = minGRULM(total_vf_dim=self.total_vf_dim, dim=self.d_model, depth=self.n_layers)
     
-        if self.regModel in ('gru', 'lstm'):
-            self.fc = nn.Linear(self.d_model, 2)
-            self.key_regressor = nn.Linear(self.d_model, 1)
-            
-        if self.regModel in ('bigru', 'bilstm'):
-            self.bifc = nn.Linear(self.d_model * 2, 2)
-            self.key_regressor = nn.Linear(self.d_model * 2, 1)
-        
         projection = nn.Linear
         # projection = KANLinear
+        
+        if self.regModel in ('gru', 'lstm'):
+            self.fc = projection(self.d_model, 2)
+            self.key_regressor = projection(self.d_model, 1)
+            
+        if self.regModel in ('bigru', 'bilstm'):
+            self.bifc = projection(self.d_model * 2, 2)
+            self.key_regressor = projection(self.d_model * 2, 1)
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)
-            self.key_regressor = nn.Linear(self.d_model, 1)
+            self.key_regressor = projection(self.d_model, 1)
         elif self.regModel == 'minGRULM':
-            self.fc = nn.Linear(self.total_vf_dim, 2)            
+            self.fc = projection(self.total_vf_dim, 2)
+            self.key_regressor = projection(self.d_model, 1)       
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -155,53 +153,58 @@ class VideoRegression(nn.Module):
         vf_concat = feature_semantic_list.float() 
         
         # Scene offset
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1)
 
         # Motion
         try:
-            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1)
         except:
             vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
         
         # Emotion
-        vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)
+        vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (batch_size, max_seq_video, total_vf_dim)
         
-        print(vf_concat.shape)
         # Video embedding
         # if not self.scene_embed:
         #     vf_concat = self.Linear_vis(vf_concat)
         # else:
         #     vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
 
+        tmp = self.key_cls.expand(vf_concat.shape[0], -1).unsqueeze(1)
+        vf_concat = torch.cat([vf_concat, tmp], dim=1) # -> (batch_size, max_seq_video+1, total_vf_dim)
+
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)
-            out = out.permute(1,0,2)
-            out = self.bifc(out)
+            loudness_notedensity = self.bifc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "bigru":
             out, _ = self.bigru(vf_concat)
-            out = out.permute(1,0,2)
-            out = self.bifc(out)
+            loudness_notedensity = self.bifc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "lstm":
             out, _ = self.lstm(vf_concat)
-            out = out.permute(1,0,2)
-            out = self.fc(out)
+            loudness_notedensity = self.fc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "gru":
             out, _ = self.gru(vf_concat)
-            out = out.permute(1,0,2)
-            out = self.fc(out)
+            loudness_notedensity = self.fc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
         elif self.regModel in ("mamba", "moemamba", "mamba+"):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
-            out = self.fc4(out)
+            loudness_notedensity = self.bifc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
         elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
-            out = self.fc4(out)
+            loudness_notedensity = self.bifc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
-            out = self.fc(out)        
-        return out
+            loudness_notedensity = self.bifc(out[:, :-1, :])
+            key = self.key_regressor(out[:, -1, :])
+        return (loudness_notedensity, key)

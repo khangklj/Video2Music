@@ -75,9 +75,9 @@ class AttentionModule(nn.Module):
     def forward(self, rnn_output):
         dynamic_vector = self.proj(rnn_output)
 
+        print(rnn_output.shape, dynamic_vector.shape)
         attention_scores = rnn_output @ dynamic_vector.T
         attention_weights = F.softmax(attention_scores, dim=1)
-        print(attention_weights.shape)
 
         context = torch.sum(attention_weights * rnn_output, dim=1)
         return context, attention_weights
@@ -215,7 +215,7 @@ class VideoRegression(nn.Module):
             out, _ = self.model(vf_concat)
 
             loudness_notedensity = self.fc(out)
-            
+
             context, _ = self.attention(out)
             key = self.key_regressor(context)
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            

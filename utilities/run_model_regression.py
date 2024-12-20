@@ -31,6 +31,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
                       feature_emotion)
         
         key_pred = y_pred[:, -1, -1] # Last token
+        print(key_pred.shape, key_val.shape)
         y_pred = y_pred[:, :, :-1] # Loudness_notedensity
         y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
         
@@ -95,6 +96,7 @@ def eval_model(model, dataloader, loss):
                           feature_emotion)
             
             key_pred = y_pred[:, -1, -1] # Last token
+            print(key_pred.shape, key_val.shape)
             y_pred = y_pred[:, :, :-1] # Loudness_notedensity
             y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
             
@@ -103,7 +105,6 @@ def eval_model(model, dataloader, loss):
             feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
             mse_key = F.mse_loss(key_pred, key_val)
-            print(key_pred.shape, key_val.shape)
             rmse_key = torch.sqrt(mse_key)
             sum_rmse_key += float(rmse_key)
 

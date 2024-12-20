@@ -181,6 +181,7 @@ class VideoRegression(nn.Module):
 
         tmp = self.key_cls.expand(vf_concat.shape[0], -1).unsqueeze(1)
         vf_concat = torch.cat([vf_concat, tmp], dim=1) # -> (batch_size, max_seq_video+1, total_vf_dim)
+        print(vf_concat.shape, tmp.shape)
 
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)

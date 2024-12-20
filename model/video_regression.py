@@ -196,18 +196,18 @@ class VideoRegression(nn.Module):
         if self.regModel in ("bilstm", "bigru", "lstm", "gru"):
             out, _ = self.model(vf_concat)
 
-            loudness_notedensity = self.fc(out[:, :, :])
-            key = self.key_regressor(out[:, -1, :])
+            loudness_notedensity = self.fc(out)
+            key = self.key_regressor(out.mean(dim=1))
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
                 
-            loudness_notedensity = self.fc4(out[:, :, :])
-            key = self.key_regressor(out[:, -1, :])
+            loudness_notedensity = self.fc4(out)
+            key = self.key_regressor(out.mean(dim=1))
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
                 
-            loudness_notedensity = self.fc(out[:, :, :])
-            key = self.key_regressor(out[:, -1, :])
+            loudness_notedensity = self.fc(out)
+            key = self.key_regressor(out.mean(dim=1))
         return (loudness_notedensity, key)

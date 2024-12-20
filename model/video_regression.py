@@ -66,6 +66,22 @@ class advancedRNNBlock(nn.Module):
 
         x = self.last_layer(x)
         return x
+
+class AttentionModule(nn.Module):
+    def __init__(self, hidden_size):
+        super(AttentionModule, self).__init__()
+        self.proj = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, rnn_output):
+        dynamic_vector = self.proj(rnn_output)
+
+        attention_scores = rnn_output @ dynamic_vector.T
+        attention_weights = F.softmax(attention_scores, dim=1)
+        print(attention_weights.shape)
+
+        context = torch.sum(attention_weights * rnn_output, dim=1)
+        return context, attention_weights
+
 class VideoRegression(nn.Module):
     def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, use_KAN=False, max_sequence_video=300, 
                  total_vf_dim=0, regModel="bilstm", scene_embed=False, chord_embed=False):
@@ -145,6 +161,7 @@ class VideoRegression(nn.Module):
             self.fc = projection(self.total_vf_dim, 2)
 
         if self.regModel in ('bigru', 'bilstm'):
+            self.attention = AttentionModule(self.d_model * 2)
             self.key_regressor = nn.Sequential(
                 nn.SiLU(),
                 nn.Dropout(dropout),
@@ -152,6 +169,7 @@ class VideoRegression(nn.Module):
                 nn.Tanh()
             )
         else:
+            self.attention = AttentionModule(self.d_model)
             self.key_regressor = nn.Sequential(
                 nn.SiLU(),
                 nn.Dropout(dropout),
@@ -197,17 +215,23 @@ class VideoRegression(nn.Module):
             out, _ = self.model(vf_concat)
 
             loudness_notedensity = self.fc(out)
-            key = self.key_regressor(out.mean(dim=1))
+            
+            context, _ = self.attention(out)
+            key = self.key_regressor(context)
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
                 
             loudness_notedensity = self.fc4(out)
-            key = self.key_regressor(out.mean(dim=1))
+
+            context, _ = self.attention(out)
+            key = self.key_regressor(context)
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
                 
             loudness_notedensity = self.fc(out)
-            key = self.key_regressor(out.mean(dim=1))
+
+            context, _ = self.attention(out)
+            key = self.key_regressor(context)
         return (loudness_notedensity, key)

@@ -38,6 +38,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_combined = torch.cat((feature_note_density, feature_loudness, feature_key), dim=1) # (batch_size, 300, 3)
 
         out = loss.forward(y_pred, feature_combined)
+        print(out.item(), '\t')
         out.backward()
         opt.step()
         

@@ -184,60 +184,81 @@ class VideoRegression(nn.Module):
         #     vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
 
         tmp = self.key_cls.expand(vf_concat.shape[0], -1).unsqueeze(1)
-        vf_concat = torch.cat([tmp, vf_concat], dim=1) # -> (batch_size, max_seq_video+1, total_vf_dim)
+        key_end = False
+        if key_end:
+            vf_concat = torch.cat([vf_concat, tmp], dim=1) # -> (batch_size, max_seq_video+1, total_vf_dim)
+        else:
+            vf_concat = torch.cat([tmp, vf_concat], dim=1)
         # print(vf_concat.shape, tmp.shape)
+
+        # padding_mask = (feature_semantic_list == SEMANTIC_PAD).all(dim=-1) # Shape: (batch_size, seq_len)
+        # first_padding_indices = padding_mask.float().argmax(dim=1) # Shape: (batch_size,)
 
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)
             
-            # loudness_notedensity = self.bifc(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.bifc(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.bifc(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         elif self.regModel == "bigru":
             out, _ = self.bigru(vf_concat)
 
-            # loudness_notedensity = self.bifc(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.bifc(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.bifc(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         elif self.regModel == "lstm":
             out, _ = self.lstm(vf_concat)
 
-            # loudness_notedensity = self.fc(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.fc(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.bifc(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         elif self.regModel == "gru":
             out, _ = self.gru(vf_concat)
 
-            # loudness_notedensity = self.fc(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.fc(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.bifc(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         elif self.regModel in ("mamba", "moemamba", "mamba+"):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
-            # loudness_notedensity = self.bifc(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.fc4(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.fc4(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         elif self.regModel in ('bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
 
-            # loudness_notedensity = self.fc4(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.fc4(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.fc4(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
 
-            # loudness_notedensity = self.fc(out[:, :-1, :])
-            # key = self.key_regressor(out[:, -1, :])
-            loudness_notedensity = self.bifc(out[:, 1:, :])
-            key = self.key_regressor(out[:, 0, :])
+            if key_end:
+                loudness_notedensity = self.fc(out[:, :-1, :])
+                key = self.key_regressor(out[:, -1, :])
+            else:
+                loudness_notedensity = self.fc(out[:, 1:, :])
+                key = self.key_regressor(out[:, 0, :])
         return (loudness_notedensity, key)

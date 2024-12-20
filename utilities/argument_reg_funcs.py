@@ -11,9 +11,9 @@ batch_size = 32
 epochs = 100
 n_layers = 4
 motion_type = 1
-lr = 0.1
+lr = 0.01
 scene_embed = False
-optimizer = 'RAdamW' # Adam / AdamW / RAdamW
+optimizer = 'AdamW' # Adam / AdamW / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

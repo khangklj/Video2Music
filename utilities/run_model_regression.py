@@ -40,7 +40,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
 
         key_loss = F.mse_loss(key_pred, key_val)
         out = loss.forward(y_pred, feature_combined) + key_loss
-        # print(key_loss.item())
+        print(key_loss.item())
         out.backward()
         opt.step()
         
@@ -120,7 +120,7 @@ def eval_model(model, dataloader, loss):
             rmse_loudness = torch.sqrt(mse_loudness)
             sum_rmse_loudness += float(rmse_loudness)
 
-            print(key_pred[0], key_val[0])
+            print(round(key_pred[0].item()), key_val[0].item())
             
         avg_loss    = sum_loss / n_test
         avg_rmse     = sum_rmse / n_test

@@ -103,6 +103,10 @@ class VideoRegression(nn.Module):
 
         # self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
 
+        self.key_rnn = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+                                bidirectional=True, dropout=dropout, batch_first=True)
+        self.key_regressor = nn.Linear(self.d_model * 2, 1)
+
         if self.regModel == "bilstm":
             self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
                                   bidirectional=True, dropout=dropout, batch_first=True)
@@ -149,15 +153,15 @@ class VideoRegression(nn.Module):
         # projection = KANLinear
 
         if self.regModel in ('gru', 'lstm'):
-            self.fc = projection(self.d_model, 3)
+            self.fc = projection(self.d_model, 2)
         elif self.regModel in ('bigru', 'bilstm'):
-            self.fc = projection(self.d_model * 2, 3)
+            self.fc = projection(self.d_model * 2, 2)
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
-            self.fc4 = projection(self.d_model, 3)
+            self.fc4 = projection(self.d_model, 2)
         elif self.regModel == 'minGRULM':
-            self.fc = projection(self.total_vf_dim, 3)
+            self.fc = projection(self.total_vf_dim, 2)
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -192,4 +196,7 @@ class VideoRegression(nn.Module):
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
             out = self.fc(out)
-        return out
+
+        key, _ = self.key_rnn(vf_concat)
+        key = self.key_regressor(key[:, -1, :])
+        return out, key

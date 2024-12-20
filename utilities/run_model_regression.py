@@ -24,14 +24,12 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         key_val = batch["key_val"].to(get_device()).to(torch.float)
 
         # Loudness_notedensity and Key
-        y_pred = model(
+        y_pred, key_pred = model(
                       feature_semantic_list, 
                       feature_scene_offset,
                       feature_motion,
                       feature_emotion)
         
-        key_pred = y_pred[:, 20, -1].unsqueeze(-1) # Last token
-        y_pred = y_pred[:, :, :-1] # Loudness_notedensity
         y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
         
         feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size, 300, 1)
@@ -88,14 +86,12 @@ def eval_model(model, dataloader, loss):
             key_val = batch["key_val"].to(get_device()).to(torch.float)
 
             # Loudness_notedensity and Key
-            y_pred = model(
+            y_pred, key_pred = model(
                           feature_semantic_list, 
                           feature_scene_offset,
                           feature_motion,
                           feature_emotion)
             
-            key_pred = y_pred[:, -1, -1].unsqueeze(-1) # Last token
-            y_pred = y_pred[:, :, :-1] # Loudness_notedensity
             y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
             
             feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size, 300, 1)

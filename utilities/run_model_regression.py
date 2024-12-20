@@ -40,7 +40,8 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (300, 2)
 
-        out = loss.forward(y_pred, feature_combined) + F.mse_loss(key_pred, key_val)
+        # out = loss.forward(y_pred, feature_combined) + F.mse_loss(key_pred, key_val)
+        out = F.mse_loss(key_pred, key_val)
         out.backward()
         opt.step()
         

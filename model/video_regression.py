@@ -73,7 +73,7 @@ class VideoRegression(nn.Module):
         self.n_layers    = n_layers
         self.d_model    = d_model
         self.d_hidden = d_hidden
-        self.dropout    = nn.Dropout(dropout)
+        self.dropout_layer    = nn.Dropout(dropout)
         self.max_seq_video    = max_sequence_video
         self.total_vf_dim = total_vf_dim
         self.regModel = regModel
@@ -89,13 +89,15 @@ class VideoRegression(nn.Module):
         self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
 
         if self.regModel == "bilstm":
-            self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True)
+            self.bilstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
+                                  bidirectional=True, dropout=dropout, batch_first=True)
         elif self.regModel == "bigru":
-            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, bidirectional=True, dropout=dropout)
+            self.bigru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+                                bidirectional=True, dropout=dropout, batch_first=True)
         elif self.regModel == "lstm":
-            self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers)
+            self.lstm = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, dropout=dropout, batch_first=True)
         elif self.regModel == "gru":
-            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers)          
+            self.gru = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, dropout=dropout, batch_first=True)          
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)           
@@ -188,19 +190,19 @@ class VideoRegression(nn.Module):
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "bigru":
             out, _ = self.bigru(vf_concat)
-            out = self.dropout(out)
+            out = self.dropout_layer(out)
 
             loudness_notedensity = self.bifc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "lstm":
             out, _ = self.lstm(vf_concat)
-            out = self.dropout(out)
+            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "gru":
             out, _ = self.gru(vf_concat)
-            out = self.dropout(out)
+            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
@@ -208,7 +210,7 @@ class VideoRegression(nn.Module):
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
-            out = self.dropout(out)
+            out = self.dropout_layer(out)
 
             loudness_notedensity = self.bifc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
@@ -216,13 +218,13 @@ class VideoRegression(nn.Module):
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
-            out = self.dropout(out)
+            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc4(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
-            out = self.dropout(out)
+            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])

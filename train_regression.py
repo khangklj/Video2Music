@@ -188,8 +188,8 @@ def main( vm = "" , isPrintArgs = True ):
             print("Baseline model evaluation (Epoch 0):")
             
         # Eval
-        train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key, train_acc_key  = eval_model(model, train_loader, train_loss_func)
-        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key, eval_acc_key = eval_model(model, val_loader, eval_loss_func)      
+        train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key  = eval_model(model, train_loader, train_loss_func)
+        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key = eval_model(model, val_loader, eval_loss_func)      
 
         # Learn rate
         lr = get_lr(opt)
@@ -199,14 +199,14 @@ def main( vm = "" , isPrintArgs = True ):
         print("Avg train RMSE (Note Density):", train_rmse_note_density)
         print("Avg train RMSE (Loudness):", train_rmse_loudness)
         print("Avg train RMSE (Key):", train_rmse_key)
-        print("Avg train Acc (Key):", train_acc_key)
+        # print("Avg train Acc (Key):", train_acc_key)
         
         print("Avg val loss:", eval_loss)
         print("Avg val RMSE:", eval_rmse)
         print("Avg val RMSE (Note Density):", eval_rmse_note_density)
         print("Avg val RMSE (Loudness):", eval_rmse_loudness)
         print("Avg val RMSE (Key):", eval_rmse_key)
-        print("Avg val Acc (Key):", eval_acc_key)
+        # print("Avg val Acc (Key):", eval_acc_key)
         
         print(SEPERATOR)
         print("")
@@ -239,8 +239,9 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key, train_acc_key, 
-                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key, eval_acc_key])
+            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key, # train_acc_key, 
+                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key, # eval_acc_key
+                            ])
     return
 
 if __name__ == "__main__":

@@ -101,7 +101,7 @@ class VideoRegression(nn.Module):
 
         # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
-        self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
+        # self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
 
         if self.regModel == "bilstm":
             self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
@@ -149,32 +149,15 @@ class VideoRegression(nn.Module):
         # projection = KANLinear
 
         if self.regModel in ('gru', 'lstm'):
-            self.fc = projection(self.d_model, 2)
+            self.fc = projection(self.d_model, 3)
         elif self.regModel in ('bigru', 'bilstm'):
-            self.fc = projection(self.d_model * 2, 2)
+            self.fc = projection(self.d_model * 2, 3)
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
-            self.fc4 = projection(self.d_model, 2)
+            self.fc4 = projection(self.d_model, 3)
         elif self.regModel == 'minGRULM':
-            self.fc = projection(self.total_vf_dim, 2)
-
-        if self.regModel in ('bigru', 'bilstm'):
-            self.attention = AttentionModule(self.d_model * 2)
-            self.key_regressor = nn.Sequential(
-                nn.SiLU(),
-                nn.Dropout(dropout),
-                projection(self.d_model * 2, 1),
-                nn.Tanh()
-            )
-        else:
-            self.attention = AttentionModule(self.d_model)
-            self.key_regressor = nn.Sequential(
-                nn.SiLU(),
-                nn.Dropout(dropout),
-                projection(self.d_model, 1),
-                nn.Tanh()
-            )
+            self.fc = projection(self.total_vf_dim, 3)
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -199,38 +182,14 @@ class VideoRegression(nn.Module):
         # else:
         #     vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
 
-        # tmp = self.key_cls.expand(vf_concat.shape[0], -1).unsqueeze(1)
-        # key_end = False
-        # if key_end:
-        #     vf_concat = torch.cat([vf_concat, tmp], dim=1) # -> (batch_size, max_seq_video+1, total_vf_dim)
-        # else:
-        #     vf_concat = torch.cat([tmp, vf_concat], dim=1)
-        # print(vf_concat.shape, tmp.shape)
-
-        # padding_mask = (feature_semantic_list == SEMANTIC_PAD).all(dim=-1) # Shape: (batch_size, seq_len)
-        # first_padding_indices = padding_mask.float().argmax(dim=1) # Shape: (batch_size,)
-
         if self.regModel in ("bilstm", "bigru", "lstm", "gru"):
             out, _ = self.model(vf_concat)
-
-            loudness_notedensity = self.fc(out)
-
-            context, _ = self.attention(out)
-            key = self.key_regressor(context)
+            out = self.fc(out)
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
             vf_concat = self.fc3(vf_concat)
-            
             out = self.model(vf_concat)
-                
-            loudness_notedensity = self.fc4(out)
-
-            context, _ = self.attention(out)
-            key = self.key_regressor(context)
+            out = self.fc4(out)
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
-                
-            loudness_notedensity = self.fc(out)
-
-            context, _ = self.attention(out)
-            key = self.key_regressor(context)
-        return (loudness_notedensity, key)
+            out = self.fc(out)
+        return out

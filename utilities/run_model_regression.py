@@ -30,8 +30,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
                       feature_motion,
                       feature_emotion)
         
-        key_pred = y_pred[:, -1, -1] # Last token
-        print(key_pred.shape, key_val.shape)
+        key_pred = y_pred[:, -1, -1].unsqueeze(-1) # Last token
         y_pred = y_pred[:, :, :-1] # Loudness_notedensity
         y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
         
@@ -95,8 +94,7 @@ def eval_model(model, dataloader, loss):
                           feature_motion,
                           feature_emotion)
             
-            key_pred = y_pred[:, -1, -1] # Last token
-            print(key_pred.shape, key_val.shape)
+            key_pred = y_pred[:, -1, -1].unsqueeze(-1) # Last token
             y_pred = y_pred[:, :, :-1] # Loudness_notedensity
             y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
             

@@ -199,5 +199,5 @@ class VideoRegression(nn.Module):
 
         # vf_concat = torch.cat((torch.zeros((vf_concat.shape[0], 1, vf_concat.shape[2])), vf_concat), dim=1)
         key, _ = self.key_rnn(vf_concat)
-        key = self.key_regressor(key[:, -1, :])
+        key = self.key_regressor(key[:, 0, :])
         return out, key

@@ -96,7 +96,7 @@ def eval_model(model, dataloader, loss):
 
             feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size*300, 1)
             feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size*300, 1)
-            feature_key = key_val.unsqueeze(1).expand(feature_loudness.shape[0], 1) # (batch_size*300, 1)
+            feature_key = key_val.unsqueeze(1).expand(1, 300, 1).flatten().reshape(-1,1) # (batch_size*300, 1)
             feature_combined = torch.cat((feature_note_density, feature_loudness, feature_key), dim=1) # (batch_size*300, 3)
 
             mse = F.mse_loss(y_pred, feature_combined)

@@ -75,8 +75,7 @@ class AttentionModule(nn.Module):
     def forward(self, rnn_output):
         dynamic_vector = self.proj(rnn_output)
 
-        print(rnn_output.shape, dynamic_vector.shape)
-        attention_scores = rnn_output @ dynamic_vector.T
+        attention_scores = torch.sum(rnn_output * dynamic_vector, dim=-1, keepdim=True)
         attention_weights = F.softmax(attention_scores, dim=1)
 
         context = torch.sum(attention_weights * rnn_output, dim=1)

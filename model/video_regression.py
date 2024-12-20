@@ -190,8 +190,8 @@ class VideoRegression(nn.Module):
             out, _ = self.model(vf_concat)
             out = self.fc(out)
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
-            vf_concat = self.fc3(vf_concat)
-            out = self.model(vf_concat)
+            out = self.fc3(vf_concat)
+            out = self.model(out)
             out = self.fc4(out)
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)

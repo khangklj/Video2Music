@@ -111,7 +111,6 @@ def eval_model(model, dataloader, loss):
             sum_rmse += float(rmse)
 
             y_note_density, y_loudness = torch.split(y_pred, split_size_or_sections=1, dim=1)
-            print(y_note_density.shape)
 
             mse_note_density = F.mse_loss(y_note_density, feature_note_density)
             rmse_note_density = torch.sqrt(mse_note_density)

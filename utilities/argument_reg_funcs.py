@@ -11,7 +11,7 @@ batch_size = 32
 epochs = 100
 n_layers = 4
 motion_type = 1
-lr = None
+lr = 0.1
 scene_embed = False
 optimizer = 'RAdamW' # Adam / AdamW / RAdamW
 

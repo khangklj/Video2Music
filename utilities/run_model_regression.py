@@ -30,7 +30,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
                       feature_motion,
                       feature_emotion)
         
-        key_pred = y_pred[:, -1, -1].unsqueeze(-1) # Last token
+        key_pred = y_pred[:, 20, -1].unsqueeze(-1) # Last token
         y_pred = y_pred[:, :, :-1] # Loudness_notedensity
         y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
         
@@ -120,7 +120,7 @@ def eval_model(model, dataloader, loss):
             rmse_loudness = torch.sqrt(mse_loudness)
             sum_rmse_loudness += float(rmse_loudness)
 
-            print(round(key_pred[0].item()), key_val[0].item())
+            print(round(key_pred[0].item()), int(key_val[0].item()), '|', end='\t')
             
         avg_loss    = sum_loss / n_test
         avg_rmse     = sum_rmse / n_test

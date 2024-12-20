@@ -32,9 +32,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         
         y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
         # Scale key_pred from (-1, 1) to (-7.25, 4.25) Note: This value will be rounded at inference
-        # old_min, old_max = -1.0, 1.0
-        # new_min, new_max = -7.25, 4.25
-        # key_pred = new_min + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
+        old_min, old_max = -1.0, 1.0
+        new_min, new_max = -7.25, 4.25
+        key_pred = new_min + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
         
         feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        
@@ -98,9 +98,9 @@ def eval_model(model, dataloader, loss):
             
             y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
             # Scale key_pred from (-1, 1) to (-7.25, 4.25) Note: This value will be rounded at inference
-            # old_min, old_max = -1.0, 1.0
-            # new_min, new_max = -7.25, 4.25
-            # key_pred = new_min + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
+            old_min, old_max = -1.0, 1.0
+            new_min, new_max = -7.25, 4.25
+            key_pred = new_min + (key_pred - old_min) * (new_max - new_min) / (old_max - old_min)
 
             feature_loudness = feature_loudness.flatten().reshape(-1,1) # (300, 1)
             feature_note_density = feature_note_density.flatten().reshape(-1,1) # (300, 1)        

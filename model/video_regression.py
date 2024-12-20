@@ -147,13 +147,17 @@ class VideoRegression(nn.Module):
 
         if self.regModel in ('bigru', 'bilstm'):
             self.key_regressor = nn.Sequential(
+                nn.SiLU(),
+                nn.Dropout(dropout),
                 projection(self.d_model * 2, 1),
-                # nn.Tanh()
+                nn.Tanh()
             )
         else:
             self.key_regressor = nn.Sequential(
+                nn.SiLU(),
+                nn.Dropout(dropout),
                 projection(self.d_model, 1),
-                # nn.Tanh()
+                nn.Tanh()
             )
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
@@ -185,25 +189,21 @@ class VideoRegression(nn.Module):
 
         if self.regModel == "bilstm":
             out, _ = self.bilstm(vf_concat)
-            out = self.dropout(out)
             
             loudness_notedensity = self.bifc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "bigru":
             out, _ = self.bigru(vf_concat)
-            out = self.dropout_layer(out)
 
             loudness_notedensity = self.bifc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "lstm":
             out, _ = self.lstm(vf_concat)
-            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == "gru":
             out, _ = self.gru(vf_concat)
-            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
@@ -211,7 +211,6 @@ class VideoRegression(nn.Module):
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
-            out = self.dropout_layer(out)
 
             loudness_notedensity = self.bifc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
@@ -219,13 +218,11 @@ class VideoRegression(nn.Module):
             vf_concat = self.fc3(vf_concat)
             
             out = self.model(vf_concat)
-            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc4(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])
         elif self.regModel == 'minGRULM':
             out = self.model(vf_concat)
-            out = self.dropout_layer(out)
 
             loudness_notedensity = self.fc(out[:, :-1, :])
             key = self.key_regressor(out[:, -1, :])

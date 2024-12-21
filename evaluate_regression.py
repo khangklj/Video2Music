@@ -96,14 +96,13 @@ def main( vm = "", isPrintArgs = True):
     logging.info("Evaluating (Note Density):")
     model.eval()
     
-    eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key, eval_acc_key = eval_model(model, test_loader, loss)
+    eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key = eval_model(model, test_loader, loss)
 
     logging.info(f"Avg loss: {eval_loss}")
     logging.info(f"Avg RMSE: {eval_rmse}")
     logging.info(f"Avg RMSE (Note Density): {eval_rmse_note_density}")
     logging.info(f"Avg RMSE (Loudness): {eval_rmse_loudness}")
     logging.info(f"Avg RMSE (Key): {eval_rmse_key}")
-    logging.info(f"Avg Acc (Key): {eval_acc_key}")
 
     logging.info(SEPERATOR)
     logging.info("")

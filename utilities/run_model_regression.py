@@ -38,7 +38,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
 
         key_loss = torch.mean((key_pred - key_val) ** 2)
         out = loss.forward(y_pred, feature_combined) + key_loss
-        print(key_loss.item())
+        # print(key_loss.item())
         out.backward()
         opt.step()
         
@@ -58,7 +58,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
             print("")
     return
 
-def eval_model(model, dataloader, loss):
+def eval_model(model, dataloader):
     model.eval()
     
     avg_rmse     = -1

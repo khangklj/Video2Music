@@ -81,6 +81,26 @@ class AttentionModule(nn.Module):
         context = torch.sum(attention_weights * rnn_output, dim=1)
         return context, attention_weights
 
+class CNN_GRU(nn.Module):
+    def __init__(self, d_input, d_model, num_layers=1, dropout=0.1, bidirectional=False):
+        super().__init__()
+        self.cnn = nn.Sequential(
+            nn.Conv1d(d_input, d_model, kernel_size=7, stride=2),
+            nn.SiLU(),
+            nn.Dropout(dropout)
+        )
+
+        self.gru = nn.GRU(d_model, d_model, num_layers=num_layers, bidirectional=bidirectional, 
+                          batch_first=True, dropout=dropout)
+        
+    def forward(self, x):
+        x = x.permute(0, 2, 1)
+        x = self.cnn(x)  # Shape: [batch_size, cnn_out_channels, seq_len]
+        x = x.permute(0, 2, 1)
+        
+        out, _ = self.gru(x)
+        return out
+
 class VideoRegression(nn.Module):
     def __init__(self, n_layers=2, d_model=64, d_hidden=1024, dropout=0.1, use_KAN=False, max_sequence_video=300, 
                  total_vf_dim=0, regModel="bilstm", scene_embed=False, chord_embed=False):
@@ -108,50 +128,75 @@ class VideoRegression(nn.Module):
             self.model = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
                                 bidirectional=True, dropout=dropout, batch_first=True)
         elif self.regModel == "lstm":
-            self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, dropout=dropout, batch_first=True)
+            self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
+                                 dropout=dropout, batch_first=True)
         elif self.regModel == "gru":
-            self.model = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, dropout=dropout, batch_first=True)          
+            self.model = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+                                dropout=dropout, batch_first=True)          
+        elif self.regModel == "cnngru":
+            self.model = CNN_GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+                                 dropout=dropout, bidirectional=False)
+        elif self.regModel == "cnnbigru":
+            self.model = CNN_GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+                                 dropout=dropout, bidirectional=True)
         elif self.regModel == "mamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, 
+                                 use_KAN=use_KAN, bias=True)
             self.model = Mamba(config)           
         elif self.regModel == "mamba+":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, use_KAN=use_KAN, bias=True, use_version=1)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, 
+                                 use_KAN=use_KAN, bias=True, use_version=1)
             self.model = Mamba(config)
         elif self.regModel == "moemamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, d_state=self.d_hidden, d_conv=8, dropout=dropout, use_KAN=use_KAN, bias=True)
+            config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, 
+                                 d_state=self.d_hidden, d_conv=8, dropout=dropout, 
+                                 use_KAN=use_KAN, bias=True)
             expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
-            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
+            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, 
+                                       n_experts_per_token=2, dropout=dropout)
             self.model = MoEMamba(moe_layer, config)
         elif self.regModel == "bimamba":
-            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=0)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, 
+                                 use_KAN=use_KAN, bias=True, use_version=0)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, 
+                                        dropout=dropout)
         elif self.regModel == "bimamba+":
-            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, 
+                                 use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, 
+                                        dropout=dropout)
         elif self.regModel == "moe_bimamba+":
             expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
-            moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
-            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
+            moe_layer = MoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, 
+                                 dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, 
+                                 use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, 
+                                        dropout=dropout, moe_layer=moe_layer)
         elif self.regModel == "sharedmoe_bimamba+":
             expert = GLUExpert(self.d_model, self.d_model * 2 + 1)
-            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, dropout=dropout)
-            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, use_KAN=use_KAN, bias=True, use_version=1)
-            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, dropout=dropout, moe_layer=moe_layer)
+            moe_layer = SharedMoELayer(expert, self.d_model, n_experts=6, n_experts_per_token=2, 
+                                       dropout=dropout)
+            config = MambaConfig(d_model=self.d_model, n_layers=1, dropout=dropout, 
+                                 use_KAN=use_KAN, bias=True, use_version=1)
+            self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, 
+                                        dropout=dropout, moe_layer=moe_layer)
         elif self.regModel == 'minGRU':
             self.model = minGRU(self.d_model)
         elif self.regModel == 'minGRULM':            
-            self.model = minGRULM(total_vf_dim=self.total_vf_dim, dim=self.d_model, depth=self.n_layers)
+            self.model = minGRULM(total_vf_dim=self.total_vf_dim, dim=self.d_model, 
+                                  depth=self.n_layers)
     
         projection = nn.Linear
         # projection = KANLinear
 
-        if self.regModel in ('gru', 'lstm'):
+        if self.regModel in ('gru', 'lstm', 'cnngru'):
             self.fc = projection(self.d_model, 2)
-        elif self.regModel in ('bigru', 'bilstm'):
+        elif self.regModel in ('bigru', 'bilstm', 'cnnbigru'):
             self.fc = projection(self.d_model * 2, 2)
         
-        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
+        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', \
+                             'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.fc3 = projection(self.total_vf_dim, self.d_model)
             self.fc4 = projection(self.d_model, 2)
         elif self.regModel == 'minGRULM':
@@ -187,7 +232,7 @@ class VideoRegression(nn.Module):
             out = self.fc3(vf_concat)
             out = self.model(out)
             out = self.fc4(out)
-        elif self.regModel == 'minGRULM':
+        elif self.regModel in ('minGRULM', 'cnngru', 'cnnbigru'):
             out = self.model(vf_concat)
             out = self.fc(out)
 

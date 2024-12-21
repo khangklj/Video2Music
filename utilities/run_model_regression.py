@@ -99,7 +99,7 @@ def eval_model(model, dataloader):
             feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
             mse_key = torch.mean((key_pred - key_val) ** 2)
-            print(round(mse_key.item(), 2), end='\t')
+            # print(round(mse_key.item(), 2), end='\t')
             rmse_key = torch.sqrt(mse_key)
             sum_rmse_key += float(rmse_key)
 

@@ -18,9 +18,8 @@ from utilities.argument_reg_funcs import parse_train_args, print_train_args, wri
 
 from utilities.run_model_regression import train_epoch, eval_model
 
-CSV_HEADER = ["Epoch", "Learn rate", "Avg Train loss", "Avg Train RMSE", "Avg Train RMSE (Note Density)", 
-              "Avg Train RMSE (Loudness)", "Avg Eval loss", "Avg Eval RMSE", 
-              "Avg Eval RMSE (Note Density)", "Avg Eval RMSE (Loudness)"]
+CSV_HEADER = ["Epoch", "Learn rate",  "Avg Train RMSE", "Avg Train RMSE (Note Density)", "Avg Train RMSE (Loudness)", 
+              "Avg Eval RMSE", "Avg Eval RMSE (Note Density)", "Avg Eval RMSE (Loudness)"]
 BASELINE_EPOCH = -1
 
 version = VERSION

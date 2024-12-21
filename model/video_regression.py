@@ -211,6 +211,6 @@ class VideoRegression(nn.Module):
         # key, _ = self.key_rnn(vf_concat)
         # key = self.key_regressor(key[:, 0, :])
 
-        key = self.key_cnn(vf_concat)
+        key = self.key_cnn(vf_concat.T)
         key = self.key_regressor(key)
         return out, key

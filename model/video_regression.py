@@ -103,7 +103,7 @@ class VideoRegression(nn.Module):
 
         # self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
 
-        self.key_rnn = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+        self.key_rnn = nn.GRU(self.total_vf_dim, self.d_model, 1, 
                                 bidirectional=True, dropout=dropout, batch_first=True)
         self.key_regressor = nn.Linear(self.d_model * 2, 1)
 

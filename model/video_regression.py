@@ -101,22 +101,6 @@ class VideoRegression(nn.Module):
 
         # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
-        # self.key_cls = nn.Parameter(torch.rand((1, self.total_vf_dim)))
-
-        self.key_rnn = nn.RNN(self.total_vf_dim, self.d_model, 1, 
-                                bidirectional=True, dropout=dropout, batch_first=True)
-        # self.key_cnn = nn.Sequential(
-        #     nn.Conv1d(self.total_vf_dim, self.d_model, 7, 3),
-        #     nn.SiLU(),
-        #     nn.Dropout(dropout),
-        #     nn.MaxPool1d(2),
-        #     nn.Conv1d(self.d_model, self.d_model * 2, 5, 3),
-        #     nn.SiLU(),
-        #     nn.Dropout(dropout),
-        #     nn.AvgPool1d(self.d_model * 2)
-        # )
-        self.key_regressor = nn.Linear(self.d_model * 2, 1)
-
         if self.regModel == "bilstm":
             self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
                                   bidirectional=True, dropout=dropout, batch_first=True)
@@ -207,10 +191,4 @@ class VideoRegression(nn.Module):
             out = self.model(vf_concat)
             out = self.fc(out)
 
-        # vf_concat = torch.cat((torch.zeros((vf_concat.shape[0], 1, vf_concat.shape[2])), vf_concat), dim=1)
-        key, _ = self.key_rnn(vf_concat)
-        key = self.key_regressor(key[:, 0, :])
-
-        # key = self.key_cnn(vf_concat.T)
-        # key = self.key_regressor(key)
-        return out, key
+        return out

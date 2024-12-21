@@ -8,12 +8,12 @@ regModel = 'bimamba+'
 augmentation = False
 chord_embedding = False
 batch_size = 64
-epochs = 50
-n_layers = 2
+epochs = 100
+n_layers = 4
 motion_type = 1
-lr = 0.01
+lr = None
 scene_embed = False
-optimizer = 'AdamW' # Adam / AdamW / RAdamW
+optimizer = 'RAdamW' # Adam / AdamW / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

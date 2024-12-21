@@ -127,8 +127,7 @@ def main( vm = "" , isPrintArgs = True ):
         print("ERROR: Need continue weights (-continue_weights) when using continue_epoch")
         assert(False)
 
-    eval_loss_func = nn.MSELoss()
-    train_loss_func = nn.MSELoss()
+    train_loss_func = nn.SmoothL1Loss()
 
     ##### Lr Scheduler vs static lr #####
     if(args.lr is None):
@@ -189,23 +188,19 @@ def main( vm = "" , isPrintArgs = True ):
             print("Baseline model evaluation (Epoch 0):")
             
         # Eval
-        train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key  = eval_model(model, train_loader)
-        eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key = eval_model(model, val_loader)      
+        train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader)
+        eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader)      
 
         # Learn rate
         lr = get_lr(opt)
         print("Epoch:", epoch+1)
-        print("Avg train loss:", train_loss)
         print("Avg train RMSE:", train_rmse)
         print("Avg train RMSE (Note Density):", train_rmse_note_density)
         print("Avg train RMSE (Loudness):", train_rmse_loudness)
-        print("Avg train RMSE (Key):", train_rmse_key)
         
-        print("Avg val loss:", eval_loss)
         print("Avg val RMSE:", eval_rmse)
         print("Avg val RMSE (Note Density):", eval_rmse_note_density)
         print("Avg val RMSE (Loudness):", eval_rmse_loudness)
-        print("Avg val RMSE (Key):", eval_rmse_key)
         
         print(SEPERATOR)
         print("")
@@ -215,11 +210,6 @@ def main( vm = "" , isPrintArgs = True ):
             best_eval_rmse = eval_rmse
             best_eval_rmse_epoch  = epoch+1
             torch.save(model.state_dict(), best_rmse_file)
-            new_best = True
-
-        if (eval_loss < best_eval_loss):
-            best_eval_loss = eval_loss
-            best_eval_loss_epoch = epoch+1
             new_best = True
         
         # Writing out new bests
@@ -238,8 +228,8 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, train_loss, train_rmse, train_rmse_note_density, train_rmse_loudness, train_rmse_key,
-                             eval_loss, eval_rmse, eval_rmse_note_density, eval_rmse_loudness, eval_rmse_key, 
+            writer.writerow([epoch+1, lr, train_rmse, train_rmse_note_density, train_rmse_loudness,
+                             eval_rmse, eval_rmse_note_density, eval_rmse_loudness,
                             ])
     return
 

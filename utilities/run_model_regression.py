@@ -21,10 +21,9 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
 
         feature_note_density = batch["note_density"].to(get_device())
         feature_loudness = batch["loudness"].to(get_device())
-        key_val = batch["key_val"].to(get_device()).to(torch.float)
 
         # Loudness_notedensity and Key
-        y_pred, key_pred = model(
+        y_pred = model(
                       feature_semantic_list, 
                       feature_scene_offset,
                       feature_motion,
@@ -36,9 +35,7 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size, 300, 1)
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
-        key_loss = torch.mean((key_pred - key_val) ** 2)
-        out = loss.forward(y_pred, feature_combined) + key_loss
-        print(key_loss.item())
+        out = loss.forward(y_pred, feature_combined)
         out.backward()
         opt.step()
         
@@ -62,18 +59,14 @@ def eval_model(model, dataloader):
     model.eval()
     
     avg_rmse     = -1
-    avg_loss    = -1
     avg_rmse_note_density     = -1
     avg_rmse_loudness     = -1
     with torch.set_grad_enabled(False):
         n_test      = len(dataloader)
         
-        sum_loss   = 0.0
-        
         sum_rmse    = 0.0
         sum_rmse_note_density = 0.0
         sum_rmse_loudness = 0.0
-        sum_rmse_key     = 0.0
 
         for batch in dataloader:
             feature_semantic_list = batch["semanticList"].to(get_device())
@@ -83,10 +76,9 @@ def eval_model(model, dataloader):
             feature_emotion = batch["emotion"].to(get_device())
             feature_loudness = batch["loudness"].to(get_device())
             feature_note_density = batch["note_density"].to(get_device())
-            key_val = batch["key_val"].to(get_device()).to(torch.float)
 
             # Loudness_notedensity and Key
-            y_pred, key_pred = model(
+            y_pred = model(
                           feature_semantic_list, 
                           feature_scene_offset,
                           feature_motion,
@@ -98,12 +90,7 @@ def eval_model(model, dataloader):
             feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size, 300, 1)
             feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
-            mse_key = torch.mean((key_pred - key_val) ** 2)
-            # print(round(mse_key.item(), 2), end='\t')
-            rmse_key = torch.sqrt(mse_key)
-            sum_rmse_key += float(rmse_key)
-
-            mse = F.mse_loss(y_pred, feature_combined) + mse_key
+            mse = F.mse_loss(y_pred, feature_combined)
             rmse = torch.sqrt(mse)
             sum_rmse += float(rmse)
 
@@ -116,13 +103,9 @@ def eval_model(model, dataloader):
             mse_loudness = F.mse_loss(y_loudness, feature_loudness)
             rmse_loudness = torch.sqrt(mse_loudness)
             sum_rmse_loudness += float(rmse_loudness)
-
-            print(round(key_pred[0].item()), int(key_val[0].item()), '|', end='\t')
             
-        avg_loss    = sum_loss / n_test
         avg_rmse     = sum_rmse / n_test
         avg_rmse_note_density     = sum_rmse_note_density / n_test
         avg_rmse_loudness     = sum_rmse_loudness / n_test
-        avg_rmse_key     = sum_rmse_key / n_test
 
-    return avg_loss, avg_rmse, avg_rmse_note_density, avg_rmse_loudness, avg_rmse_key
+    return avg_rmse, avg_rmse_note_density, avg_rmse_loudness

@@ -113,7 +113,7 @@ class VideoRegression(nn.Module):
             nn.Conv1d(self.d_model, self.d_model * 2, 5, 3),
             nn.SiLU(),
             nn.Dropout(dropout),
-            nn.AvgPool1d()
+            nn.AvgPool1d(self.d_model * 2)
         )
         self.key_regressor = nn.Linear(self.d_model * 2, 1)
 

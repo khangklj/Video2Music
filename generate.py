@@ -196,14 +196,14 @@ def main():
     os.makedirs(os.path.join(args.output_dir, str(args.test_id)), exist_ok=True)
     print("Using primer index:", test_id_idx, "(", dataset.data_files_chord[test_id_idx], ")")
 
-    if "major" in custumKey:
-        feature_key = torch.tensor([0])
-        feature_key = feature_key.float()
-    elif "minor" in custumKey:
+    emotion_idx = torch.argmax(feature_emotion.mean(dim=0))
+    if emotion_idx in (1, 2, 3): # Minor
         feature_key = torch.tensor([1])
         feature_key = feature_key.float()
-    else:
-        feature_key = dataset[test_id_idx]["key"]
+    else: # Major
+        feature_key = torch.tensor([0])
+        feature_key = feature_key.float()
+        
     feature_key = feature_key.to(get_device())
 
     if args.music_gen_version == None:

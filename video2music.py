@@ -412,7 +412,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer):
+    def generate(self, video, primer, key):
 
         feature_dir = Path("./feature")
         output_dir = Path("./output")
@@ -580,7 +580,7 @@ class Video2music:
                                               max_conseq_N= max_conseq_N,
                                               max_conseq_chord = max_conseq_chord)
             
-            y, key_pred = self.modelReg(
+            y = self.modelReg(
                         feature_semantic_list, 
                         feature_scene_offset,
                         feature_motion,
@@ -640,7 +640,7 @@ class Video2music:
                 else:
                     midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
             midi_chords = voice(midi_chords_orginal)
-            trans = torch.round(key_pred).item()
+            trans = traspose_key_dic[key]
 
             for i, chord in enumerate(midi_chords):
                 if densitylist[i] == 0:

@@ -95,12 +95,14 @@ class CNN_GRU(nn.Module):
                           batch_first=True, dropout=dropout)
         
     def forward(self, x):
+        print(x.shape)
         x = x.permute(0, 2, 1)
-        x = self.cnn(x)  # Shape: [batch_size, cnn_out_channels, seq_len]
+        x = self.cnn(x)  # Shape: [batch_size, d_model, seq_len]
         x = x.permute(0, 2, 1)
         
+        print(x.shape)
+        
         out, _ = self.gru(x)
-        out = self.cnn(out)
         return out
 
 class VideoRegression(nn.Module):

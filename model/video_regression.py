@@ -85,7 +85,7 @@ class CNN_GRU(nn.Module):
     def __init__(self, d_input, d_model, num_layers=1, dropout=0.1, bidirectional=False):
         super().__init__()
         self.cnn = nn.Sequential(
-            nn.Conv1d(d_input, d_model, kernel_size=7, stride=2, padding=3),
+            nn.Conv1d(d_input, d_model, kernel_size=7, stride=1, padding=3),
             nn.SiLU(),
             nn.Dropout(dropout)
         )
@@ -95,14 +95,10 @@ class CNN_GRU(nn.Module):
         
     def forward(self, x):
         x = x.permute(0, 2, 1)
-        print(x.shape)
         x = self.cnn(x)  # Shape: [batch_size, d_model, seq_len]
-        print(x.shape)
         x = x.permute(0, 2, 1)
-        print(x.shape)
         
         out, _ = self.gru(x)
-        print(out.shape)
         return out
 
 class VideoRegression(nn.Module):

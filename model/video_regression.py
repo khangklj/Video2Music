@@ -94,7 +94,7 @@ class CNN_GRU(nn.Module):
                           batch_first=True, dropout=dropout)
         
     def forward(self, x):
-        # x = x.permute(0, 2, 1)
+        x = x.permute(0, 2, 1)
         print(x.shape)
         x = self.cnn(x)  # Shape: [batch_size, d_model, seq_len]
         print(x.shape)

@@ -87,7 +87,8 @@ class CNN_GRU(nn.Module):
         self.cnn = nn.Sequential(
             nn.Conv1d(d_input, d_model, kernel_size=7, stride=2),
             nn.SiLU(),
-            nn.Dropout(dropout)
+            nn.Dropout(dropout),
+            nn.AdaptiveAvgPool1d(d_model)
         )
 
         self.gru = nn.GRU(d_model, d_model, num_layers=num_layers, bidirectional=bidirectional, 

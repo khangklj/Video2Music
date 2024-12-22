@@ -220,7 +220,7 @@ class SharedMoELayer(Module):
         if self.balancing:
             self.register_buffer('bias', torch.zeros((n_experts, 1)))
             self.bias = self.bias.to(get_device())
-            self.update_rate = 0.0001
+            self.update_rate = 0.01
 
         self.shared_expert = _get_clones(expert, 1)[0]
 
@@ -244,8 +244,8 @@ class SharedMoELayer(Module):
         else:
             b = self.bias.T.unsqueeze(0)
             if self.training:
-                # tmp = gate_logits + b
-                tmp = gate_logits * b
+                tmp = gate_logits + b
+                # tmp = gate_logits * b
             else:
                 tmp = gate_logits
 

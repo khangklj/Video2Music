@@ -4,10 +4,10 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'cnngru'
+regModel = 'cnnbigru'
 augmentation = False
 chord_embedding = False
-batch_size = 32
+batch_size = 64
 epochs = 100
 n_layers = 4
 motion_type = 1

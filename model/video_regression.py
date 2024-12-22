@@ -237,10 +237,10 @@ class VideoRegression(nn.Module):
             out = self.model(out)
             out = self.fc4(out)
         elif self.regModel in ('minGRULM', 'cnngru', 'cnnbigru'):
-            print(vf_concat.shape)
+            # print(vf_concat.shape)
             out = self.model(vf_concat)
-            print(out.shape)
+            # print(out.shape)
             out = self.fc(out)
-            print(out.shape)
+            # print(out.shape)
 
         return out

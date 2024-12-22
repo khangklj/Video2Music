@@ -99,6 +99,7 @@ class CNN_GRU(nn.Module):
         x = x.permute(0, 2, 1)
         
         out, _ = self.gru(x)
+        out = self.cnn(out)
         return out
 
 class VideoRegression(nn.Module):

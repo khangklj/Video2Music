@@ -85,7 +85,7 @@ class CNN_GRU(nn.Module):
     def __init__(self, d_input, d_model, num_layers=1, dropout=0.1, bidirectional=False):
         super().__init__()
         self.cnn = nn.Sequential(
-            nn.Conv1d(d_input, d_model, kernel_size=7, stride=2, padding=6),
+            nn.Conv1d(d_input, d_model, kernel_size=7, stride=2, padding=3),
             nn.SiLU(),
             nn.Dropout(dropout)
         )

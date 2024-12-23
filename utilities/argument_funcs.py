@@ -17,7 +17,7 @@ lr = None
 optimizer = 'RAdamW' # Adam / AdamW / RAdamW / Lion
 auxiliary_loss = True # False / True
 drop_loss = True # False / True
-balancing = True # True / False
+balancing = False # True / False
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

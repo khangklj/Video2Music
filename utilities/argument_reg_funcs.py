@@ -4,13 +4,13 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'mamba+'
+regModel = 'bigru'
 augmentation = False
 chord_embedding = False
 batch_size = 64
 epochs = 100
 n_layers = 6
-motion_type = 1
+motion_type = 0
 lr = None
 scene_embed = False
 optimizer = 'RAdamW' # Adam / AdamW / RAdamW

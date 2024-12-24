@@ -252,8 +252,8 @@ class SharedMoELayer(Module):
         else:
             b = self.bias.T.unsqueeze(0)
             if self.training:
-                # tmp = gate_logits + b
-                tmp = gate_logits * b
+                tmp = gate_logits + b
+                # tmp = gate_logits * b
             else:
                 tmp = gate_logits
 

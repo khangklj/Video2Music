@@ -372,13 +372,16 @@ class VideoMusicTransformer_V2(nn.Module):
             # Positional embedding
             self.positional_embedding = nn.Embedding(self.max_seq_chord, self.d_model)
             self.positional_embedding_video = nn.Embedding(self.max_seq_video, self.d_model)
-        elif version_name in ('2.1', '2.2'):
+        elif version_name in ('2.1', '2.2', '2.3'):
             RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
 
         self.n_experts = 6
         self.n_experts_per_token = 2
 
-        expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
+        if version_name in ('2.3'):
+            expert = KANLinear(self.d_model, self.d_model)
+        else:
+            expert = GLUExpert(self.d_model, self.d_ff, self.dropout)
 
         att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE)
         

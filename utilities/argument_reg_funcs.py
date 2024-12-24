@@ -4,13 +4,13 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'bimamba+'
+regModel = 'bigru'
 augmentation = False
 chord_embedding = False
 batch_size = 64
 epochs = 100
 n_layers = 6
-motion_type = 0
+motion_type = 1
 lr = None
 scene_embed = False
 optimizer = 'RAdamW' # Adam / AdamW / RAdamW
@@ -41,7 +41,7 @@ def parse_train_args():
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum video sequence to consider")
 
     parser.add_argument("-n_layers", type=int, default=n_layers, help="Number of layers to use")
-    parser.add_argument("-d_model", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
+    parser.add_argument("-d_model", type=int, default=128, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")

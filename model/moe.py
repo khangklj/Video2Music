@@ -242,9 +242,9 @@ class SharedMoELayer(Module):
         if not self.balancing:
             weights, selected_experts = torch.topk(gate_logits, k)
 
-            c = torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)
-            c = torch.cat((torch.tensor([0]).to(get_device()), c))
-            c = c[1:]
+            c = torch.bincount(selected_experts.flatten(), minlength=6).to(torch.float)
+            # c = torch.cat((torch.tensor([0]).to(get_device()), c))
+            # c = c[1:]
 
             if not self.training:
                 # Logging
@@ -264,8 +264,8 @@ class SharedMoELayer(Module):
                 weights = torch.gather(gate_logits, dim=-1, index=selected_experts)
 
             c = torch.bincount(selected_experts.flatten(), minlength=6).to(self.bias.dtype)
-            c = torch.cat((torch.tensor([0]).to(get_device()), c))
-            c = c[1:]
+            # c = torch.cat((torch.tensor([0]).to(get_device()), c))
+            # c = c[1:]
 
             if self.training: 
                 c_mean = torch.mean(c)

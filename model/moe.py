@@ -272,8 +272,8 @@ class SharedMoELayer(Module):
                 e = c_mean - c
 
                 e = e.unsqueeze(1)
-                self.bias += self.update_rate * e
-                # self.bias += self.update_rate * torch.sign(e)
+                # self.bias += self.update_rate * e
+                self.bias += self.update_rate * torch.sign(e)
             else:
                 # Logging
                 update_maxvio(c)

@@ -279,7 +279,7 @@ class SharedMoELayer(Module):
                 update_maxvio(c)
         
         # Logging
-        update_expert_counts(selected_experts)
+        update_expert_counts(selected_experts, self.training)
 
         weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())

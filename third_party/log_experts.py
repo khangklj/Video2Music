@@ -22,7 +22,10 @@ def change_logging_state(state):
     global is_logging
     is_logging = state
 
-def get_highest_emotion_indices(emotion_feature):
+def get_highest_emotion_indices(emotion_feature, training=False):
+    if training:
+        return None
+    
     global is_logging
     if not is_logging:
         return
@@ -44,7 +47,10 @@ def get_highest_emotion_indices(emotion_feature):
     return indices
 
 
-def update_expert_counts(selected_expert):
+def update_expert_counts(selected_expert, training=False):
+    if training:
+        return
+    
     global is_logging
     if not is_logging:
         return

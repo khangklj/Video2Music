@@ -127,6 +127,7 @@ def main( vm = "" , isPrintArgs = True ):
         assert(False)
 
     train_loss_func = nn.SmoothL1Loss()
+    # train_loss_func = nn.MSELoss()
 
     ##### Lr Scheduler vs static lr #####
     if(args.lr is None):

@@ -12,7 +12,7 @@ d_ff = 256
 epochs = 100
 n_layers = 6
 motion_type = 1
-lr = None
+lr = 1e-3
 scene_embed = False
 optimizer = 'RAdamW' # Adam / AdamW / RAdam / RAdamW
 

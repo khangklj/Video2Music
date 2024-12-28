@@ -14,7 +14,7 @@ n_layers = 6
 motion_type = 0
 lr = 1e-3
 scene_embed = False
-optimizer = 'RAdamW' # Adam / AdamW / RAdam / RAdamW
+optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

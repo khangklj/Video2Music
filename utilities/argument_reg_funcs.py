@@ -4,7 +4,7 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'bigru'
+regModel = 'bilstm'
 augmentation = False
 batch_size = 64
 d_model = 128

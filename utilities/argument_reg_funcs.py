@@ -4,13 +4,13 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'bigru'
+regModel = 'cnnbigru'
 augmentation = False
 batch_size = 32
 d_model = 64
 d_ff = 256
 epochs = 50
-n_layers = 3
+n_layers = 1
 motion_type = 1
 lr = 1e-3
 scene_embed = False

@@ -11,10 +11,10 @@ d_model = 128
 d_ff = 256
 epochs = 100
 n_layers = 6
-motion_type = 0
+motion_type = 1
 lr = 1e-3
 scene_embed = False
-optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW
+optimizer = 'Adam' # Adam / AdamW / RAdam / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

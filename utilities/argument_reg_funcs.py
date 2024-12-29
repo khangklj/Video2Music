@@ -4,13 +4,13 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'bigru'
+regModel = 'bimamba+'
 augmentation = False
 batch_size = 32
 d_model = 128
 d_ff = 256
 epochs = 100
-n_layers = 6
+n_layers = 1
 motion_type = 1
 lr = 1e-3
 scene_embed = False

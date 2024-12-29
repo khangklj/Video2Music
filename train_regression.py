@@ -145,12 +145,12 @@ def main( vm = "" , isPrintArgs = True ):
         opt = Adam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.optimizer == 'AdamW':
         opt = AdamW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON,
-                    weight_decay=1e-6)
+                    weight_decay=1e-5)
     elif args.optimizer == 'RAdam':
         opt = RAdam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON)
     elif args.optimizer == 'RAdamW':
         opt = RAdam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON,
-                    weight_decay=1e-6, decoupled_weight_decay=True)
+                    weight_decay=1e-5, decoupled_weight_decay=True)
 
     if(args.lr is None):
         lr_scheduler = LambdaLR(opt, lr_stepper.step)

@@ -12,6 +12,7 @@ d_ff = 256
 epochs = 50
 n_layers = 2
 motion_type = 1
+dropout = 0.4
 lr = 1e-3
 scene_embed = False
 optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW
@@ -44,7 +45,7 @@ def parse_train_args():
     parser.add_argument("-n_layers", type=int, default=n_layers, help="Number of layers to use")
     parser.add_argument("-d_model", type=int, default=d_model, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=d_ff, help="Dimension of the feedforward layer")
-    parser.add_argument("-dropout", type=float, default=0.2, help="Dropout rate")
+    parser.add_argument("-dropout", type=float, default=dropout, help="Dropout rate")
     parser.add_argument('-use_KAN', type=bool, default=False, help="Use KANLinear instead of Linear")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")

@@ -151,8 +151,6 @@ class VevoDataset(Dataset):
             checkFile_loudness = os.path.exists(fpath_loudness)
             checkFile_note_density = os.path.exists(fpath_note_density)
             checkFile_instrument = os.path.exists(fpath_instrument)
-            if not checkFile_instrument:
-                print(fpath_instrument)
 
             if checkFile_chord and checkFile_chord_no_norm and checkFile_emotion and checkFile_motion \
                 and checkFile_scene_offset and checkFile_semantic and checkFile_loudness \
@@ -188,7 +186,7 @@ class VevoDataset(Dataset):
 
         # Get all samples
         self.dataset = []
-        print('Get all samples')
+        print(f'Get all samples ({len(self.data_files_chord)})')
         for i in tqdm(range(len(self.data_files_chord))):
             self.dataset.append(self.createSample(i))
 

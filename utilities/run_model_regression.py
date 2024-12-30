@@ -91,7 +91,8 @@ def eval_model(model, dataloader):
             feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size, 300, 1)
             feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
-            bce_instrument = F.binary_cross_entropy(inst,feature_instrument)
+            print(inst.shape, inst.dtype, feature_instrument.shape, feature_instrument.dtype)
+            bce_instrument = F.binary_cross_entropy(inst, feature_instrument)
             sum_bce_instrument += float(bce_instrument)
 
             mse = torch.sqrt(F.mse_loss(ln_nd, feature_combined)) + bce_instrument

@@ -469,6 +469,8 @@ class VevoDataset(Dataset):
         feature_instrument = np.empty((self.max_seq_video, INSTRUMENT_SIZE))
         feature_instrument.fill(INSTRUMENT_PAD)
         data = pd.read_csv(self.data_files_instrument[idx]).to_numpy()
+        if data.shape[0] > self.max_seq_chord:
+            data = data[:self.max_seq_chord, :]
         feature_instrument[:data.shape[0], :] = data
 
         # -- emotion to chord

@@ -18,8 +18,9 @@ from utilities.argument_reg_funcs import parse_train_args, print_train_args, wri
 
 from utilities.run_model_regression import train_epoch, eval_model
 
-CSV_HEADER = ["Epoch", "Learn rate",  "Avg Train RMSE", "Avg Train RMSE (Note Density)", "Avg Train RMSE (Loudness)", 
-              "Avg Eval RMSE", "Avg Eval RMSE (Note Density)", "Avg Eval RMSE (Loudness)"]
+CSV_HEADER = ["Epoch", "Learn rate",  
+              "Avg Train Total loss", "Avg Train RMSE (Note Density)", "Avg Train RMSE (Loudness)", "Avg Train BCE (Instrument)", 
+              "Avg Eval Total loss", "Avg Eval RMSE (Note Density)", "Avg Eval RMSE (Loudness)", "Avg Eval BCE (Instrument)"]
 BASELINE_EPOCH = -1
 
 version = VERSION
@@ -164,8 +165,6 @@ def main( vm = "" , isPrintArgs = True ):
     # lr_scheduler = None 
     
     ##### Tracking best evaluation accuracy #####
-    best_eval_rmse        = float("inf")
-    best_eval_rmse_epoch  = -1
     best_eval_loss       = float("inf")
     best_eval_loss_epoch = -1
 
@@ -191,36 +190,35 @@ def main( vm = "" , isPrintArgs = True ):
             print("Baseline model evaluation (Epoch 0):")
             
         # Eval
-        train_rmse, train_rmse_note_density, train_rmse_loudness  = eval_model(model, train_loader)
-        eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, val_loader)      
+        train_total_loss, train_rmse_note_density, train_rmse_loudness, train_bce_instrument  = eval_model(model, train_loader)
+        eval_total_loss, eval_rmse_note_density, eval_rmse_loudness, eval_bce_instrument = eval_model(model, val_loader)      
 
         # Learn rate
         lr = get_lr(opt)
         print("Epoch:", epoch+1)
-        print("Avg train RMSE:", train_rmse)
+        print("Avg train Total loss:", train_total_loss)
         print("Avg train RMSE (Note Density):", train_rmse_note_density)
         print("Avg train RMSE (Loudness):", train_rmse_loudness)
+        print("Avg train BCE (Instrument):", train_bce_instrument)
         
-        print("Avg val RMSE:", eval_rmse)
+        print("Avg val Total loss:", eval_total_loss)
         print("Avg val RMSE (Note Density):", eval_rmse_note_density)
         print("Avg val RMSE (Loudness):", eval_rmse_loudness)
+        print("Avg train BCE (Instrument):", eval_bce_instrument)
         
         print(SEPERATOR)
         print("")
 
         new_best = False
-        if (eval_rmse < best_eval_rmse):
-            best_eval_rmse = eval_rmse
-            best_eval_rmse_epoch  = epoch+1
+        if (eval_total_loss < best_eval_loss):
+            best_eval_loss = eval_total_loss
+            best_eval_loss_epoch  = epoch+1
             torch.save(model.state_dict(), best_rmse_file)
             new_best = True
         
         # Writing out new bests
         if (new_best):
             with open(best_text, "w") as o_stream:
-                print("Best val RMSE epoch:", best_eval_rmse_epoch, file=o_stream)
-                print("Best val RMSE:", best_eval_rmse, file=o_stream)
-                print("")
                 print("Best val loss epoch:", best_eval_loss_epoch, file=o_stream)
                 print("Best val loss:", best_eval_loss, file=o_stream)
         
@@ -231,8 +229,9 @@ def main( vm = "" , isPrintArgs = True ):
             
         with open(results_file, "a", newline="") as o_stream:
             writer = csv.writer(o_stream)
-            writer.writerow([epoch+1, lr, train_rmse, train_rmse_note_density, train_rmse_loudness,
-                             eval_rmse, eval_rmse_note_density, eval_rmse_loudness,
+            writer.writerow([epoch+1, lr, 
+                             train_total_loss, train_rmse_note_density, train_rmse_loudness, train_bce_instrument,
+                             eval_total_loss, eval_rmse_note_density, eval_rmse_loudness, eval_bce_instrument,
                             ])
     return
 

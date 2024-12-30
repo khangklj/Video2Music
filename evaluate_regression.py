@@ -96,11 +96,12 @@ def main( vm = "", isPrintArgs = True):
     logging.info("Evaluating (Note Density):")
     model.eval()
     
-    eval_rmse, eval_rmse_note_density, eval_rmse_loudness = eval_model(model, test_loader)
+    eval_total_loss, eval_rmse_note_density, eval_rmse_loudness, eval_bce_instrument = eval_model(model, test_loader)
 
-    logging.info(f"Avg RMSE: {eval_rmse}")
+    logging.info(f"Avg Total loss: {eval_total_loss}")
     logging.info(f"Avg RMSE (Note Density): {eval_rmse_note_density}")
     logging.info(f"Avg RMSE (Loudness): {eval_rmse_loudness}")
+    logging.info(f"Avg BCE (Instrument): {eval_bce_instrument}")
 
     logging.info(SEPERATOR)
     logging.info("")

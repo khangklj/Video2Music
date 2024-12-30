@@ -151,6 +151,7 @@ class VevoDataset(Dataset):
             checkFile_loudness = os.path.exists(fpath_loudness)
             checkFile_note_density = os.path.exists(fpath_note_density)
             checkFile_instrument = os.path.exists(fpath_instrument)
+            print(checkFile_instrument)
 
             if checkFile_chord and checkFile_chord_no_norm and checkFile_emotion and checkFile_motion \
                 and checkFile_scene_offset and checkFile_semantic and checkFile_loudness \

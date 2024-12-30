@@ -181,11 +181,6 @@ class VideoRegression(nn.Module):
                                  use_KAN=use_KAN, bias=True, use_version=1)
             self.model = BiMambaEncoder(config, self.d_hidden, n_encoder_layers=self.n_layers, 
                                         dropout=dropout, moe_layer=moe_layer)
-        elif self.regModel == 'minGRU':
-            self.model = minGRU(self.d_model)
-        elif self.regModel == 'minGRULM':            
-            self.model = minGRULM(total_vf_dim=self.total_vf_dim, dim=self.d_model, 
-                                  depth=self.n_layers)
     
         projection = nn.Linear
         # projection = KANLinear
@@ -195,16 +190,20 @@ class VideoRegression(nn.Module):
             nn.Dropout(dropout)
         )
 
-        if self.regModel in ('gru', 'lstm', 'cnngru'):
-            self.out_proj = projection(self.d_model, 2)
-        elif self.regModel in ('bigru', 'bilstm', 'cnnbigru'):
-            self.out_proj = projection(self.d_model * 2, 2)
-        
-        if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', \
+        if self.regModel in ('gru', 'lstm', 'cnngru' \
+                             'mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', \
                              'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
-            self.out_proj = projection(self.d_model, 2)
-        elif self.regModel == 'minGRULM':
-            self.out_proj = projection(self.total_vf_dim, 2)
+            self.regressor = projection(self.d_model, 2)
+            self.classifier = nn.Sequential(
+                projection(self.d_model, INSTRUMENT_SIZE),
+                nn.Sigmoid()
+            )
+        elif self.regModel in ('bigru', 'bilstm', 'cnnbigru'):
+            self.regressor = projection(self.d_model * 2, 2)
+            self.classifier = nn.Sequential(
+                projection(self.d_model * 2, INSTRUMENT_SIZE),
+                nn.Sigmoid()
+            )
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -232,12 +231,12 @@ class VideoRegression(nn.Module):
         vf = self.in_proj(vf_concat)
         if self.regModel in ("bilstm", "bigru", "lstm", "gru"):
             out, _ = self.model(vf)
-            out = self.out_proj(out)
-        elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
+            loudness_notedensity = self.regressor(out)
+            instrument = self.classifier(out)
+        elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', \
+                               'moe_bimamba+', 'sharedmoe_bimamba+', 'cnngru', 'cnnbigru'):            
             out = self.model(vf)
-            out = self.out_proj(out)
-        elif self.regModel in ('minGRULM', 'cnngru', 'cnnbigru'):
-            out = self.model(vf)
-            out = self.out_proj(out)
+            loudness_notedensity = self.regressor(out)
+            instrument = self.classifier(out)
 
-        return out
+        return loudness_notedensity, instrument

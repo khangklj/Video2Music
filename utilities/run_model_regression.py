@@ -21,21 +21,21 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
 
         feature_note_density = batch["note_density"].to(get_device())
         feature_loudness = batch["loudness"].to(get_device())
+        feature_instrument = batch["instrument"].to(get_device())
 
-        # Loudness_notedensity and Key
-        y_pred = model(
-                      feature_semantic_list, 
-                      feature_scene_offset,
-                      feature_motion,
-                      feature_emotion)
+        # Loudness_notedensity and Instrument
+        ln_nd, inst = model(feature_semantic_list, 
+                            feature_scene_offset,
+                            feature_motion,
+                            feature_emotion)
         
-        y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
+        ln_nd   = ln_nd.reshape(ln_nd.shape[0] * ln_nd.shape[1], -1)
         
         feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size, 300, 1)
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size, 300, 1)
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
-        out = loss.forward(y_pred, feature_combined)
+        out = loss.forward(ln_nd, feature_combined) + F.binary_cross_entropy(inst, feature_instrument)
         out.backward()
         opt.step()
         
@@ -64,9 +64,10 @@ def eval_model(model, dataloader):
     with torch.set_grad_enabled(False):
         n_test      = len(dataloader)
         
-        sum_rmse    = 0.0
+        sum_total_loss    = 0.0
         sum_rmse_note_density = 0.0
         sum_rmse_loudness = 0.0
+        sum_bce_instrument = 0.0
 
         for batch in dataloader:
             feature_semantic_list = batch["semanticList"].to(get_device())
@@ -76,36 +77,37 @@ def eval_model(model, dataloader):
             feature_emotion = batch["emotion"].to(get_device())
             feature_loudness = batch["loudness"].to(get_device())
             feature_note_density = batch["note_density"].to(get_device())
+            feature_instrument = batch["instrument"].to(get_device())
 
-            # Loudness_notedensity and Key
-            y_pred = model(
-                          feature_semantic_list, 
-                          feature_scene_offset,
-                          feature_motion,
-                          feature_emotion)
+            # Loudness_notedensity and Instrument
+            ln_nd, inst = model(feature_semantic_list, 
+                                feature_scene_offset,
+                                feature_motion,
+                                feature_emotion)
             
-            y_pred   = y_pred.reshape(y_pred.shape[0] * y_pred.shape[1], -1)
+            ln_nd   = ln_nd.reshape(ln_nd.shape[0] * ln_nd.shape[1], -1)
             
             feature_loudness = feature_loudness.flatten().reshape(-1,1) # (batch_size, 300, 1)
             feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size, 300, 1)
             feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
-            mse = F.mse_loss(y_pred, feature_combined)
-            rmse = torch.sqrt(mse)
-            sum_rmse += float(rmse)
+            bce_instrument = F.binary_cross_entropy(inst,feature_instrument)
+            sum_bce_instrument += float(bce_instrument)
 
-            y_note_density, y_loudness = torch.split(y_pred, split_size_or_sections=1, dim=1)
+            mse = torch.sqrt(F.mse_loss(ln_nd, feature_combined)) + bce_instrument
+            sum_total_loss += float(mse)
 
-            mse_note_density = F.mse_loss(y_note_density, feature_note_density)
-            rmse_note_density = torch.sqrt(mse_note_density)
+            y_note_density, y_loudness = torch.split(ln_nd, split_size_or_sections=1, dim=1)
+
+            rmse_note_density = torch.sqrt(F.mse_loss(y_note_density, feature_note_density))
             sum_rmse_note_density += float(rmse_note_density)
             
-            mse_loudness = F.mse_loss(y_loudness, feature_loudness)
-            rmse_loudness = torch.sqrt(mse_loudness)
+            rmse_loudness = torch.sqrt(F.mse_loss(y_loudness, feature_loudness))
             sum_rmse_loudness += float(rmse_loudness)
             
-        avg_rmse     = sum_rmse / n_test
+        avg_total_loss     = sum_total_loss / n_test
         avg_rmse_note_density     = sum_rmse_note_density / n_test
         avg_rmse_loudness     = sum_rmse_loudness / n_test
+        avg_bce_instrument     = sum_bce_instrument / n_test
 
-    return avg_rmse, avg_rmse_note_density, avg_rmse_loudness
+    return avg_total_loss, avg_rmse_note_density, avg_rmse_loudness, avg_bce_instrument

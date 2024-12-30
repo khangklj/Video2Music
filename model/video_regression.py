@@ -122,22 +122,22 @@ class VideoRegression(nn.Module):
         # self.Linear_vis     = nn.Linear(self.total_vf_dim, self.d_model)
 
         if self.regModel == "bilstm":
-            self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
+            self.model = nn.LSTM(self.d_model, self.d_model, self.n_layers, 
                                   bidirectional=True, dropout=dropout, batch_first=True)
         elif self.regModel == "bigru":
-            self.model = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+            self.model = nn.GRU(self.d_model, self.d_model, self.n_layers, 
                                 bidirectional=True, dropout=dropout, batch_first=True)
         elif self.regModel == "lstm":
-            self.model = nn.LSTM(self.total_vf_dim, self.d_model, self.n_layers, 
+            self.model = nn.LSTM(self.d_model, self.d_model, self.n_layers, 
                                  dropout=dropout, batch_first=True)
         elif self.regModel == "gru":
-            self.model = nn.GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+            self.model = nn.GRU(self.d_model, self.d_model, self.n_layers, 
                                 dropout=dropout, batch_first=True)          
         elif self.regModel == "cnngru":
-            self.model = CNN_GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+            self.model = CNN_GRU(self.d_model, self.d_model, self.n_layers, 
                                  dropout=dropout, bidirectional=False)
         elif self.regModel == "cnnbigru":
-            self.model = CNN_GRU(self.total_vf_dim, self.d_model, self.n_layers, 
+            self.model = CNN_GRU(self.d_model, self.d_model, self.n_layers, 
                                  dropout=dropout, bidirectional=True)
         elif self.regModel == "mamba":
             config = MambaConfig(d_model=self.d_model, n_layers=self.n_layers, 
@@ -190,17 +190,21 @@ class VideoRegression(nn.Module):
         projection = nn.Linear
         # projection = KANLinear
 
+        self.in_proj = nn.Sequential(
+            projection(self.total_vf_dim, self.d_model),
+            nn.Dropout(dropout)
+        )
+
         if self.regModel in ('gru', 'lstm', 'cnngru'):
-            self.fc = projection(self.d_model, 2)
+            self.out_proj = projection(self.d_model, 2)
         elif self.regModel in ('bigru', 'bilstm', 'cnnbigru'):
-            self.fc = projection(self.d_model * 2, 2)
+            self.out_proj = projection(self.d_model * 2, 2)
         
         if self.regModel in ('mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', \
                              'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
-            self.fc3 = projection(self.total_vf_dim, self.d_model)
-            self.fc4 = projection(self.d_model, 2)
+            self.out_proj = projection(self.d_model, 2)
         elif self.regModel == 'minGRULM':
-            self.fc = projection(self.total_vf_dim, 2)
+            self.out_proj = projection(self.total_vf_dim, 2)
 
     def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
@@ -225,18 +229,15 @@ class VideoRegression(nn.Module):
         # else:
         #     vf_concat = self.Linear_vis(vf_concat) + self.scene_embedding(feature_scene_offset.int())
 
+        vf = self.in_proj(vf_concat)
         if self.regModel in ("bilstm", "bigru", "lstm", "gru"):
-            out, _ = self.model(vf_concat)
-            out = self.fc(out)
+            out, _ = self.model(vf)
+            out = self.out_proj(out)
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', 'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):            
-            out = self.fc3(vf_concat)
-            out = self.model(out)
-            out = self.fc4(out)
+            out = self.model(vf)
+            out = self.out_proj(out)
         elif self.regModel in ('minGRULM', 'cnngru', 'cnnbigru'):
-            # print(vf_concat.shape)
-            out = self.model(vf_concat)
-            # print(out.shape)
-            out = self.fc(out)
-            # print(out.shape)
+            out = self.model(vf)
+            out = self.out_proj(out)
 
         return out

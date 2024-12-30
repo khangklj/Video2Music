@@ -82,7 +82,7 @@ LOUDNESS_PAD        = 0.0
 
 # INSTRUMENT
 INSTRUMENT_SIZE     = 40
-INSTRUMENT_PAD      = 0.0 
+INSTRUMENT_PAD      = 0
 
 # OTHER
 SEPERATOR               = "========================="

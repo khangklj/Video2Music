@@ -77,7 +77,7 @@ def eval_model(model, dataloader):
             feature_emotion = batch["emotion"].to(get_device())
             feature_loudness = batch["loudness"].to(get_device())
             feature_note_density = batch["note_density"].to(get_device())
-            feature_instrument = batch["instrument"].to(get_device())
+            feature_instrument = batch["instrument"].to(get_device()).float()
 
             # Loudness_notedensity and Instrument
             ln_nd, inst = model(feature_semantic_list, 

@@ -127,8 +127,8 @@ def main( vm = "" , isPrintArgs = True ):
         print("ERROR: Need continue weights (-continue_weights) when using continue_epoch")
         assert(False)
 
-    train_loss_func = nn.SmoothL1Loss()
-    # train_loss_func = nn.MSELoss()
+    # train_loss_func = nn.SmoothL1Loss()
+    train_loss_func = nn.MSELoss()
 
     ##### Lr Scheduler vs static lr #####
     if(args.lr is None):

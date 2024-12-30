@@ -466,7 +466,7 @@ class VevoDataset(Dataset):
         max_prob_values = max_prob_values.squeeze()
 
         #### ---- INSTRUMENT ----- ####
-        feature_instrument = np.empty(self.max_seq_video, INSTRUMENT_SIZE)
+        feature_instrument = np.empty((self.max_seq_video, INSTRUMENT_SIZE))
         feature_instrument.fill(INSTRUMENT_PAD)
         data = pd.read_csv(self.data_files_instrument[idx]).to_numpy()
         feature_instrument[:data.shape[0], :] = data

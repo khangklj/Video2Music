@@ -69,16 +69,20 @@ SCENE_OFFSET_PAD        = 0.0
 SCENE_OFFSET_MAX        = 300
 
 # MOTION
-MOTION_PAD        = 0.0 
+MOTION_PAD          = 0.0 
 
 # EMOTION
-EMOTION_PAD        = 0.0 
+EMOTION_PAD         = 0.0 
 
 # NOTE_DENSITY
-NOTE_DENSITY_PAD        = 0.0 
+NOTE_DENSITY_PAD    = 0.0 
 
 # LOUDNESS
 LOUDNESS_PAD        = 0.0 
+
+# INSTRUMENT
+INSTRUMENT_SIZE     = 40
+INSTRUMENT_PAD      = 0.0 
 
 # OTHER
 SEPERATOR               = "========================="

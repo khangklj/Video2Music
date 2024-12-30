@@ -4,6 +4,7 @@ import random
 import torch
 import torch.nn as nn
 import numpy as np
+import pandas as pd
 
 from torch.utils.data import Dataset
 from utilities.constants import *
@@ -61,22 +62,23 @@ class VevoDataset(Dataset):
         self.motion_type = motion_type
         self.augmentation = augmentation
 
-        self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "all")
-        self.vevo_chord_root_no_norm = os.path.join( dataset_root, "vevo_chord", "lab_v2", "all")
-        self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "all")
+        self.vevo_chord_root = os.path.join( dataset_root, "vevo_chord", "lab_v2_norm", "origin")
+        self.vevo_chord_root_no_norm = os.path.join( dataset_root, "vevo_chord", "lab_v2", "origin")
+        self.vevo_emotion_root = os.path.join( dataset_root, "vevo_emotion", emo_model, "origin")
         
         if self.motion_type == 0:
-            self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "all") # Original
+            self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "origin") # Original
         elif self.motion_type == 1:
             self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "option1") # Option 1
         elif self.motion_type == 2:
             self.vevo_motion_root = os.path.join( dataset_root, "vevo_motion", "option2") # Option 2
         
-        self.vevo_scene_offset_root = os.path.join( dataset_root, "vevo_scene_offset", "all")
+        self.vevo_scene_offset_root = os.path.join( dataset_root, "vevo_scene_offset", "origin")
         self.vevo_meta_split_path = os.path.join( dataset_root, "vevo_meta", "split", split_ver, split + ".txt")
         
-        self.vevo_loudness_root = os.path.join( dataset_root, "vevo_loudness", "all")
-        self.vevo_note_density_root = os.path.join( dataset_root, "vevo_note_density", "all")
+        self.vevo_loudness_root = os.path.join( dataset_root, "vevo_loudness", "origin")
+        self.vevo_note_density_root = os.path.join( dataset_root, "vevo_note_density", "origin")
+        self.vevo_instrument_root = os.path.join( dataset_root, "vevo_instrument", "thresholding")
 
         self.max_seq_video    = max_seq_video
         self.max_seq_chord    = max_seq_chord
@@ -100,15 +102,16 @@ class VevoDataset(Dataset):
             for line in f:
                 self.id_list.append(line.strip())
         
-        self.data_files_chord = []
+        self.data_files_chord         = []
         self.data_files_chord_no_norm = []
-        self.data_files_emotion = []
-        self.data_files_motion = []
-        self.data_files_scene_offset = []
+        self.data_files_emotion       = []
+        self.data_files_motion        = []
+        self.data_files_scene_offset  = []
         self.data_files_semantic_list = []
 
-        self.data_files_loudness = []
-        self.data_files_note_density = []
+        self.data_files_loudness      = []
+        self.data_files_note_density  = []
+        self.data_files_instrument    = []
 
         for i in range(len(self.vis_models_arr)):
             self.data_files_semantic_list.append([])
@@ -127,6 +130,7 @@ class VevoDataset(Dataset):
 
             fpath_loudness = os.path.join( self.vevo_loudness_root, fid + ".lab" )
             fpath_note_density = os.path.join( self.vevo_note_density_root, fid + ".lab" )
+            fpath_instrument = os.path.join( self.vevo_instrument_root, fid + ".csv")
 
             fpath_semantic_list = []
             for vevo_semantic_root in self.vevo_semantic_root_list:
@@ -146,9 +150,11 @@ class VevoDataset(Dataset):
 
             checkFile_loudness = os.path.exists(fpath_loudness)
             checkFile_note_density = os.path.exists(fpath_note_density)
+            checkFile_instrument = os.path.exists(fpath_instrument)
 
             if checkFile_chord and checkFile_chord_no_norm and checkFile_emotion and checkFile_motion \
-                and checkFile_scene_offset and checkFile_semantic and checkFile_loudness and checkFile_note_density :
+                and checkFile_scene_offset and checkFile_semantic and checkFile_loudness \
+                and checkFile_note_density and checkFile_instrument:
 
                 self.data_files_chord.append(fpath_chord)
                 self.data_files_chord_no_norm.append(fpath_chord_no_norm)
@@ -158,6 +164,7 @@ class VevoDataset(Dataset):
 
                 self.data_files_loudness.append(fpath_loudness)
                 self.data_files_note_density.append(fpath_note_density)
+                self.data_files_instrument.append(fpath_instrument)
 
                 if IS_VIDEO:
                     for i in range(len(self.vis_models_arr)):
@@ -458,6 +465,12 @@ class VevoDataset(Dataset):
         max_prob_values = torch.gather(feature_emotion, dim=1, index=max_prob_indices.unsqueeze(1))
         max_prob_values = max_prob_values.squeeze()
 
+        #### ---- INSTRUMENT ----- ####
+        feature_instrument = np.empty(self.max_seq_video, INSTRUMENT_SIZE)
+        feature_instrument.fill(INSTRUMENT_PAD)
+        data = pd.read_csv(self.data_files_instrument[idx]).to_numpy()
+        feature_instrument[:data.shape[0], :] = data
+
         # -- emotion to chord
         #              maj dim sus4 min7 min sus2 aug dim7 maj6 hdim7 7 min6 maj7
         # 0. extcing : [1,0,1,0,0,0,0,0,0,0,1,0,0]
@@ -549,7 +562,8 @@ class VevoDataset(Dataset):
                 "tgt_emotion" : tgt_emotion,
                 "tgt_emotion_prob" : tgt_emotion_prob,
                 "note_density" : feature_note_density,
-                "loudness" : feature_loudness
+                "loudness" : feature_loudness,
+                "instrument": feature_instrument
                 }
 
     def find_fit_index(self, nums, idx=0, val=1.0):

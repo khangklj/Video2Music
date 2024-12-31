@@ -39,14 +39,12 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         # total_loss = loss.forward(ln_nd, feature_combined) + F.binary_cross_entropy(inst, feature_instrument)
         
         # DROPLOSS
-        ln, nd = torch.split(ln_nd, split_size_or_sections=1, dim=1)
+        # ln, nd = torch.split(ln_nd, split_size_or_sections=1, dim=1)
         p = random.random()
-        if p < 0.7:
+        if p < 0.8:
             total_loss = loss.forward(ln_nd, feature_combined) + F.binary_cross_entropy(inst, feature_instrument)
-        elif p < 0.8:
-            total_loss = loss.forward(ln, feature_loudness)
         elif p < 0.9:
-            total_loss = loss.forward(nd, feature_note_density)
+            total_loss = loss.forward(ln_nd, feature_combined)
         else:
             total_loss = F.binary_cross_entropy(inst, feature_instrument)
 

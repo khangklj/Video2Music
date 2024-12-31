@@ -5,6 +5,7 @@ from .constants import *
 from utilities.device import get_device
 from .lr_scheduling import get_lr
 import torch.nn.functional as F
+import random
 
 def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, print_modulus=1):
     out = -1
@@ -35,8 +36,21 @@ def train_epoch(cur_epoch, model, dataloader, loss, opt, lr_scheduler=None, prin
         feature_note_density = feature_note_density.flatten().reshape(-1,1) # (batch_size, 300, 1)
         feature_combined = torch.cat((feature_note_density, feature_loudness), dim=1) # (batch_size, 300, 2)
 
-        out = loss.forward(ln_nd, feature_combined) + F.binary_cross_entropy(inst, feature_instrument)
-        out.backward()
+        # total_loss = loss.forward(ln_nd, feature_combined) + F.binary_cross_entropy(inst, feature_instrument)
+        
+        # DROPLOSS
+        ln, nd = torch.split(ln_nd, split_size_or_sections=1, dim=1)
+        p = random.random()
+        if p < 0.7:
+            total_loss = loss.forward(ln_nd, feature_combined) + F.binary_cross_entropy(inst, feature_instrument)
+        elif p < 0.8:
+            total_loss = loss.forward(ln, feature_loudness)
+        elif p < 0.9:
+            total_loss = loss.forward(nd, feature_note_density)
+        else:
+            total_loss = F.binary_cross_entropy(inst, feature_instrument)
+
+        total_loss.backward()
         opt.step()
         
         if(lr_scheduler is not None):

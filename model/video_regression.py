@@ -211,13 +211,13 @@ class VideoRegression(nn.Module):
         vf_concat = feature_semantic_list.float() 
         
         # Scene offset
-        vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1)
+        # vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1)
 
         # Motion
-        try:
-            vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1)
-        except:
-            vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
+        # try:
+        #     vf_concat = torch.cat([vf_concat, feature_motion.unsqueeze(-1).float()], dim=-1)
+        # except:
+        #     vf_concat = torch.cat([vf_concat, feature_motion], dim=-1)
         
         # Emotion
         vf_concat = torch.cat([vf_concat, feature_emotion.float()], dim=-1) # -> (batch_size, max_seq_video, total_vf_dim)

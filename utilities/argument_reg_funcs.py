@@ -15,7 +15,7 @@ motion_type = 0
 dropout = 0.2
 lr = 5e-4
 scene_embed = False
-optimizer = 'Adam' # Adam / AdamW / RAdam / RAdamW
+optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

@@ -10,10 +10,10 @@ batch_size = 32
 d_model = 128
 d_ff = 256
 epochs = 50
-n_layers = 3
+n_layers = 2
 motion_type = 1
 dropout = 0.2
-lr = 5e-4
+lr = 1e-3
 scene_embed = False
 optimizer = 'Adam' # Adam / AdamW / RAdam / RAdamW
 

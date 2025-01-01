@@ -68,15 +68,15 @@ def main( vm = "", isPrintArgs = True):
     total_vf_dim = 0
     total_vf_dim += test_dataset[0]["semanticList"].shape[1]
 
-    total_vf_dim += 1 # Scene_offset
+    # total_vf_dim += 1 # Scene_offset
 
     # Motion
-    if args.motion_type == 0:
-        total_vf_dim += 1 
-    elif args.motion_type == 1:
-        total_vf_dim += 512
-    elif args.motion_type == 2:
-        total_vf_dim += 768
+    # if args.motion_type == 0:
+    #     total_vf_dim += 1 
+    # elif args.motion_type == 1:
+    #     total_vf_dim += 512
+    # elif args.motion_type == 2:
+    #     total_vf_dim += 768
     
     # Emotion
     if args.emo_model.startswith("6c"):

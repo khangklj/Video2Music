@@ -153,11 +153,11 @@ def main():
     key_detection_models = {
         'SVC': SVC(),
         'DecisionTreeClassifier': DecisionTreeClassifier(),
-        'RandomForestClassifier_50': RandomForestClassifier(n_estimators=50),
-        'RandomForestClassifier_100': RandomForestClassifier(n_estimators=100),
-        'RandomForestClassifier_150': RandomForestClassifier(n_estimators=150),
-        'RandomForestClassifier_200': RandomForestClassifier(n_estimators=200),
-        'RandomForestClassifier_250': RandomForestClassifier(n_estimators=250),
+        'RandomForestClassifier_50': RandomForestClassifier(n_estimators=50, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
+        'RandomForestClassifier_100': RandomForestClassifier(n_estimators=100, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
+        'RandomForestClassifier_150': RandomForestClassifier(n_estimators=150, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
+        'RandomForestClassifier_200': RandomForestClassifier(n_estimators=200, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
+        'RandomForestClassifier_250': RandomForestClassifier(n_estimators=250, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
         'AdaBoostClassifier': AdaBoostClassifier(),
         'GradientBoostingClassifier': GradientBoostingClassifier(),
         'BaggingClassifier': BaggingClassifier(),
@@ -236,7 +236,7 @@ def main():
     print("\nSummary and save of Results:")
     for model_name, metrics in results.items():
         # print(f"{model_name} - MSE: {metrics['MSE']:.4f}, R2: {metrics['R2']:.4f}")
-        print(f"{model_name} - ACC: {metrics['ACC']:.4f}, F1: {metrics['F1']:.4f}")
+        print(f"{model_name} - Acc: {metrics['Acc']:.4f}, F1: {metrics['F1']:.4f}")
 
     with open('key_detection_results.json', "w") as f:
         js.dump(results, f, indent=4)

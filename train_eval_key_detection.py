@@ -5,15 +5,40 @@ from utilities.device import get_device, use_cuda
 from utilities.constants import *
 
 from tqdm import tqdm
-import sklearn
+import json as js
+import joblib
+import os
+import numpy as np
+
+# Support Vector Machines
+from sklearn.svm import SVR
+
+# Tree-Based Models
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor
+
+# Ensemble Models
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import BaggingRegressor
+
+# Neural Networks
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
+
+# Naive Bayes and Nearest Neighbors
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsRegressor
+
+from sklearn.metrics import mean_squared_error, r2_score
 
 split_ver = SPLIT_VER
 
 def create_sample(sample, model, X, y):
     semantic = sample['semanticList'].unsqueeze(0)
     emotion = sample['emotion'].unsqueeze(0)
-    feature = model.get_feature(semantic, None, None, emotion)
-    X.append(feature.squeeze().detach().cpu().numpy())
+    feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
+    X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'])
 
 def main():
@@ -65,6 +90,65 @@ def main():
 
     print(f'Created {len(X_train)} training samples and {len(X_test)} testing samples')
     print(f'Each sample has shape ({X_train[0].shape}, {y_train[0].shape})')
+
+    key_detection_models = {
+        "LinearRegression": LinearRegression(),
+        "SVR": SVR(),
+        "DecisionTreeRegressor": DecisionTreeRegressor(),
+        "RandomForestRegressor": RandomForestRegressor(),
+        "AdaBoostRegressor": AdaBoostRegressor(),
+        "GradientBoostingRegressor": GradientBoostingRegressor(),
+        "BaggingRegressor": BaggingRegressor(),
+        "KNeighborsRegressor": KNeighborsRegressor(),
+        "MLPRegressor": MLPRegressor(max_iter=500),  # Ensure sufficient iterations for convergence
+    }
+
+    results = {}
+    model_dir = 'saved_models/key_detection/'
+    os.makedirs(model_dir, exist_ok=True)
+
+    for name, model in key_detection_models.items():
+        print(f"Training {name}...")
+        
+        model.fit(X_train, y_train)
+        
+        y_pred = round(model.predict(X_test))
+        
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+        
+        results[name] = {"MSE": mse, "R2": r2}
+        print(f"{name} - MSE: {mse:.4f}, R2: {r2:.4f}")
+
+        model_path = os.path.join(model_dir, f"{name}.pkl")
+        joblib.dump(model, model_path)
+        print(f"Model {name} saved to {model_path}")
+    try:
+        print("\nTraining GaussianNB (as regressor)...")
+
+        gnb = GaussianNB()
+        gnb.fit(X_train, y_train.astype(int))  # GaussianNB requires discrete classes
+
+        y_pred = round(gnb.predict(X_test))
+
+        mse = mean_squared_error(y_test, y_pred)
+        r2 = r2_score(y_test, y_pred)
+
+        results["GaussianNB"] = {"MSE": mse, "R2": r2}
+        print(f"GaussianNB - MSE: {mse:.4f}, R2: {r2:.4f}")
+
+        gnb_path = os.path.join(model_dir, "GaussianNB.pkl")
+        joblib.dump(gnb, gnb_path)
+        print(f"Model GaussianNB saved to {gnb_path}")
+    except Exception as e:
+        print(f"GaussianNB failed: {e}")
+
+    print("\nSummary and save of Results:")
+    for model_name, metrics in results.items():
+        print(f"{model_name} - MSE: {metrics['MSE']:.4f}, R2: {metrics['R2']:.4f}")
+
+    with open('key_detection_results.json', "w") as f:
+        js.dump(results, f, indent=4)
 
 if __name__ == "__main__":
     main()

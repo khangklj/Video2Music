@@ -39,8 +39,8 @@ def create_sample(sample, model, X, y):
     emotion = sample['emotion'].unsqueeze(0)
     # feature = torch.cat((semantic, emotion), dim=-1).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
-    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
+    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
+    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
 
     emotion_idx = torch.argmax(emotion.mean(dim=0))
 
@@ -176,6 +176,7 @@ def main():
     model_dir = 'saved_models/key_detection/'
     os.makedirs(model_dir, exist_ok=True)
 
+    n_show = 25
     for name, model in key_detection_models.items():
         print(f"Training {name}... ===================")
         
@@ -191,8 +192,8 @@ def main():
         print(f"Train {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
 
         print('Training predictions')
-        print(y_pred[:20].astype(int))
-        print(y_train[:20])
+        print(y_pred[:n_show].astype(int))
+        print(y_train[:n_show])
 
         # y_pred = model.predict(X_train)
 
@@ -203,8 +204,8 @@ def main():
         # print(f"Train {name} - Acc: {acc:.4f}, F1: {f1:.4f}")
 
         # print('Training predictions')
-        # print(y_pred[:20])
-        # print(y_train[:20])
+        # print(y_pred[:n_show])
+        # print(y_train[:n_show])
         
         ### Testing predictions
         y_pred = np.round(model.predict(X_test))
@@ -216,8 +217,8 @@ def main():
         print(f"Test {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
 
         print('Testing predictions')
-        print(y_pred[:20].astype(int))
-        print(y_test[:20])
+        print(y_pred[:n_show].astype(int))
+        print(y_test[:n_show])
 
         # y_pred = model.predict(X_test)
         
@@ -228,8 +229,8 @@ def main():
         # print(f"Test {name} - Acc: {acc:.4f}, F1: {f1:.4f}")
 
         # print('Testing predictions')
-        # print(y_pred[:20])
-        # print(y_test[:20])
+        # print(y_pred[:n_show])
+        # print(y_test[:n_show])
         
         ### Save the trained model
         model_path = os.path.join(model_dir, f"{name}.pkl")

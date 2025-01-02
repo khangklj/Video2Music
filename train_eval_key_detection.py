@@ -101,7 +101,7 @@ def main():
     key_detection_models = {
         "SVR": SVR(),
         "DecisionTreeRegressor": DecisionTreeRegressor(),
-        "RandomForestRegressor": RandomForestRegressor(n_estimators=300, min_samples_leaf=5),
+        "RandomForestRegressor": RandomForestRegressor(n_estimators=50, min_samples_leaf=5),
         "AdaBoostRegressor": AdaBoostRegressor(),
         "GradientBoostingRegressor": GradientBoostingRegressor(),
         "BaggingRegressor": BaggingRegressor(),
@@ -115,7 +115,7 @@ def main():
     os.makedirs(model_dir, exist_ok=True)
 
     for name, model in key_detection_models.items():
-        print(f"Training {name}...")
+        print(f"Training {name}... ===================")
         
         model.fit(X_train, y_train)
 

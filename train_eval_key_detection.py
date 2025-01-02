@@ -11,25 +11,26 @@ import os
 import numpy as np
 
 # Support Vector Machines
-from sklearn.svm import SVR
+from sklearn.svm import SVR, SVC
 
 # Tree-Based Models
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 
 # Ensemble Models
-from sklearn.ensemble import AdaBoostRegressor
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import BaggingRegressor
+from sklearn.ensemble import AdaBoostRegressor, AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingRegressor, GradientBoostingClassifier
+from sklearn.ensemble import BaggingRegressor, BaggingClassifier
 
 # Neural Networks
 from sklearn.linear_model import LinearRegression
-from sklearn.neural_network import MLPRegressor
+from sklearn.neural_network import MLPRegressor, MLPClassifier
 
-# Nearest Neighbors
-from sklearn.neighbors import KNeighborsRegressor
+# Nearest Neighbors and Gaussian Naive Bayes
+from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f2_score
 
 split_ver = SPLIT_VER
 
@@ -99,45 +100,64 @@ def main():
     X_test = np.array(X_test)
     y_test = np.array(y_test).ravel()
 
+    # key_detection_models = {
+    #     "SVR_linear": SVR(kernel='linear'),
+    #     "SVR_poly": SVR(kernel='poly'),
+    #     "SVR_rbf": SVR(kernel='rbf'),
+    #     "DecisionTreeRegressor": DecisionTreeRegressor(),
+    #     "RandomForestRegressor_50": RandomForestRegressor(n_estimators=50,
+    #                                                    max_depth=20, 
+    #                                                    max_features='sqrt',
+    #                                                    min_samples_leaf=5,
+    #                                                    min_samples_split=10),
+    #     "RandomForestRegressor_100": RandomForestRegressor(n_estimators=100,
+    #                                                    max_depth=20, 
+    #                                                    max_features='sqrt',
+    #                                                    min_samples_leaf=5,
+    #                                                    min_samples_split=10),
+    #     "RandomForestRegressor_150": RandomForestRegressor(n_estimators=150,
+    #                                                    max_depth=20, 
+    #                                                    max_features='sqrt',
+    #                                                    min_samples_leaf=5,
+    #                                                    min_samples_split=10),
+    #     "RandomForestRegressor_200": RandomForestRegressor(n_estimators=200,
+    #                                                    max_depth=20, 
+    #                                                    max_features='sqrt',
+    #                                                    min_samples_leaf=5,
+    #                                                    min_samples_split=10),
+    #     "RandomForestRegressor_250": RandomForestRegressor(n_estimators=250,
+    #                                                    max_depth=20,
+    #                                                    max_features='sqrt',
+    #                                                    min_samples_leaf=5,
+    #                                                    min_samples_split=10),
+    #     "AdaBoostRegressor": AdaBoostRegressor(),
+    #     "GradientBoostingRegressor": GradientBoostingRegressor(),
+    #     "BaggingRegressor": BaggingRegressor(),
+    #     "KNeighborsRegressor_3": KNeighborsRegressor(n_neighbors=3),
+    #     "KNeighborsRegressor_5": KNeighborsRegressor(n_neighbors=5),
+    #     "KNeighborsRegressor_9": KNeighborsRegressor(n_neighbors=9),
+    #     "KNeighborsRegressor_15": KNeighborsRegressor(n_neighbors=15),
+    #     "LinearRegression": LinearRegression(),
+    #     "MLPRegressor": MLPRegressor(max_iter=500),
+    # }
+
     key_detection_models = {
-        "SVR_linear": SVR(kernel='linear'),
-        "SVR_poly": SVR(kernel='poly'),
-        "SVR_rbf": SVR(kernel='rbf'),
-        "DecisionTreeRegressor": DecisionTreeRegressor(),
-        "RandomForestRegressor_50": RandomForestRegressor(n_estimators=50,
-                                                       max_depth=20, 
-                                                       max_features='sqrt',
-                                                       min_samples_leaf=5,
-                                                       min_samples_split=10),
-        "RandomForestRegressor_100": RandomForestRegressor(n_estimators=100,
-                                                       max_depth=20, 
-                                                       max_features='sqrt',
-                                                       min_samples_leaf=5,
-                                                       min_samples_split=10),
-        "RandomForestRegressor_150": RandomForestRegressor(n_estimators=150,
-                                                       max_depth=20, 
-                                                       max_features='sqrt',
-                                                       min_samples_leaf=5,
-                                                       min_samples_split=10),
-        "RandomForestRegressor_200": RandomForestRegressor(n_estimators=200,
-                                                       max_depth=20, 
-                                                       max_features='sqrt',
-                                                       min_samples_leaf=5,
-                                                       min_samples_split=10),
-        "RandomForestRegressor_250": RandomForestRegressor(n_estimators=250,
-                                                       max_depth=20,
-                                                       max_features='sqrt',
-                                                       min_samples_leaf=5,
-                                                       min_samples_split=10),
-        "AdaBoostRegressor": AdaBoostRegressor(),
-        "GradientBoostingRegressor": GradientBoostingRegressor(),
-        "BaggingRegressor": BaggingRegressor(),
-        "KNeighborsRegressor_3": KNeighborsRegressor(n_neighbors=3),
-        "KNeighborsRegressor_5": KNeighborsRegressor(n_neighbors=5),
-        "KNeighborsRegressor_9": KNeighborsRegressor(n_neighbors=9),
-        "KNeighborsRegressor_15": KNeighborsRegressor(n_neighbors=15),
-        "LinearRegression": LinearRegression(),
-        "MLPRegressor": MLPRegressor(max_iter=500),
+        'SVC': SVC(),
+        'DecisionTreeClassifier': DecisionTreeClassifier(),
+        'RandomForestClassifier_50': RandomForestClassifier(n_estimators=50),
+        'RandomForestClassifier_100': RandomForestClassifier(n_estimators=100),
+        'RandomForestClassifier_150': RandomForestClassifier(n_estimators=150),
+        'RandomForestClassifier_200': RandomForestClassifier(n_estimators=200),
+        'RandomForestClassifier_250': RandomForestClassifier(n_estimators=250),
+        'AdaBoostClassifier': AdaBoostClassifier(),
+        'GradientBoostingClassifier': GradientBoostingClassifier(),
+        'BaggingClassifier': BaggingClassifier(),
+        'KNeighborsClassifier_3': KNeighborsClassifier(n_neighbors=3),
+        'KNeighborsClassifier_5': KNeighborsClassifier(n_neighbors=5),
+        'KNeighborsClassifier_9': KNeighborsClassifier(n_neighbors=9),
+        'KNeighborsClassifier_15': KNeighborsClassifier(n_neighbors=15),
+        'MLPClassifier': MLPClassifier(max_iter=500),
+        'GaussianNB': GaussianNB(),
     }
 
     results = {}
@@ -150,31 +170,55 @@ def main():
         model.fit(X_train, y_train)
 
         ### Training predictions
-        y_pred = np.round(model.predict(X_train))
+        # y_pred = np.round(model.predict(X_train))
 
-        mse = mean_squared_error(y_train, y_pred)
-        r2 = r2_score(y_train, y_pred)
+        # mse = mean_squared_error(y_train, y_pred)
+        # r2 = r2_score(y_train, y_pred)
         
-        results[name] = {"MSE": mse, "R2": r2}
-        print(f"Train {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
+        # results[name] = {"MSE": mse, "R2": r2}
+        # print(f"Train {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
+
+        # print('Training predictions')
+        # print(y_pred[:20].astype(int))
+        # print(y_train[:20])
+
+        y_pred = model.predict(X_train)
+
+        acc = accuracy_score(y_pred, y_train)
+        f2 = f2_score(y_pred, y_train)
+
+        results[name] = {"Acc": acc, "F2": f2}
+        print(f"Train {name} - Acc: {acc:.4f}, F2: {f2:.4f}")
 
         print('Training predictions')
-        print(y_pred[:20].astype(int))
+        print(y_pred[:20])
         print(y_train[:20])
         
         ### Testing predictions
-        y_pred = np.round(model.predict(X_test))
+        # y_pred = np.round(model.predict(X_test))
         
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
+        # mse = mean_squared_error(y_test, y_pred)
+        # r2 = r2_score(y_test, y_pred)
         
-        results[name] = {"MSE": mse, "R2": r2}
-        print(f"Test {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
+        # results[name] = {"MSE": mse, "R2": r2}
+        # print(f"Test {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
+
+        # print('Testing predictions')
+        # print(y_pred[:20].astype(int))
+        # print(y_test[:20])
+
+        y_pred = model.predict(X_test)
+        
+        acc = accuracy_score(y_pred, y_test)
+        f2 = f2_score(y_pred, y_test)
+        
+        results[name] = {"Acc": acc, "F2": f2}
+        print(f"Test {name} - Acc: {acc:.4f}, F2: {f2:.4f}")
 
         print('Testing predictions')
-        print(y_pred[:20].astype(int))
+        print(y_pred[:20])
         print(y_test[:20])
-
+        
         ### Save the trained model
         model_path = os.path.join(model_dir, f"{name}.pkl")
         joblib.dump(model, model_path)

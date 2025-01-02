@@ -33,15 +33,17 @@ def print_eval_args(args):
 # parse_generate_args
 def parse_generate_args():
     parser = argparse.ArgumentParser()
-    outputpath = "./output_vevo/"+version
+    outputpath = "./output_vevo/" + version
     if IS_VIDEO:
         modelpath = "saved_models/AMT/best_loss_weights.pickle"
         modelpathReg = "saved_models/AMT/best_rmse_weights.pickle"
+        modelpathKey = "saved_models/AMT/SVC_rbf.pkl"
         # modelpath = "./saved_models/"+version+ "/"+VIS_MODELS_PATH+"/results/best_acc_weights.pickle"
         # modelpathReg = "./saved_models/"+version+ "/"+VIS_MODELS_PATH+"/results_regression_bigru/best_rmse_weights.pickle"
     else:
-        modelpath = "./saved_models/"+version+ "/no_video/results/best_loss_weights.pickle"
+        modelpath = "./saved_models/" + version + "/no_video/results/best_loss_weights.pickle"
         modelpathReg = None
+        modelpathKey = "./saved_models/" + version + "/no_video/results/SVC_rbf.pkl"
 
     parser.add_argument("-dataset_dir", type=str, default="./dataset/", help="Folder of VEVO dataset")
     
@@ -60,6 +62,8 @@ def parse_generate_args():
     parser.add_argument("-num_prime_chord", type=int, default=30, help="Amount of messages to prime the generator with")    
     parser.add_argument("-model_weights", type=str, default=modelpath, help="Pickled model weights file saved with torch.save and model.state_dict()")
     parser.add_argument("-modelReg_weights", type=str, default=modelpathReg, help="Pickled model weights file saved with torch.save and model.state_dict()")
+    parser.add_argument("-modelKey_weights", type=str, default=modelpathKey, help="Pickled model weights file saved with torch.save and model.state_dict()")
+    
 
     parser.add_argument("-beam", type=int, default=0, help="Beam search k. 0 for random probability sample and 1 for greedy")
 

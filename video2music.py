@@ -8,6 +8,7 @@ import subprocess
 import cv2
 import math
 import clip
+import joblib
 import numpy as np
 from PIL import Image
 from scenedetect import open_video, SceneManager, split_video_ffmpeg
@@ -415,7 +416,7 @@ class Video2music:
         self.modelReg = VideoRegression(n_layers=args.n_layers_reg, d_model=args.d_model_reg, d_hidden=args.dim_feedforward_reg, use_KAN=args.use_KAN_reg, max_sequence_video=args.max_sequence_video, total_vf_dim=self.total_vf_dim, regModel=args.regModel).to(get_device())        
         self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
 
-        self.key_detector = None
+        self.key_detector = joblib.load(args.modelpathKey)
 
         self.model.eval()
         self.modelReg.eval()
@@ -638,6 +639,7 @@ class Video2music:
             
             chord_offsetlist = convert_format_id_to_offset(chord_genlist)
             f_path_midi = output_dir / "output.mid"
+            f_path_midi_instrument = output_dir / "output_instrument.mid"
             f_path_flac = output_dir / "output.flac"
             f_path_video_out = output_dir / "output.mp4"
 
@@ -656,7 +658,9 @@ class Video2music:
             if key != None:
                 trans = traspose_key_dic[key]
             else:
-                trans = 0
+                # Key detection model
+                key_pred = self.key_detector.predict([feature_emotion.flatten().detach().cpu().numpy()])
+                trans = key_pred[0]
 
             for i, chord in enumerate(midi_chords):
                 if densitylist[i] == 0:
@@ -727,6 +731,12 @@ class Video2music:
                             MIDI.addNote(0, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
             
             with open(f_path_midi, "wb") as outputFile:
+                MIDI.writeFile(outputFile)
+
+            # MIDI rendering with instruments
+
+
+            with open(f_path_midi_instrument, "wb") as outputFile:
                 MIDI.writeFile(outputFile)
             
             # Convert midi to audio (e.g., flac)

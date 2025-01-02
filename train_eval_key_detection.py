@@ -10,8 +10,10 @@ import sklearn
 split_ver = SPLIT_VER
 
 def create_sample(sample, model, X, y):
-    feature = model.forward(sample['semanticList'], sample['scene_offset'], sample['motion'], sample['emotion'])
-    X.append(feature.detach().cpu().numpy())
+    semantic = sample['semanticList'].unsqueeze(0)
+    emotion = sample['emotion'].unsqueeze(0)
+    feature = model.forward(semantic, None, None, emotion)
+    X.append(feature.squeeze().detach().cpu().numpy())
     y.append(sample['key_val'])
 
 def main():

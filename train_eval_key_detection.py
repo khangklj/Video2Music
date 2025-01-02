@@ -26,8 +26,7 @@ from sklearn.ensemble import BaggingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.neural_network import MLPRegressor
 
-# Naive Bayes and Nearest Neighbors
-from sklearn.naive_bayes import GaussianNB
+# Nearest Neighbors
 from sklearn.neighbors import KNeighborsRegressor
 
 from sklearn.metrics import mean_squared_error, r2_score
@@ -92,7 +91,6 @@ def main():
     print(f'Each sample has shape ({X_train[0].shape}, {y_train[0].shape})')
 
     key_detection_models = {
-        "LinearRegression": LinearRegression(),
         "SVR": SVR(),
         "DecisionTreeRegressor": DecisionTreeRegressor(),
         "RandomForestRegressor": RandomForestRegressor(),
@@ -100,7 +98,8 @@ def main():
         "GradientBoostingRegressor": GradientBoostingRegressor(),
         "BaggingRegressor": BaggingRegressor(),
         "KNeighborsRegressor": KNeighborsRegressor(),
-        "MLPRegressor": MLPRegressor(max_iter=500),  # Ensure sufficient iterations for convergence
+        "LinearRegression": LinearRegression(),
+        "MLPRegressor": MLPRegressor(max_iter=500),
     }
 
     results = {}
@@ -123,25 +122,6 @@ def main():
         model_path = os.path.join(model_dir, f"{name}.pkl")
         joblib.dump(model, model_path)
         print(f"Model {name} saved to {model_path}")
-    try:
-        print("\nTraining GaussianNB (as regressor)...")
-
-        gnb = GaussianNB()
-        gnb.fit(X_train, y_train.astype(int))  # GaussianNB requires discrete classes
-
-        y_pred = round(gnb.predict(X_test))
-
-        mse = mean_squared_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-
-        results["GaussianNB"] = {"MSE": mse, "R2": r2}
-        print(f"GaussianNB - MSE: {mse:.4f}, R2: {r2:.4f}")
-
-        gnb_path = os.path.join(model_dir, "GaussianNB.pkl")
-        joblib.dump(gnb, gnb_path)
-        print(f"Model GaussianNB saved to {gnb_path}")
-    except Exception as e:
-        print(f"GaussianNB failed: {e}")
 
     print("\nSummary and save of Results:")
     for model_name, metrics in results.items():

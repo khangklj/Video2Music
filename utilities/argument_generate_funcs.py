@@ -76,8 +76,8 @@ def parse_generate_args():
     parser.add_argument('-music_gen_version', type=str, default='2.2', help="Version number. None is original musgic generation AMT model")
 
     # Reg model
-    parser.add_argument("-n_layers_reg", type=int, default=4, help="Number of layers to use")
-    parser.add_argument("-d_model_reg", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
+    parser.add_argument("-n_layers_reg", type=int, default=6, help="Number of layers to use")
+    parser.add_argument("-d_model_reg", type=int, default=128, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward_reg", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument('-use_KAN_reg', type=bool, default=False, help="Use KANLinear instead of Linear")
     parser.add_argument('-regModel', type=str, default='bimamba+', help="Version name. None is original loudness and note density Regression model")

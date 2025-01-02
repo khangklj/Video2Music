@@ -17,7 +17,7 @@ from scenedetect.scene_manager import save_images
 from utilities.constants import *
 from utilities.chord_to_midi import *
 
-from model.video_music_transformer import VideoMusicTransformer, VideoMusicTransformer_V1, VideoMusicTransformer_V2
+from model.video_music_transformer import *
 from model.video_regression import VideoRegression
 
 import json
@@ -395,24 +395,34 @@ class Video2music:
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim,
-                        rms_norm=args.rms_norm).to(get_device())
+                        rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
         elif args.music_gen_version.startswith('2.'):
             self.model = VideoMusicTransformer_V2(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
                         d_model=args.d_model, dim_feedforward=args.dim_feedforward,
                         max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
                         max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim,
-                        rms_norm=args.rms_norm).to(get_device())              
+                        rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed,
+                        balancing=args.balancing).to(get_device())
+        elif args.music_gen_version.startswith('3.'):
+            self.model = VideoMusicTransformer_V3(version_name=args.music_gen_version, n_layers=args.n_layers, num_heads=args.num_heads,
+                        d_model=args.d_model, dim_feedforward=args.dim_feedforward,
+                        max_sequence_midi=args.max_sequence_midi, max_sequence_video=args.max_sequence_video, 
+                        max_sequence_chord=args.max_sequence_chord, total_vf_dim=self.total_vf_dim,
+                        rms_norm=args.rms_norm, scene_embed=args.scene_embed, chord_embed=args.chord_embed).to(get_device())
+                  
         self.model.load_state_dict(torch.load(self.model_weights, map_location=get_device()))
 
         self.modelReg = VideoRegression(n_layers=args.n_layers_reg, d_model=args.d_model_reg, d_hidden=args.dim_feedforward_reg, use_KAN=args.use_KAN_reg, max_sequence_video=args.max_sequence_video, total_vf_dim=self.total_vf_dim, regModel=args.regModel).to(get_device())        
         self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
+
+        self.key_detector = None
 
         self.model.eval()
         self.modelReg.eval()
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer, key):
+    def generate(self, video, primer=None, key=None):
 
         feature_dir = Path("./feature")
         output_dir = Path("./output")
@@ -475,12 +485,17 @@ class Video2music:
         feature_semantic_list = feature_semantic.to(self.device)
 
         emotion_idx = torch.argmax(feature_emotion.mean(dim=0))
-        if emotion_idx in (1, 2, 3): # Minor
-            feature_key = torch.tensor([1])
-            feature_key = feature_key.float()
-        else: # Major
-            feature_key = torch.tensor([0])
-            feature_key = feature_key.float()
+        if key != None:
+            key = key.strip()
+            if key[-3:] == 'min': # Minor
+                feature_key = torch.tensor([1]).float()
+            else: # Major
+                feature_key = torch.tensor([0]).float()
+        else: # Key is not given
+            if emotion_idx in (1, 2, 3): # Minor
+                feature_key = torch.tensor([1]).float()
+            else: # Major
+                feature_key = torch.tensor([0]).float()
         
         feature_key = feature_key.to(self.device)
 
@@ -493,8 +508,7 @@ class Video2music:
         with open('dataset/vevo_meta/chord_attr.json') as json_file:
             chordAttrDic = json.load(json_file)
 
-        primer = primer.strip()
-        if primer.strip() == "":
+        if primer == None or primer.strip() == "":
             if emotion_idx in (1, 2, 3):
                 primer = "Am"
             else:
@@ -638,7 +652,11 @@ class Video2music:
                 else:
                     midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
             midi_chords = voice(midi_chords_orginal)
-            trans = traspose_key_dic[key]
+
+            if key != None:
+                trans = traspose_key_dic[key]
+            else:
+                trans = 0
 
             for i, chord in enumerate(midi_chords):
                 if densitylist[i] == 0:

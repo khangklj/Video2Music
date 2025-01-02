@@ -50,7 +50,7 @@ def create_sample(sample, model, X, y):
     #     feature_key = torch.tensor([0]).float()
 
     # feature = torch.cat((feature_key, feature))
-    feature = torch.cat((semantic, emotion), dim=-1)[:20].flatten()
+    feature = torch.cat((semantic, emotion), dim=-1)[:5].flatten()
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 

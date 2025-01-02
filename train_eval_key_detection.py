@@ -37,10 +37,10 @@ split_ver = SPLIT_VER
 def create_sample(sample, model, X, y):
     semantic = sample['semanticList'].unsqueeze(0)
     emotion = sample['emotion'].unsqueeze(0)
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
+    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
 
-    feature_emotion = emotion.flatten()
-    feature = torch.cat((feature, feature_emotion))
+    feature = emotion.flatten()
+    # feature = torch.cat((feature, feature_emotion))
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 

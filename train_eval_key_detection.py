@@ -78,6 +78,7 @@ def main():
 
     X_train, y_train, X_test, y_test = [], [], [], []
 
+    print('Create feature for key detection:')
     for sample in tqdm(train_dataset):
         create_sample(sample, model, X_train, y_train)
 
@@ -111,7 +112,7 @@ def main():
         
         model.fit(X_train, y_train)
         
-        y_pred = round(model.predict(X_test))
+        y_pred = np.round(model.predict(X_test))
         
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)

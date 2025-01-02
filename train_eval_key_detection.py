@@ -176,7 +176,7 @@ def main():
     model_dir = 'saved_models/key_detection/'
     os.makedirs(model_dir, exist_ok=True)
 
-    n_show = 25
+    n_show = 22
     for name, model in key_detection_models.items():
         print(f"Training {name}... ===================")
         

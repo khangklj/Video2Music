@@ -50,6 +50,7 @@ def create_sample(sample, model, X, y):
         feature_key = torch.tensor([0]).float()
 
     feature = torch.cat((feature_key, feature))
+    feature = emotion.flatten()
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 
@@ -154,7 +155,9 @@ def main():
     # }
 
     key_detection_models = {
-        'SVC': SVC(),
+        'SVC_linear': SVC(kernel='linear', probability=True),
+        'SVC_poly': SVC(kernel='poly', probability=True),
+        'SVC_rbf': SVC(kernel='rbf', probability=True),
         'DecisionTreeClassifier': DecisionTreeClassifier(),
         'RandomForestClassifier_50': RandomForestClassifier(n_estimators=50, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
         # 'RandomForestClassifier_100': RandomForestClassifier(n_estimators=100, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),

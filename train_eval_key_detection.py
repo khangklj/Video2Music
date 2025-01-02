@@ -135,7 +135,7 @@ def main():
         "KNeighborsRegressor_3": KNeighborsRegressor(n_neighbors=3),
         "KNeighborsRegressor_5": KNeighborsRegressor(n_neighbors=5),
         "KNeighborsRegressor_9": KNeighborsRegressor(n_neighbors=9),
-        "KNeighborsRegressor_9": KNeighborsRegressor(n_neighbors=15),
+        "KNeighborsRegressor_15": KNeighborsRegressor(n_neighbors=15),
         "LinearRegression": LinearRegression(),
         "MLPRegressor": MLPRegressor(max_iter=500),
     }

@@ -1,4 +1,4 @@
-from utilities.argument_reg_funcs import parse_train_args
+from utilities.argument_reg_funcs import parse_eval_args, print_eval_args
 from dataset.vevo_dataset import create_vevo_datasets
 from model.video_regression import VideoRegression
 from utilities.device import get_device, use_cuda
@@ -15,7 +15,7 @@ def create_sample(sample, model, X, y):
     y.append(sample['key_val'])
 
 def main():
-    args = parse_train_args()[0]
+    args = parse_eval_args()[0]
 
     train_dataset, val_dataset, test_dataset = create_vevo_datasets(
         dataset_root = "./dataset/", 

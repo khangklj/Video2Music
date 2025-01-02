@@ -40,7 +40,7 @@ def create_sample(sample, model, X, y):
     # feature = torch.cat((semantic, emotion), dim=-1).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
+    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:10, :].flatten()
 
     emotion_idx = torch.argmax(emotion.mean(dim=0))
 
@@ -49,7 +49,7 @@ def create_sample(sample, model, X, y):
     else: # Major
         feature_key = torch.tensor([0]).float()
 
-    feature = torch.cat((feature, feature_key))
+    feature = torch.cat((feature_key, feature))
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 
@@ -149,8 +149,8 @@ def main():
         # "KNeighborsRegressor_9": KNeighborsRegressor(n_neighbors=9),
         # "KNeighborsRegressor_15": KNeighborsRegressor(n_neighbors=15),
         # "LinearRegression": LinearRegression(),
-        "MLPRegressor": MLPRegressor(hidden_layer_sizes=256, solver='lbfgs', 
-                                     learning_rate='adaptive', max_iter=200),
+        "MLPRegressor": MLPRegressor(hidden_layer_sizes=256, solver='adam', 
+                                     learning_rate='adaptive', max_iter=500),
     }
 
     # key_detection_models = {

@@ -36,8 +36,8 @@ split_ver = SPLIT_VER
 def create_sample(sample, model, X, y):
     semantic = sample['semanticList'].unsqueeze(0)
     emotion = sample['emotion'].unsqueeze(0)
-    # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
+    feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
+    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
     # feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())

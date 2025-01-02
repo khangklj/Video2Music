@@ -205,7 +205,7 @@ class VideoRegression(nn.Module):
                 nn.Sigmoid()
             )
 
-    def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
+    def get_feature(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
         # Semantic
         vf_concat = feature_semantic_list.float() 
@@ -231,12 +231,16 @@ class VideoRegression(nn.Module):
         vf = self.in_proj(vf_concat)
         if self.regModel in ("bilstm", "bigru", "lstm", "gru"):
             out, _ = self.model(vf)
-            loudness_notedensity = self.regressor(out)
-            instrument = self.classifier(out)
         elif self.regModel in ("mamba", "moemamba", "mamba+", 'bimamba', 'bimamba+', \
                                'moe_bimamba+', 'sharedmoe_bimamba+', 'cnngru', 'cnnbigru'):            
             out = self.model(vf)
-            loudness_notedensity = self.regressor(out)
-            instrument = self.classifier(out)
+
+        return out
+
+    def forward(self, feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion):
+        out = self.get_feature(feature_semantic_list, feature_scene_offset, feature_motion, feature_emotion)
+        
+        loudness_notedensity = self.regressor(out)
+        instrument = self.classifier(out)
 
         return loudness_notedensity, instrument

@@ -71,7 +71,7 @@ def parse_generate_args():
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum chord sequence to consider")
 
-     parser.add_argument("-chord_embed", type=bool, default=True, help="Use chord embedding or not")
+    parser.add_argument("-chord_embed", type=bool, default=True, help="Use chord embedding or not")
     
     # Chord generation model
     parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")

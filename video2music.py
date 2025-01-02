@@ -736,7 +736,7 @@ class Video2music:
             # MIDI rendering with instruments
 
 
-            with open(f_path_midi_instrument, "wb") as outputFile:
+            with open(f_path_midi_instrument, "wb") as outputFile: # Write rendered instrument
                 MIDI.writeFile(outputFile)
             
             # Convert midi to audio (e.g., flac)

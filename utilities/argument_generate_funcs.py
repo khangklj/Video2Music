@@ -78,6 +78,7 @@ def parse_generate_args():
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument('-music_gen_version', type=str, default='2.2', help="Version number. None is original musgic generation AMT model")
+    parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
 
     # Reg model
     parser.add_argument("-n_layers_reg", type=int, default=6, help="Number of layers to use")

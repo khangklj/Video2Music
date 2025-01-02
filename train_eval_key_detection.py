@@ -162,7 +162,7 @@ def main():
         # 'RandomForestClassifier_200': RandomForestClassifier(n_estimators=200, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
         # 'RandomForestClassifier_250': RandomForestClassifier(n_estimators=250, max_depth=20, max_features='sqrt', min_samples_leaf=5, min_samples_split=10),
         'AdaBoostClassifier': AdaBoostClassifier(),
-        'GradientBoostingClassifier': GradientBoostingClassifier(loss='exponential', warm_start=True, min_samples_leaf=5, 
+        'GradientBoostingClassifier': GradientBoostingClassifier(warm_start=True, min_samples_leaf=5, 
                                                                min_samples_split=10, max_features='sqrt'),
         'BaggingClassifier': BaggingClassifier(max_samples=5, max_features=5, warm_start=True),
         # 'KNeighborsClassifier_3': KNeighborsClassifier(n_neighbors=3),

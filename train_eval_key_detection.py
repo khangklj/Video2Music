@@ -101,7 +101,11 @@ def main():
     key_detection_models = {
         "SVR": SVR(),
         "DecisionTreeRegressor": DecisionTreeRegressor(),
-        "RandomForestRegressor": RandomForestRegressor(n_estimators=50, min_samples_leaf=5),
+        "RandomForestRegressor": RandomForestRegressor(n_estimators=50,
+                                                       max_depth=10, 
+                                                       max_features='sqrt',
+                                                       min_samples_leaf=5,
+                                                       min_samples_split=10),
         "AdaBoostRegressor": AdaBoostRegressor(),
         "GradientBoostingRegressor": GradientBoostingRegressor(),
         "BaggingRegressor": BaggingRegressor(),

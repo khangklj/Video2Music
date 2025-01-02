@@ -4,6 +4,7 @@ from model.video_regression import VideoRegression
 from utilities.device import get_device, use_cuda
 from utilities.constants import *
 
+from tqdm import tqdm
 import sklearn
 
 split_ver = SPLIT_VER
@@ -51,13 +52,13 @@ def main():
 
     X_train, y_train, X_test, y_test = [], [], [], []
 
-    for sample in train_dataset:
+    for sample in tqdm(train_dataset):
         create_sample(sample, model, X_train, y_train)
 
-    for sample in val_dataset:
+    for sample in tqdm(val_dataset):
         create_sample(sample, model, X_test, y_test)
 
-    for sample in test_dataset:
+    for sample in tqdm(test_dataset):
         create_sample(sample, model, X_test, y_test)
 
     print(f'Created {len(X_train)} training samples and {len(X_test)} testing samples')

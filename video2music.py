@@ -471,10 +471,7 @@ class Video2music:
         feature_emotion = feature_emotion.unsqueeze(0)
 
         feature_semantic = feature_semantic.to(self.device)
-        feature_semantic_list = []
         feature_semantic = torch.unsqueeze(feature_semantic, 0)
-        # feature_semantic_list.append( feature_semantic.to(self.device) )
-        #feature_semantic_list.append( feature_semantic )
         feature_semantic_list = feature_semantic.to(self.device)
 
         emotion_idx = torch.argmax(feature_emotion.mean(dim=0))
@@ -567,7 +564,7 @@ class Video2music:
         # self.modelReg.eval()
 
         with torch.set_grad_enabled(False):
-            rand_seq = self.model.generate(feature_semantic_list=feature_semantic_list, 
+            chord_sequence = self.model.generate(feature_semantic_list=feature_semantic_list, 
                                               feature_key=feature_key, 
                                               feature_scene_offset=feature_scene_offset,
                                               feature_motion=feature_motion,
@@ -580,15 +577,16 @@ class Video2music:
                                               max_conseq_N= max_conseq_N,
                                               max_conseq_chord = max_conseq_chord)
             
-            y = self.modelReg(
+            # Loudness, Note density, Instrument
+            ln_nd, inst = self.modelReg(
                         feature_semantic_list, 
                         feature_scene_offset,
                         feature_motion,
                         feature_emotion)
         
-            y   = y.reshape(y.shape[0] * y.shape[1], -1)
+            ln_nd   = ln_nd.reshape(ln_nd.shape[0] * ln_nd.shape[1], -1)
 
-            y_note_density, y_loudness = torch.split(y, split_size_or_sections=1, dim=1)
+            y_note_density, y_loudness = torch.split(ln_nd, split_size_or_sections=1, dim=1)
             y_note_density_np = y_note_density.cpu().numpy()
             y_note_density_np = np.round(y_note_density_np).astype(int)
             y_note_density_np = np.clip(y_note_density_np, 0, 40)
@@ -620,7 +618,7 @@ class Video2music:
             
             # generated ChordID to ChordSymbol
             chord_genlist = []
-            chordID_genlist= rand_seq[0].cpu().numpy()
+            chordID_genlist= chord_sequence[0].cpu().numpy()
             for i in chordID_genlist:
                 chord_genlist.append(chordInvDic[str(i)])
             

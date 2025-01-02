@@ -90,11 +90,11 @@ def main():
 
     print(f'Created {len(X_train)} training samples and {len(X_test)} testing samples')
     print(f'Each sample has shape ({X_train[0].shape}, {y_train[0].shape})')
-    
+
     X_train = np.array(X_train)
-    y_train = np.array(y_train)
+    y_train = np.array(y_train).ravel()
     X_test = np.array(X_test)
-    y_test = np.array(y_test)
+    y_test = np.array(y_test).ravel()
 
     key_detection_models = {
         "SVR": SVR(),

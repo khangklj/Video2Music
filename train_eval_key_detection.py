@@ -41,6 +41,15 @@ def create_sample(sample, model, X, y):
     feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
     # feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
+
+    emotion_idx = torch.argmax(emotion.mean(dim=0))
+
+    if emotion_idx in (1, 2, 3): # Minor
+        feature_key = torch.tensor([1]).float()
+    else: # Major
+        feature_key = torch.tensor([0]).float()
+
+    feature = torch.cat((feature, feature_key))
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 
@@ -185,7 +194,7 @@ def main():
         y_pred = model.predict(X_train)
 
         acc = accuracy_score(y_pred, y_train)
-        f1 = f1_score(y_pred, y_train)
+        f1 = f1_score(y_pred, y_train, average='weighted')
 
         results[name] = {"Acc": acc, "F1": f1}
         print(f"Train {name} - Acc: {acc:.4f}, F1: {f1:.4f}")
@@ -210,7 +219,7 @@ def main():
         y_pred = model.predict(X_test)
         
         acc = accuracy_score(y_pred, y_test)
-        f1 = f1_score(y_pred, y_test)
+        f1 = f1_score(y_pred, y_test, average='weighted')
         
         results[name] = {"Acc": acc, "F1": f1}
         print(f"Test {name} - Acc: {acc:.4f}, F1: {f1:.4f}")

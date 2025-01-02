@@ -30,7 +30,7 @@ from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 
-from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f2_score
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, f1_score
 
 split_ver = SPLIT_VER
 
@@ -185,10 +185,10 @@ def main():
         y_pred = model.predict(X_train)
 
         acc = accuracy_score(y_pred, y_train)
-        f2 = f2_score(y_pred, y_train)
+        f1 = f1_score(y_pred, y_train)
 
-        results[name] = {"Acc": acc, "F2": f2}
-        print(f"Train {name} - Acc: {acc:.4f}, F2: {f2:.4f}")
+        results[name] = {"Acc": acc, "F1": f1}
+        print(f"Train {name} - Acc: {acc:.4f}, F1: {f1:.4f}")
 
         print('Training predictions')
         print(y_pred[:20])
@@ -210,10 +210,10 @@ def main():
         y_pred = model.predict(X_test)
         
         acc = accuracy_score(y_pred, y_test)
-        f2 = f2_score(y_pred, y_test)
+        f1 = f1_score(y_pred, y_test)
         
-        results[name] = {"Acc": acc, "F2": f2}
-        print(f"Test {name} - Acc: {acc:.4f}, F2: {f2:.4f}")
+        results[name] = {"Acc": acc, "F1": f1}
+        print(f"Test {name} - Acc: {acc:.4f}, F1: {f1:.4f}")
 
         print('Testing predictions')
         print(y_pred[:20])
@@ -226,7 +226,8 @@ def main():
 
     print("\nSummary and save of Results:")
     for model_name, metrics in results.items():
-        print(f"{model_name} - MSE: {metrics['MSE']:.4f}, R2: {metrics['R2']:.4f}")
+        # print(f"{model_name} - MSE: {metrics['MSE']:.4f}, R2: {metrics['R2']:.4f}")
+        print(f"{model_name} - ACC: {metrics['ACC']:.4f}, F1: {metrics['F1']:.4f}")
 
     with open('key_detection_results.json', "w") as f:
         js.dump(results, f, indent=4)

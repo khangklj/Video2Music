@@ -71,6 +71,8 @@ def parse_generate_args():
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum chord sequence to consider")
 
+     parser.add_argument("-chord_embed", type=bool, default=True, help="Use chord embedding or not")
+    
     # Chord generation model
     parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
     parser.add_argument("-num_heads", type=int, default=8, help="Number of heads to use for multi-head attention")
@@ -79,6 +81,7 @@ def parse_generate_args():
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
     parser.add_argument('-music_gen_version', type=str, default='2.2', help="Version number. None is original musgic generation AMT model")
     parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
+    parser.add_argument("-balancing", type=bool, default=True, help="False / True")
 
     # Reg model
     parser.add_argument("-n_layers_reg", type=int, default=6, help="Number of layers to use")

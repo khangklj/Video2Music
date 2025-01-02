@@ -96,7 +96,7 @@ def main():
         create_sample(sample, model, X_train, y_train)
 
     for sample in tqdm(val_dataset):
-        create_sample(sample, model, X_test, y_test)
+        create_sample(sample, model, X_train, y_train)
 
     for sample in tqdm(test_dataset):
         create_sample(sample, model, X_test, y_test)
@@ -149,8 +149,8 @@ def main():
         # "KNeighborsRegressor_9": KNeighborsRegressor(n_neighbors=9),
         # "KNeighborsRegressor_15": KNeighborsRegressor(n_neighbors=15),
         # "LinearRegression": LinearRegression(),
-        "MLPRegressor": MLPRegressor(hidden_layer_sizes=256, solver='lbfgs', learning_rate='adaptive', 
-                                     max_iter=200, early_stopping=True),
+        "MLPRegressor": MLPRegressor(hidden_layer_sizes=256, solver='lbfgs', 
+                                     learning_rate='adaptive', max_iter=200),
     }
 
     # key_detection_models = {

@@ -37,8 +37,8 @@ def create_sample(sample, model, X, y):
     semantic = sample['semanticList'].unsqueeze(0)
     emotion = sample['emotion'].unsqueeze(0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
-    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
+    feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
+    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 
@@ -118,8 +118,18 @@ def main():
         print(f"Training {name}...")
         
         model.fit(X_train, y_train)
+
+        y_pred = np.round(model.predict(X_train[:20]))
+
+        print('Training predictions')
+        print(y_pred[:20].astype(int))
+        print(y_train[:20])
         
         y_pred = np.round(model.predict(X_test))
+
+        print('Testing predictions')
+        print(y_pred[:20].astype(int))
+        print(y_test[:20])
         
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
@@ -130,9 +140,6 @@ def main():
         model_path = os.path.join(model_dir, f"{name}.pkl")
         joblib.dump(model, model_path)
         # print(f"Model {name} saved to {model_path}")
-
-        print(y_pred[:20].astype(int))
-        print(y_test[:20])
 
     print("\nSummary and save of Results:")
     for model_name, metrics in results.items():

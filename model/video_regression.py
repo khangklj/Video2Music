@@ -190,7 +190,7 @@ class VideoRegression(nn.Module):
             nn.Dropout(dropout)
         )
 
-        if self.regModel in ('gru', 'lstm', 'cnngru' \
+        if self.regModel in ('gru', 'lstm', 'cnngru', \
                              'mamba', 'moemamba', 'mamba+', 'bimamba', 'bimamba+', \
                              'moe_bimamba+', 'sharedmoe_bimamba+', 'minGRU'):
             self.regressor = projection(self.d_model, 2)

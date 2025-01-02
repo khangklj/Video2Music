@@ -37,8 +37,8 @@ def create_sample(sample, model, X, y):
     semantic = sample['semanticList'].unsqueeze(0)
     emotion = sample['emotion'].unsqueeze(0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
-    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
+    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
+    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:5, :].flatten()
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 
@@ -131,7 +131,7 @@ def main():
         joblib.dump(model, model_path)
         # print(f"Model {name} saved to {model_path}")
 
-        print(y_pred[:20])
+        print(y_pred[:20].astype(int))
         print(y_test[:20])
 
     print("\nSummary and save of Results:")

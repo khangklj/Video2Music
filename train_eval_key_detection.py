@@ -119,24 +119,33 @@ def main():
         
         model.fit(X_train, y_train)
 
-        y_pred = np.round(model.predict(X_train[:20]))
+        ### Training predictions
+        y_pred = np.round(model.predict(X_train))
+
+        mse = mean_squared_error(y_train, y_pred)
+        r2 = r2_score(y_train, y_pred)
+        
+        results[name] = {"MSE": mse, "R2": r2}
+        print(f"Train {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
 
         print('Training predictions')
         print(y_pred[:20].astype(int))
         print(y_train[:20])
         
+        ### Testing predictions
         y_pred = np.round(model.predict(X_test))
-
-        print('Testing predictions')
-        print(y_pred[:20].astype(int))
-        print(y_test[:20])
         
         mse = mean_squared_error(y_test, y_pred)
         r2 = r2_score(y_test, y_pred)
         
         results[name] = {"MSE": mse, "R2": r2}
-        print(f"{name} - MSE: {mse:.4f}, R2: {r2:.4f}")
+        print(f"Test {name} - MSE: {mse:.4f}, R2: {r2:.4f}")
 
+        print('Testing predictions')
+        print(y_pred[:20].astype(int))
+        print(y_test[:20])
+
+        ### Save the trained model
         model_path = os.path.join(model_dir, f"{name}.pkl")
         joblib.dump(model, model_path)
         # print(f"Model {name} saved to {model_path}")

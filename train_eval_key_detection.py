@@ -40,17 +40,17 @@ def create_sample(sample, model, X, y):
     # feature = torch.cat((semantic, emotion), dim=-1).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
-    # feature = model.get_feature(semantic, None, None, emotion).squeeze()[:50, :].flatten()
+    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:50, :].flatten()
 
-    # emotion_idx = torch.argmax(emotion.mean(dim=0))
+    emotion_idx = torch.argmax(sample['emotion'].mean(dim=0))
 
-    # if emotion_idx in (1, 2, 3): # Minor
-    #     feature_key = torch.tensor([1]).float()
-    # else: # Major
-    #     feature_key = torch.tensor([0]).float()
+    if emotion_idx in (1, 2, 3): # Minor
+        feature_key = torch.tensor([1]).float()
+    else: # Major
+        feature_key = torch.tensor([0]).float()
 
-    # feature = torch.cat((feature_key, feature))
-    feature = torch.cat((sample['semanticList'], sample['emotion']), dim=-1)[:5, :].flatten()
+    feature = torch.cat((feature_key, feature))
+    # feature = torch.cat((sample['semanticList'], sample['emotion']), dim=-1)[0, :].flatten()
     X.append(feature.detach().cpu().numpy())
     y.append(sample['key_val'].numpy())
 

@@ -129,7 +129,10 @@ def main():
 
         model_path = os.path.join(model_dir, f"{name}.pkl")
         joblib.dump(model, model_path)
-        print(f"Model {name} saved to {model_path}")
+        # print(f"Model {name} saved to {model_path}")
+
+        print(y_pred[:20])
+        print(y_test[:20])
 
     print("\nSummary and save of Results:")
     for model_name, metrics in results.items():

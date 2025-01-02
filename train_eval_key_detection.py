@@ -40,7 +40,7 @@ def create_sample(sample, model, X, y):
     # feature = torch.cat((semantic, emotion), dim=-1).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
     # feature = model.get_feature(semantic, None, None, emotion).squeeze()[0, :]
-    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:10, :].flatten()
+    feature = model.get_feature(semantic, None, None, emotion).squeeze()[:50, :].flatten()
 
     emotion_idx = torch.argmax(emotion.mean(dim=0))
 

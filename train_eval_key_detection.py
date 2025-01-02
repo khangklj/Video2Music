@@ -38,7 +38,7 @@ def create_sample(sample, model, X, y):
     emotion = sample['emotion'].unsqueeze(0)
     feature = model.get_feature(semantic, None, None, emotion).squeeze().mean(dim=0)
     X.append(feature.detach().cpu().numpy())
-    y.append(sample['key_val'])
+    y.append(sample['key_val'].numpy())
 
 def main():
     args = parse_eval_args()[0]

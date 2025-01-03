@@ -416,15 +416,14 @@ class Video2music:
         self.modelReg = VideoRegression(n_layers=args.n_layers_reg, d_model=args.d_model_reg, d_hidden=args.dim_feedforward_reg, use_KAN=args.use_KAN_reg, max_sequence_video=args.max_sequence_video, total_vf_dim=self.total_vf_dim, regModel=args.regModel).to(get_device())        
         self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
 
-        self.key_detector = joblib.load(args.modelpathKey)
+        # self.key_detector = joblib.load(args.modelpathKey)
 
         self.model.eval()
         self.modelReg.eval()
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer=None, key=None):
-
+    def generate(self, video, primer=None, key=None, transposition_value=0):
         feature_dir = Path("./feature")
         output_dir = Path("./output")
         if feature_dir.exists():
@@ -658,9 +657,7 @@ class Video2music:
             if key != None:
                 trans = traspose_key_dic[key]
             else:
-                # Key detection model
-                key_pred = self.key_detector.predict([feature_emotion.flatten().detach().cpu().numpy()])
-                trans = key_pred[0]
+                trans = transposition_value
 
             for i, chord in enumerate(midi_chords):
                 if densitylist[i] == 0:

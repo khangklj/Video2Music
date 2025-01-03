@@ -84,6 +84,16 @@ flatsharpDic = {
     'Bb':'A#'
 }
 
+
+replace_instrument_index_dict = {
+    13: 14,
+    18: 10,
+    22: 28,
+    26: 14,
+    29: 25,
+    31: 11
+}
+
 max_conseq_N = 0
 max_conseq_chord = 2
 tempo = 120
@@ -482,7 +492,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer=None, key=None, transposition_value=0, sound_fonts=None):
+    def generate(self, video, primer=None, key=None, transposition_value=0, custom_sound_font=False):
         feature_dir = Path("./feature")
         output_dir = Path("./output")
         if feature_dir.exists():
@@ -792,16 +802,31 @@ class Video2music:
             
             
             # Convert midi to audio (e.g., flac)
-            if sound_fonts is None:
+            if custom_sound_font == False:
               fs = FluidSynth(sound_font=self.SF2_FILE)
               fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
-            else:
+            else:               
                 inst = torch.round(inst)
                 inst = inst.mean(dim=1)
-                inst = torch.where(inst > 0.6, 1.0, 0.0)
+                inst = torch.where(inst > 0.6, 1.0, 0.0)                
                 flac_files = []
-                for sf in sound_fonts:
-                    # TODO: add conditionals here                  
+                for filename in os.listdir("soundfonts"):
+                    if filename == self.SF2_FILE:
+                        continue
+
+                    index, name = filename.split('_', 1)
+                    instrument_name = name.split('.')[0]
+
+                    if inst[int(index)] == 0.0:
+                        continue
+
+                    if index in replace_instrument_index_dict.keys():
+                        with open("dataset/vevo_meta/instrument_inv.json", "r") as file:
+                            instrument_inv_dict = json.load(file)
+                            new_index = replace_instrument_index_dict[int(index)]
+                            filename = f"{new_index}_{instrument_inv_dict[instrument_name]}.sf2"
+
+                    sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{sf}.flac")
                     fs = FluidSynth(sound_font=sf)
                     fs.midi_to_audio(str(f_path_midi), str(flac_output))

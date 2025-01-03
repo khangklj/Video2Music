@@ -824,8 +824,8 @@ class Video2music:
                     if index in replace_instrument_index_dict.keys():
                         with open("dataset/vevo_meta/instrument_inv.json", "r") as file:
                             instrument_inv_dict = json.load(file)
-                            new_index = replace_instrument_index_dict[str(index)]
-                            filename = f"{new_index}_{instrument_inv_dict[instrument_name]}.sf2"
+                            new_index = replace_instrument_index_dict[int(index)]
+                            filename = f"{new_index}_{instrument_inv_dict[str(new_index)]}.sf2"
 
                     sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{sf}.flac")

@@ -812,7 +812,7 @@ class Video2music:
                 print(inst.shape)
                 flac_files = []
                 for filename in os.listdir("soundfonts"):
-                    if filename == self.SF2_FILE or not filename.endswith(".sf2"):
+                    if filename.startswith("default") or not filename.endswith(".sf2"):
                         continue
 
                     index, name = filename.split('_', 1)
@@ -824,7 +824,7 @@ class Video2music:
                     if index in replace_instrument_index_dict.keys():
                         with open("dataset/vevo_meta/instrument_inv.json", "r") as file:
                             instrument_inv_dict = json.load(file)
-                            new_index = replace_instrument_index_dict[int(index)]
+                            new_index = replace_instrument_index_dict[str(index)]
                             filename = f"{new_index}_{instrument_inv_dict[instrument_name]}.sf2"
 
                     sf = os.path.join("soundfonts", filename)

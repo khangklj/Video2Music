@@ -805,10 +805,13 @@ class Video2music:
             if custom_sound_font == False:
               fs = FluidSynth(sound_font=self.SF2_FILE)
               fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
-            else:               
+            else:
+                print(inst.shape)               
                 inst = torch.round(inst)
                 inst = inst.mean(dim=1)
-                inst = torch.where(inst > 0.6, 1.0, 0.0)                
+                tmp = inst.mean(dim=0)
+                inst = torch.where(inst > 0.6, 1.0, 0.0)
+                print(inst.shape, tmp.shape)                
                 flac_files = []
                 for filename in os.listdir("soundfonts"):
                     if filename == self.SF2_FILE:
@@ -832,10 +835,10 @@ class Video2music:
                     fs.midi_to_audio(str(f_path_midi), str(flac_output))
                     flac_files.append(flac_output)
 
-            mixed = AudioSegment.from_file(flac_files[0])
-            for audio_path in flac_files[1:]:
-                mixed = mixed.overlay(AudioSegment.from_file(audio_path))
-            mixed.export(f_path_flac, format="flac")
+                mixed = AudioSegment.from_file(flac_files[0])
+                for audio_path in flac_files[1:]:
+                    mixed = mixed.overlay(AudioSegment.from_file(audio_path))
+                mixed.export(f_path_flac, format="flac")
 
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))

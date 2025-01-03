@@ -809,7 +809,7 @@ class Video2music:
                 inst = torch.round(inst)
                 inst = inst.mean(dim=0)
                 inst = torch.where(inst > 0.6, 1.0, 0.0)
-                print(inst.shape)
+                
                 flac_files = []
                 for filename in os.listdir("soundfonts"):
                     if filename.startswith("default") or not filename.endswith(".sf2"):
@@ -824,8 +824,9 @@ class Video2music:
                     if index in replace_instrument_index_dict.keys():
                         with open("dataset/vevo_meta/instrument_inv.json", "r") as file:
                             instrument_inv_dict = json.load(file)
-                            new_index = replace_instrument_index_dict[int(index)]
-                            filename = f"{new_index}_{instrument_inv_dict[str(new_index)]}.sf2"
+                            index = replace_instrument_index_dict[int(index)]
+                            instrument_name = instrument_inv_dict[str(index)]
+                            filename = f"{index}_{instrument_name}.sf2"                            
 
                     sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")

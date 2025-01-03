@@ -36,6 +36,7 @@ from huggingface_hub import snapshot_download
 from gradio import Markdown
 
 from pytube import YouTube
+from pydub import AudioSegment
 
 from utilities.argument_generate_funcs import parse_generate_args, print_generate_args
 from utilities.device import get_device, use_cuda
@@ -481,7 +482,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer=None, key=None, transposition_value=0):
+    def generate(self, video, primer=None, key=None, transposition_value=0, sound_fonts=None):
         feature_dir = Path("./feature")
         output_dir = Path("./output")
         if feature_dir.exists():
@@ -788,15 +789,28 @@ class Video2music:
             with open(f_path_midi, "wb") as outputFile:
                 MIDI.writeFile(outputFile)
 
-            # MIDI rendering with instruments
-
-
-            with open(f_path_midi_instrument, "wb") as outputFile: # Write rendered instrument
-                MIDI.writeFile(outputFile)
+            
             
             # Convert midi to audio (e.g., flac)
-            fs = FluidSynth(sound_font=self.SF2_FILE)
-            fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
+            if sound_fonts is None:
+              fs = FluidSynth(sound_font=self.SF2_FILE)
+              fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
+            else:
+                inst = torch.round(inst)
+                inst = inst.mean(dim=1)
+                inst = torch.where(inst > 0.6, 1.0, 0.0)
+                flac_files = []
+                for sf in sound_fonts:
+                    # TODO: add conditionals here                  
+                    flac_output = os.path.join(output_dir, f"output_{sf}.flac")
+                    fs = FluidSynth(sound_font=sf)
+                    fs.midi_to_audio(str(f_path_midi), str(flac_output))
+                    flac_files.append(flac_output)
+
+            mixed = AudioSegment.from_file(flac_files[0])
+            for audio_path in flac_files[1:]:
+                mixed = mixed.overlay(AudioSegment.from_file(audio_path))
+            mixed.export(f_path_flac, format="flac")
 
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))

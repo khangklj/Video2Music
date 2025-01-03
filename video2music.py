@@ -37,6 +37,7 @@ from gradio import Markdown
 
 from pytube import YouTube
 from pydub import AudioSegment
+import pandas as pd
 
 from utilities.argument_generate_funcs import parse_generate_args, print_generate_args
 from utilities.device import get_device, use_cuda
@@ -805,7 +806,13 @@ class Video2music:
               fs = FluidSynth(sound_font=self.SF2_FILE)
               fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
-                inst = inst.squeeze(0)                
+                # inst shape [1, 300, 40]
+                inst = inst.squeeze(0)   
+
+                # inst shape [300, 40]               
+                df = pd.DataFrame(inst.cpu().numpy())
+                df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)
+
                 inst = torch.round(inst)
                 inst = inst.mean(dim=0)
                 inst = torch.where(inst > 0.6, 1.0, 0.0)
@@ -818,15 +825,17 @@ class Video2music:
                     index, name = filename.split('_', 1)
                     instrument_name = name.split('.')[0]
 
-                    if inst[int(index)] == 0.0:
+                    index = int(index)
+
+                    if inst[index] == 0.0:
                         continue
 
                     if index in replace_instrument_index_dict.keys():
                         with open("dataset/vevo_meta/instrument_inv.json", "r") as file:
                             instrument_inv_dict = json.load(file)
-                            index = replace_instrument_index_dict[int(index)]
+                            index = replace_instrument_index_dict[index]
                             instrument_name = instrument_inv_dict[str(index)]
-                            filename = f"{index}_{instrument_name}.sf2"                            
+                            filename = f"{str(index)}_{instrument_name}.sf2"                            
 
                     sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")

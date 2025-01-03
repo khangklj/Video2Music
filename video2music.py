@@ -2,6 +2,7 @@ import gradio as gr
 from pathlib import Path
 
 import torch
+import torchvision.models as models
 import shutil
 import os
 import subprocess
@@ -218,38 +219,80 @@ def gen_scene_offset_feature(scene_dir, scene_offset_dir):
             f.write(str(i) + " " + str(offset_list[i]) + "\n")
 
 def gen_motion_feature(video, motion_dir):
+    # Motion origin
+    # cap = cv2.VideoCapture(str(video))
+    # prev_frame = None
+    # prev_time = 0
+    # motion_value = 0
+    # motiondict = {}
+
+    # while cap.isOpened():
+    #     ret, frame = cap.read()
+    #     if not ret:
+    #         break
+    #     curr_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+    #     motiondict[0] = "0.0000"
+    #     if prev_frame is not None and curr_time - prev_time >= 1:
+    #         diff = cv2.absdiff(frame, prev_frame)
+    #         diff_rgb = cv2.cvtColor(diff, cv2.COLOR_BGR2RGB)
+    #         motion_value = diff_rgb.mean()
+    #         motion_value = format(motion_value, ".4f")
+    #         motiondict[int(curr_time)] = str(motion_value)
+    #         prev_time = int(curr_time)
+    #     prev_frame = frame.copy()
+    # cap.release()
+    # cv2.destroyAllWindows()
+    # fpathname = motion_dir / "motion.lab"
+    
+    # with open(fpathname,'w',encoding = 'utf-8') as f:
+    #     for i in range(0, len(motiondict)):
+    #         f.write(str(i) + " "+motiondict[i]+"\n")
+
+    # Motion option 1
+    model = models.maxvit_t(weights=models.MaxVit_T_Weights.DEFAULT)   
+    model.classifier = torch.nn.Sequential(
+        torch.nn.AdaptiveAvgPool2d(1),
+        torch.nn.Flatten()
+    )
+    model = model.to(get_device())
+    model.eval()
+    transform = models.MaxVit_T_Weights.IMAGENET1K_V1.transforms()
+
     cap = cv2.VideoCapture(str(video))
     prev_frame = None
     prev_time = 0
-    motion_value = 0
-    motiondict = {}
 
+    features = [np.zeros(512)]
     while cap.isOpened():
+        # Read the frame and get its time stamp
         ret, frame = cap.read()
         if not ret:
             break
         curr_time = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
-        motiondict[0] = "0.0000"
+        
+        # Calculate the RGB difference between consecutive frames per second
         if prev_frame is not None and curr_time - prev_time >= 1:
             diff = cv2.absdiff(frame, prev_frame)
             diff_rgb = cv2.cvtColor(diff, cv2.COLOR_BGR2RGB)
-            motion_value = diff_rgb.mean()
-            motion_value = format(motion_value, ".4f")
-            motiondict[int(curr_time)] = str(motion_value)
+
+            diff_image = transform(Image.fromarray(diff_rgb)).unsqueeze(0).to(get_device())
+            with torch.no_grad():
+                motion_features = model(diff_image).squeeze()
+
+            motion_features = motion_features.cpu().numpy()
+            features.append(motion_features)
+
             prev_time = int(curr_time)
+
+        # Update the variables
         prev_frame = frame.copy()
+    # Release the video file and close all windows
     cap.release()
     cv2.destroyAllWindows()
-    fpathname = motion_dir / "motion.lab"
-    
-    with open(fpathname,'w',encoding = 'utf-8') as f:
-        for i in range(0, len(motiondict)):
-            f.write(str(i) + " "+motiondict[i]+"\n")
 
-
-# def get_motion_feature(scene_dir, scene_offset_dir):
-# fpath_emotion = emotion_dir / "emotion.lab" 
-# fpath_motion = motion_dir / "motion.lab" 
+    features = np.stack(features, axis=0)
+    fpathname = motion_dir / "motion.npy"
+    np.save(fpathname, features)
 
 def get_scene_offset_feature(scene_offset_dir, max_seq_chord=300, max_seq_video=300):
     feature_scene_offset = np.empty(max_seq_video)
@@ -273,22 +316,32 @@ def get_scene_offset_feature(scene_offset_dir, max_seq_chord=300, max_seq_video=
     return feature_scene_offset
 
 def get_motion_feature(motion_dir, max_seq_chord=300, max_seq_video=300):
-    fpath_motion = motion_dir / "motion.lab" 
-    feature_motion = np.empty(max_seq_video)
-    feature_motion.fill(MOTION_PAD)
-    with open(fpath_motion, encoding = 'utf-8') as f:
-        for line in f:
-            line = line.strip()
-            line_arr = line.split(" ")
-            time = line_arr[0]
-            time = int(time)
-            if time >= max_seq_chord:
-                break
-            motion = line_arr[1]
-            feature_motion[time] = float(motion)
+    # fpath_motion = motion_dir / "motion.lab" 
+    # feature_motion = np.empty(max_seq_video)
+    # feature_motion.fill(MOTION_PAD)
+    # with open(fpath_motion, encoding = 'utf-8') as f:
+    #     for line in f:
+    #         line = line.strip()
+    #         line_arr = line.split(" ")
+    #         time = line_arr[0]
+    #         time = int(time)
+    #         if time >= max_seq_chord:
+    #             break
+    #         motion = line_arr[1]
+    #         feature_motion[time] = float(motion)
 
-    feature_motion = torch.from_numpy(feature_motion)
-    feature_motion = feature_motion.to(torch.float32)
+    # feature_motion = torch.from_numpy(feature_motion)
+    # feature_motion = feature_motion.to(torch.float32)
+
+    # Motion option 1
+    fpath_motion = motion_dir / "motion.npy" 
+    feature_motion = np.zeros((max_seq_video, 512))
+    loaded_motion = np.load(fpath_motion)
+    if loaded_motion.shape[0] > max_seq_chord:
+        feature_motion = loaded_motion[:max_seq_chord, :]
+    else:
+        feature_motion[:loaded_motion.shape[0], :] = loaded_motion
+
     return feature_motion
 
 def get_emotion_feature(emotion_dir, max_seq_chord=300, max_seq_video=300):

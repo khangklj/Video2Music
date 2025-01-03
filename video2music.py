@@ -805,15 +805,14 @@ class Video2music:
               fs = FluidSynth(sound_font=self.SF2_FILE)
               fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
-                inst = inst.squeeze(0)
-                print(inst.shape)               
+                inst = inst.squeeze(0)                
                 inst = torch.round(inst)
-                inst = inst.mean(dim=1)
+                inst = inst.mean(dim=0)
                 inst = torch.where(inst > 0.6, 1.0, 0.0)
-                print(inst.shape)                
+                print(inst.shape)
                 flac_files = []
                 for filename in os.listdir("soundfonts"):
-                    if filename == self.SF2_FILE:
+                    if filename == self.SF2_FILE or not filename.endswith(".sf2"):
                         continue
 
                     index, name = filename.split('_', 1)

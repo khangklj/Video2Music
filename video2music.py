@@ -828,7 +828,7 @@ class Video2music:
                             filename = f"{new_index}_{instrument_inv_dict[str(new_index)]}.sf2"
 
                     sf = os.path.join("soundfonts", filename)
-                    flac_output = os.path.join(output_dir, f"output_{sf}.flac")
+                    flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")
                     fs = FluidSynth(sound_font=sf)
                     fs.midi_to_audio(str(f_path_midi), str(flac_output))
                     flac_files.append(flac_output)

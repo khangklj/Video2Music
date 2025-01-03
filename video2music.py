@@ -342,7 +342,9 @@ def get_motion_feature(motion_dir, max_seq_chord=300, max_seq_video=300):
     else:
         feature_motion[:loaded_motion.shape[0], :] = loaded_motion
 
-    return torch.from_numpy(feature_motion)
+    feature_motion = torch.from_numpy(feature_motion)
+    feature_motion = feature_motion.to(torch.float32)
+    return feature_motion
 
 def get_emotion_feature(emotion_dir, max_seq_chord=300, max_seq_video=300):
     fpath_emotion = emotion_dir / "emotion.lab" 

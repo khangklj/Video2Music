@@ -707,7 +707,6 @@ class Video2music:
             
             chord_offsetlist = convert_format_id_to_offset(chord_genlist)
             f_path_midi = output_dir / "output.mid"
-            f_path_midi_instrument = output_dir / "output_instrument.mid"
             f_path_flac = output_dir / "output.flac"
             f_path_video_out = output_dir / "output.mp4"
 
@@ -806,6 +805,7 @@ class Video2music:
               fs = FluidSynth(sound_font=self.SF2_FILE)
               fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
+                inst = inst.squeeze(0)
                 print(inst.shape)               
                 inst = torch.round(inst)
                 inst = inst.mean(dim=1)

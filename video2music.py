@@ -809,9 +809,8 @@ class Video2music:
                 print(inst.shape)               
                 inst = torch.round(inst)
                 inst = inst.mean(dim=1)
-                tmp = inst.mean(dim=0)
                 inst = torch.where(inst > 0.6, 1.0, 0.0)
-                print(inst.shape, tmp.shape)                
+                print(inst.shape)                
                 flac_files = []
                 for filename in os.listdir("soundfonts"):
                     if filename == self.SF2_FILE:

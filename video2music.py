@@ -427,9 +427,12 @@ class Video2music:
         self.model_weights = args.model_weights
         self.modelReg_weights = args.modelReg_weights
 
-        # 768 (sem) + 1 (mo) + 1 (scene) + 6 (emo)
-        self.total_vf_dim = 776        
+        # 768 (sem) + 1 (scene) + 6 (emo) + 512 (mo1) (AMT)       
+        self.total_vf_dim = 1287     
 
+        # 768 (sem) + 6 (emo) (AMT)
+        self.total_vf_dim_reg = 774
+      
         self.max_seq_video = 300
         self.max_seq_chord = 300
       
@@ -466,7 +469,7 @@ class Video2music:
                   
         self.model.load_state_dict(torch.load(self.model_weights, map_location=get_device()))
 
-        self.modelReg = VideoRegression(n_layers=args.n_layers_reg, d_model=args.d_model_reg, d_hidden=args.dim_feedforward_reg, use_KAN=args.use_KAN_reg, max_sequence_video=args.max_sequence_video, total_vf_dim=self.total_vf_dim, regModel=args.regModel).to(get_device())        
+        self.modelReg = VideoRegression(n_layers=args.n_layers_reg, d_model=args.d_model_reg, d_hidden=args.dim_feedforward_reg, use_KAN=args.use_KAN_reg, max_sequence_video=args.max_sequence_video, total_vf_dim=self.total_vf_dim_reg, regModel=args.regModel).to(get_device())        
         self.modelReg.load_state_dict(torch.load(self.modelReg_weights, map_location=get_device()))
 
         # self.key_detector = joblib.load(args.modelpathKey)

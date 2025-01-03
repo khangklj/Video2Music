@@ -374,25 +374,12 @@ class Video2music:
         self.model_weights = args.model_weights
         self.modelReg_weights = args.modelReg_weights
 
-        # 768 (sem) + 1 (mo) + 1 (scene) + 6 (emo) (AMT)       
-        self.total_vf_dim = 776
+        # 768 (sem) + 1 (scene) + 6 (emo) + 512 (mo1) (AMT)       
+        self.total_vf_dim = 1287     
 
-        if args.motion_type == 0:
-            self.total_vf_dim += 1
-        elif args.motion_type == 1:
-            self.total_vf_dim += 512
-        elif args.motion_type == 2:
-            self.total_vf_dim += 768
-
-        # 768 (sem) + 1 (mo) + 1 (scene) + 6 (emo) (AMT)
-        self.total_vf_dim_reg = 776
-        if args.motion_type_reg == 0:
-            self.total_vf_dim_reg += 1
-        elif args.motion_type_reg == 1:
-            self.total_vf_dim_reg += 512
-        elif args.motion_type_reg == 2:
-            self.total_vf_dim_reg += 768
-
+        # 768 (sem) + 6 (emo) (AMT)
+        self.total_vf_dim_reg = 774
+      
         self.max_seq_video = 300
         self.max_seq_chord = 300
       

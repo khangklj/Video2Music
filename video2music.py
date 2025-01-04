@@ -37,6 +37,7 @@ from gradio import Markdown
 
 from pytube import YouTube
 from pydub import AudioSegment
+import pandas as pd
 
 from utilities.argument_generate_funcs import parse_generate_args, print_generate_args
 from utilities.device import get_device, use_cuda
@@ -82,6 +83,16 @@ flatsharpDic = {
     'Gb':'F#', 
     'Ab':'G#', 
     'Bb':'A#'
+}
+
+
+replace_instrument_index_dict = {
+    13: 14,
+    18: 10,
+    22: 28,
+    26: 14,
+    29: 25,
+    31: 11
 }
 
 max_conseq_N = 0
@@ -482,7 +493,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer=None, key=None, transposition_value=0, sound_fonts=None):
+    def generate(self, video, primer=None, key=None, transposition_value=0, custom_sound_font=False):
         feature_dir = Path("./feature")
         output_dir = Path("./output")
         if feature_dir.exists():
@@ -697,7 +708,6 @@ class Video2music:
             
             chord_offsetlist = convert_format_id_to_offset(chord_genlist)
             f_path_midi = output_dir / "output.mid"
-            f_path_midi_instrument = output_dir / "output_instrument.mid"
             f_path_flac = output_dir / "output.flac"
             f_path_video_out = output_dir / "output.mp4"
 
@@ -792,25 +802,51 @@ class Video2music:
             
             
             # Convert midi to audio (e.g., flac)
-            if sound_fonts is None:
+            if custom_sound_font == False:
               fs = FluidSynth(sound_font=self.SF2_FILE)
               fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
+                # inst shape [1, 300, 40]
+                inst = inst.squeeze(0)   
+
+                # inst shape [300, 40]               
+                df = pd.DataFrame(inst.cpu().numpy())
+                df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)
+
                 inst = torch.round(inst)
-                inst = inst.mean(dim=1)
+                inst = inst.mean(dim=0)
                 inst = torch.where(inst > 0.6, 1.0, 0.0)
+                
                 flac_files = []
-                for sf in sound_fonts:
-                    # TODO: add conditionals here                  
-                    flac_output = os.path.join(output_dir, f"output_{sf}.flac")
+                for filename in os.listdir("soundfonts"):
+                    if filename.startswith("default") or not filename.endswith(".sf2"):
+                        continue
+
+                    index, name = filename.split('_', 1)
+                    instrument_name = name.split('.')[0]
+
+                    index = int(index)
+
+                    if inst[index] == 0.0:
+                        continue
+
+                    if index in replace_instrument_index_dict.keys():
+                        with open("dataset/vevo_meta/instrument_inv.json", "r") as file:
+                            instrument_inv_dict = json.load(file)
+                            index = replace_instrument_index_dict[index]
+                            instrument_name = instrument_inv_dict[str(index)]
+                            filename = f"{str(index)}_{instrument_name}.sf2"                            
+
+                    sf = os.path.join("soundfonts", filename)
+                    flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")
                     fs = FluidSynth(sound_font=sf)
                     fs.midi_to_audio(str(f_path_midi), str(flac_output))
                     flac_files.append(flac_output)
 
-            mixed = AudioSegment.from_file(flac_files[0])
-            for audio_path in flac_files[1:]:
-                mixed = mixed.overlay(AudioSegment.from_file(audio_path))
-            mixed.export(f_path_flac, format="flac")
+                mixed = AudioSegment.from_file(flac_files[0])
+                for audio_path in flac_files[1:]:
+                    mixed = mixed.overlay(AudioSegment.from_file(audio_path))
+                mixed.export(f_path_flac, format="flac")
 
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))

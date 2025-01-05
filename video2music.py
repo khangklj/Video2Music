@@ -493,7 +493,7 @@ class Video2music:
 
         self.SF2_FILE = "soundfonts/default_sound_font.sf2"
 
-    def generate(self, video, primer=None, key=None, transposition_value=0, custom_sound_font=False):
+    def generate(self, video, primer=None, key=None, transposition_value=0, custom_sound_font=False, temperature=1.0):
         feature_dir = Path("./feature")
         output_dir = Path("./output")
         if feature_dir.exists():
@@ -659,7 +659,8 @@ class Video2music:
                                               target_seq_length = 300, 
                                               beam=0,
                                               max_conseq_N= max_conseq_N,
-                                              max_conseq_chord = max_conseq_chord)
+                                              max_conseq_chord = max_conseq_chord,
+                                              temperature=temperature)
             
             # Loudness, Note density, Instrument
             ln_nd, inst = self.modelReg(

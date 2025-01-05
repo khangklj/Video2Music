@@ -222,7 +222,8 @@ class VideoMusicTransformer_V1(nn.Module):
             return y
         
     def generate(self, feature_semantic_list = [], feature_key=None, feature_scene_offset=None, feature_motion=None, feature_emotion=None,
-                 primer=None, primer_root=None, primer_attr=None, target_seq_length=300, beam=0, beam_chance=1.0, max_conseq_N = 0, max_conseq_chord = 2):
+                 primer=None, primer_root=None, primer_attr=None, target_seq_length=300, beam=0, beam_chance=1.0, max_conseq_N = 0, max_conseq_chord = 2,
+                 temperature=1.0):
         
         assert (not self.training), "Cannot generate while in training mode"
         print("Generating sequence of max length:", target_seq_length)
@@ -246,7 +247,7 @@ class VideoMusicTransformer_V1(nn.Module):
         cur_i = num_primer
         while(cur_i < target_seq_length):
             y = self.softmax( self.forward( gen_seq[..., :cur_i], gen_seq_root[..., :cur_i], gen_seq_attr[..., :cur_i], 
-                                           feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion) )[..., :CHORD_END]
+                                           feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion) / temperature)[..., :CHORD_END]
             
             token_probs = y[:, cur_i-1, :]
             if(beam == 0):
@@ -516,7 +517,8 @@ class VideoMusicTransformer_V2(nn.Module):
             return y
         
     def generate(self, feature_semantic_list = [], feature_key=None, feature_scene_offset=None, feature_motion=None, feature_emotion=None,
-                 primer=None, primer_root=None, primer_attr=None, target_seq_length=300, beam=0, beam_chance=1.0, max_conseq_N = 0, max_conseq_chord = 2):
+                 primer=None, primer_root=None, primer_attr=None, target_seq_length=300, beam=0, beam_chance=1.0, max_conseq_N = 0, max_conseq_chord = 2,
+                 temperature=1.0):
         
         assert (not self.training), "Cannot generate while in training mode"
         print("Generating sequence of max length:", target_seq_length)
@@ -540,7 +542,7 @@ class VideoMusicTransformer_V2(nn.Module):
         cur_i = num_primer
         while(cur_i < target_seq_length):
             y = self.softmax( self.forward( gen_seq[..., :cur_i], gen_seq_root[..., :cur_i], gen_seq_attr[..., :cur_i], 
-                                           feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion) )[..., :CHORD_END]
+                                           feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion) / temperature)[..., :CHORD_END]
             
             token_probs = y[:, cur_i-1, :]
             if(beam == 0):
@@ -814,7 +816,8 @@ class VideoMusicTransformer_V3(nn.Module):
             return y
         
     def generate(self, feature_semantic_list = [], feature_key=None, feature_scene_offset=None, feature_motion=None, feature_emotion=None,
-                 primer=None, primer_root=None, primer_attr=None, target_seq_length=300, beam=0, beam_chance=1.0, max_conseq_N = 0, max_conseq_chord = 2):
+                 primer=None, primer_root=None, primer_attr=None, target_seq_length=300, beam=0, beam_chance=1.0, max_conseq_N = 0, max_conseq_chord = 2,
+                 temperature=1.0):
         
         assert (not self.training), "Cannot generate while in training mode"
         print("Generating sequence of max length:", target_seq_length)
@@ -838,7 +841,7 @@ class VideoMusicTransformer_V3(nn.Module):
         cur_i = num_primer
         while(cur_i < target_seq_length):
             y = self.softmax( self.forward( gen_seq[..., :cur_i], gen_seq_root[..., :cur_i], gen_seq_attr[..., :cur_i], 
-                                           feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion) )[..., :CHORD_END]
+                                           feature_semantic_list, feature_key, feature_scene_offset, feature_motion, feature_emotion) / temperature)[..., :CHORD_END]
             
             token_probs = y[:, cur_i-1, :]
             if(beam == 0):

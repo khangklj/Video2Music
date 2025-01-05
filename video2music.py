@@ -859,7 +859,7 @@ class Video2music:
                     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
 
                     index = int(index)
-                    track = muli_track_midi.tracks[index] # Get track by index
+                    track = muli_track_midi.tracks[track_index].eventList # Get track by index
                     single_track_midi = MIDIFile(1)
                     single_track_midi.addTempo(0, 0, tempo)
 

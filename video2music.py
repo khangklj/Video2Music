@@ -767,7 +767,7 @@ class Video2music:
                     trans = transposition_value
 
                 for i, chord in enumerate(midi_chords):
-                    if inst[track, i] >= 0.5:
+                    if inst[i, track] >= 0.5:
                         if densitylist[i] == 0:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:

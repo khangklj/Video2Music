@@ -432,7 +432,7 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
     # Extract events from the specified track
-    events = multi_track_midi.tracks[track_index]["eventList"]
+    events = multi_track_midi.tracks[track_index].eventList
     
     # Add the events to the single-track MIDI
     for event in events:

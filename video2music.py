@@ -436,17 +436,17 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
     
     # Add the events to the single-track MIDI
     for event in events:
-        event_type = event["type"]
-        time = event["time"]
+        event_type = event.type
+        time = event.time
         
         if event_type == "note":
             single_track_midi.addNote(
                 track=0,  # Single track in the new MIDI
-                channel=event["channel"],
-                pitch=event["pitch"],
+                channel=event.channel,
+                pitch=event.pitch,
                 time=time,
-                duration=event["duration"],
-                volume=event["volume"]
+                duration=event.duration,
+                volume=event.volume
             )
 
 class Video2music:

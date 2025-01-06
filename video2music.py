@@ -433,6 +433,7 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
 
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
+        print(event)
         if (event.evtname == "NoteOn"):
             single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume)    
 

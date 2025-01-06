@@ -433,7 +433,6 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
 
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
-        print(event)
         if (event.evtname == "NoteOn"):
             single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume)    
 
@@ -826,7 +825,14 @@ class Video2music:
             # Save multi-tracks MIDI file
             with open(f_path_midi, "wb") as outputFile:
                 muli_track_midi.writeFile(outputFile)
-     
+            
+            # DEBUG
+            for event in muli_track_midi.tracks[1].eventList:
+                print(event)
+
+            for event in muli_track_midi.tracks[2].eventList:
+                print(event)
+
             # Convert midi to audio (e.g., flac)
             if custom_sound_font == False:
                 fs = FluidSynth(sound_font=self.SF2_FILE)

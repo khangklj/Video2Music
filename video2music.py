@@ -872,11 +872,11 @@ class Video2music:
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
                     if track == 0:
-                        addChord(generated_midi, 0, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i], emotion_indice)
+                        addChord(generated_midi, 0, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                     else:
                         # For multi_track_midi
                         if inst[i, track-1] == 1.0:
-                            addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i], emotion_indice)
+                            addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                                     
             # Save generated_midi file
             with open(f_path_midi, "wb") as outputFile:

@@ -434,7 +434,7 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
         if (event.evtname == "NoteOn"):
-            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume)    
+            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume) 
 
 class Video2music:
     def __init__(
@@ -832,10 +832,7 @@ class Video2music:
                                 muli_track_midi.addNote(track, 0, chord[1]+trans,  index * duration + 1.5 ,  duration,  velolistExp[index])
                                 muli_track_midi.addNote(track, 0, chord[2]+trans,  index * duration + 1.75 ,  duration,  velolistExp[index])
 
-            # Save multi-tracks MIDI file
-            with open(f_path_midi, "wb") as outputFile:
-                muli_track_midi.writeFile(outputFile)           
-
+                       
             # Convert midi to audio (e.g., flac)
             if custom_sound_font == False:
                 fs = FluidSynth(sound_font=self.SF2_FILE)
@@ -908,6 +905,10 @@ class Video2music:
                     mixed = mixed.overlay(AudioSegment.from_file(audio_path))
                 mixed.export(f_path_flac, format="flac")
 
+            # Save multi-tracks MIDI file
+            with open(f_path_midi, "wb") as outputFile:
+                muli_track_midi.writeFile(outputFile)
+                
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))
             video_mp = mp.VideoFileClip(str(video))

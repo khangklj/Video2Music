@@ -98,6 +98,7 @@ replace_instrument_index_dict = {
 max_conseq_N = 0
 max_conseq_chord = 2
 tempo = 120
+numerator, denominator = 4, 4 # Time signature (Nhịp 4/4)
 duration = 2
 
 min_loudness = 0  # Minimum loudness level in the input range
@@ -431,6 +432,8 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
     if track_index > multi_track_midi.numTracks or track_index < 0:
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
+    single_track_midi.addTempo(0, 0, tempo)
+    single_track_midi.addTimeSignature(0, 0, numerator, denominator)
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
         if (event.evtname == "NoteOn"):
@@ -738,17 +741,13 @@ class Video2music:
             df = pd.DataFrame(inst.cpu().numpy())
             df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)                
             
-            inst_mean = inst.mean(dim=0)
-            mask = inst_mean >= 0.5
-            chosen_inst_index = mask.nonzero(as_tuple=True)[0]
-            chosen_inst = inst[:, mask]
+            num_tracks = inst.shape[1] + 1 # first track is for meta data
 
-            num_tracks = chosen_inst_index.shape[0]
-
-            muli_track_midi = MIDIFile(num_tracks)
-            muli_track_midi.addTempo(0, 0, tempo)
-            track = 0
-            for track in range(num_tracks):                
+            multi_track_midi = MIDIFile(num_tracks)
+            multi_track_midi.addTempo(0, 0, tempo)
+            multi_track_midi.addTimeSignature(0, 0, numerator, denominator)
+            
+            for track in range(1, num_tracks):            
                 midi_chords_orginal = []
                 for index, k in enumerate(chord_genlist):
                     k = k.replace(":", "")
@@ -769,73 +768,73 @@ class Video2music:
                         if densitylist[i] == 0:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
                                 else:
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
                         elif densitylist[i] == 1:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
                                 else:
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
                         elif densitylist[i] == 2:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
                                 else:
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
                         elif densitylist[i] == 3:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
                                 else:
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
                         elif densitylist[i] == 4:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.25 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.25 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
                                 else:
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.25 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                                    muli_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.25 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
+                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
 
             # Save multi-tracks MIDI file
             with open(f_path_midi, "wb") as outputFile:
-                muli_track_midi.writeFile(outputFile)
+                multi_track_midi.writeFile(outputFile)
      
             # Convert midi to audio (e.g., flac)
             if custom_sound_font == False:
@@ -843,18 +842,16 @@ class Video2music:
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
                 flac_files = []
-                curr_track = 1 # index 0 is tempo
-                for index in chosen_inst_index:
-                    index = index.item()                    
+                for index in range(1, num_tracks):
                     if index in replace_instrument_index_dict.keys():
-                        index = replace_instrument_index_dict[index]
+                        # index = replace_instrument_index_dict[index]
+                        continue
                     
                     instrument_name = instrument_inv_dict[str(index)]
                     filename = filename = f"{str(index)}_{instrument_name}.sf2"
                     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
                     single_track_midi = MIDIFile(1)
-                    single_track_midi.addTempo(0, 0, tempo)
-                    copy_track(muli_track_midi, single_track_midi, curr_track)
+                    copy_track(multi_track_midi, single_track_midi, index)
                     
                     # Save single-tracks MIDI file
                     with open(f_path_midi_instrument, "wb") as outputFile:
@@ -865,17 +862,11 @@ class Video2music:
                     fs = FluidSynth(sound_font=f_path_sf)
                     fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
                     flac_files.append(flac_output)
-                    
-                    curr_track += 1
 
                 mixed = AudioSegment.from_file(flac_files[0])
                 for audio_path in flac_files[1:]:
                     mixed = mixed.overlay(AudioSegment.from_file(audio_path))
                 mixed.export(f_path_flac, format="flac")
-
-            # Save multi-tracks MIDI file
-            with open(f_path_midi, "wb") as outputFile:
-                muli_track_midi.writeFile(outputFile)
 
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))

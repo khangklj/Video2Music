@@ -428,13 +428,13 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         track_index (int): Index of the track to copy.
     """
     # Check if track_index is valid
-    if track_index >= multi_track_midi.numTracks or track_index < 0:
+    if track_index > multi_track_midi.numTracks or track_index < 0:
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
         if (event.evtname == "NoteOn"):
-            single_track_midi.addNote(0, event.channel, event.pitch, event.tick, event.duration, event.volume)
+            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume)    
 
 class Video2music:
     def __init__(

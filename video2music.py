@@ -736,6 +736,7 @@ class Video2music:
 
             # ChordSymbol to MIDI file with voicing
             inst = inst.squeeze(0) # inst shape = (300, 40)
+            inst = torch.where(inst >= 0.5, 1.0, 0.0)
             # Save instrument file
             df = pd.DataFrame(inst.cpu().numpy())
             df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)                
@@ -762,7 +763,7 @@ class Video2music:
 
                 # Add notes
                 for i, chord in enumerate(midi_chords):
-                    if inst[i, track-1] >= 0.5:
+                    if inst[i, track-1] == 1.0:
                         if densitylist[i] == 0:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:

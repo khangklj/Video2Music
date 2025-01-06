@@ -745,7 +745,6 @@ class Video2music:
 
             multi_track_midi = MIDIFile(num_tracks)
             multi_track_midi.addTempo(0, 0, tempo)
-            multi_track_midi.addTimeSignature(0, 0, numerator, denominator)
             
             for track in range(1, num_tracks):            
                 midi_chords_orginal = []

@@ -853,7 +853,11 @@ class Video2music:
                     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
                     single_track_midi = MIDIFile(1)
                     single_track_midi.addTempo(0, 0, tempo)
-                    copy_track(muli_track_midi, single_track_midi, index)
+                    copy_track(muli_track_midi, single_track_midi, index + 1) # index 0 is tempo
+                    
+                    # Save single-tracks MIDI file
+                    with open(f_path_midi_instrument, "wb") as outputFile:
+                        single_track_midi.writeFile(outputFile)
                     
                     f_path_sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")

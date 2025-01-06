@@ -813,9 +813,9 @@ class Video2music:
             
             num_tracks = inst.shape[1] + 1 # first track is for meta data
 
-            multi_track_midi = MIDIFile(num_tracks)
+            multi_track_midi = MIDIFile(num_tracks) # For instrument rendering
             multi_track_midi.addTempo(0, 0, tempo)
-            generated_midi = MIDIFile(1)
+            generated_midi = MIDIFile(1) # For saving midi file
             generated_midi.addTempo(0, 0, tempo)
             
             midi_chords_orginal = []
@@ -857,7 +857,7 @@ class Video2music:
                     index = track - 1
                     if index not in replace_instrument_index_dict.keys() and \
                         len(multi_track_midi.tracks[track].eventList) > 0:
-                    
+                        print(index)
                         instrument_name = instrument_inv_dict[str(index)]
                         filename = filename = f"{str(index)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")

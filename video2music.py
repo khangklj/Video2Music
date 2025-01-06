@@ -845,7 +845,7 @@ class Video2music:
                     if inst[index] == 0.0:
                         continue
 
-                    if index not in replace_instrument_index_dict.keys():
+                    if index in replace_instrument_index_dict.keys():
                         index = replace_instrument_index_dict[index]
                     
                     instrument_name = instrument_inv_dict[str(index)]

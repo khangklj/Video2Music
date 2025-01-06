@@ -418,7 +418,7 @@ def convert_format_id_to_offset(id_list):
     return offset_list
 
 # By ChatGPT
-def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_index: int =0):
+def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_index: int = 0):
     """
     Copies the i-th track of a multi-track MIDIFile object to a single-track MIDIFile object.
 
@@ -431,23 +431,10 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
     if track_index >= multi_track_midi.numTracks or track_index < 0:
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
-    # Extract events from the specified track
     events = multi_track_midi.tracks[track_index].eventList
-    
-    # Add the events to the single-track MIDI
     for event in events:
-        event_type = event.type
-        time = event.time
-        
-        if event_type == "note":
-            single_track_midi.addNote(
-                track=0,  # Single track in the new MIDI
-                channel=event.channel,
-                pitch=event.pitch,
-                time=time,
-                duration=event.duration,
-                volume=event.volume
-            )
+        if (event.evtname == "NoteOn"):
+            single_track_midi.addNote(0, event.channel, event.pitch, event.tick, event.duration, event.volume)
 
 class Video2music:
     def __init__(
@@ -853,27 +840,27 @@ class Video2music:
                     if filename.startswith("default") or not filename.endswith(".sf2"):
                         continue
 
-                    index, name = filename.split('_', 1)
-                    # instrument_name = name.split('.')[0]
+                    index, name = filename.split('_', 1)                    
                     instrument_name = instrument_inv_dict[str(index)]
                     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
 
-                    index = int(index)
-                    track = muli_track_midi.tracks[index].eventList # Get track by index
+                    index = int(index) + 1 # 0 is Tempo
+                    # track = muli_track_midi.tracks[index].eventList # Get track by index;
                     single_track_midi = MIDIFile(1)
                     single_track_midi.addTempo(0, 0, tempo)
 
                     copy_track(muli_track_midi, single_track_midi, index)
 
                     # Save single-tracks MIDI file
-                    with open(f_path_midi_instrument, "wb") as outputFile:
-                        single_track_midi.writeFile(outputFile)
+                    # with open(f_path_midi_instrument, "wb") as outputFile:
+                    #     single_track_midi.writeFile(outputFile)
 
                     # if index in replace_instrument_index_dict.keys():
                     #     index = replace_instrument_index_dict[index]
                     #     instrument_name = instrument_inv_dict[str(index)]
                     #     filename = f"{str(index)}_{instrument_name}.sf2"
 
+                    
                     sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")
                     fs = FluidSynth(sound_font=sf)

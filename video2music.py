@@ -443,7 +443,7 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
 def addChord(midifile, track, chord, chord_offset, density_val, trans_val, time, duration, velocity, emotion_index):
     if emotion_index in (1, 2):   # Fearful, Tense
         trans_val += -2
-    elif emotion_index in (3):    # Sad
+    elif emotion_index in (3,):    # Sad
         trans_val += -1
     elif emotion_index in (0, 4): # Exciting, Relaxing
         trans_val += 1
@@ -797,7 +797,7 @@ class Video2music:
 
                 if emotion_indice[i] in (0, 1):     # Exciting, Fearful
                     velocity_exp += 2
-                elif emotion_indice[i] in (2):      # Tense
+                elif emotion_indice[i] in (2,):      # Tense
                     velocity_exp += 1
                 elif emotion_indice[i] in (3, 4):   # Sad, Relaxing
                     velocity_exp += 0

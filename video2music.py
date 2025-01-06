@@ -433,10 +433,12 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
     single_track_midi.addTempo(0, 0, tempo)
-    events = multi_track_midi.tracks[track_index].eventList
-    for event in events:
-        if (event.evtname == "NoteOn"):
-            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
+    single_track_midi.tracks[0] = copy.deepcopy(multi_track_midi.tracks[track_index])
+    # for event in events:
+    #     if (event.evtname == "NoteOn"):
+    #         single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
+    #     elif (event.evtname == "NoteOff"):
+    #         single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
 
 def addChord(midifile, track, chord, chord_offset, density_val, trans_val, time, duration, velocity):
                 if density_val == 0:

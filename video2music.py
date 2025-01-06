@@ -840,7 +840,8 @@ class Video2music:
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
                 flac_files = []
-                for index in range(1, num_tracks):
+                for track in range(1, num_tracks):
+                    index = track - 1
                     if index in replace_instrument_index_dict.keys():
                         # index = replace_instrument_index_dict[index]
                         continue
@@ -849,7 +850,7 @@ class Video2music:
                     filename = filename = f"{str(index)}_{instrument_name}.sf2"
                     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
                     single_track_midi = MIDIFile(1)
-                    copy_track(multi_track_midi, single_track_midi, index)
+                    copy_track(multi_track_midi, single_track_midi, track)
                     
                     # Save single-tracks MIDI file
                     with open(f_path_midi_instrument, "wb") as outputFile:

@@ -433,7 +433,6 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
     single_track_midi.addTempo(0, 0, tempo)
-    single_track_midi.addTimeSignature(0, 0, numerator, denominator)
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
         if (event.evtname == "NoteOn"):

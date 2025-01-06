@@ -436,7 +436,7 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
     events = multi_track_midi.tracks[track_index].eventList
     for event in events:
         if (event.evtname == "NoteOn"):
-            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume) 
+            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
 
 class Video2music:
     def __init__(

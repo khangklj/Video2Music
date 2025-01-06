@@ -418,7 +418,7 @@ def convert_format_id_to_offset(id_list):
     return offset_list
 
 # By ChatGPT
-def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_index: int =0):
+def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_index: int = 0):
     """
     Copies the i-th track of a multi-track MIDIFile object to a single-track MIDIFile object.
 
@@ -428,27 +428,13 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         track_index (int): Index of the track to copy.
     """
     # Check if track_index is valid
-    if track_index >= multi_track_midi.numTracks or track_index < 0:
+    if track_index > multi_track_midi.numTracks or track_index < 0:
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
-    # Extract events from the specified track
     events = multi_track_midi.tracks[track_index].eventList
-    
-    # Add the events to the single-track MIDI
     for event in events:
-        print(type(event))
-        event_type = event["type"]
-        time = event["time"]
-        
-        if event_type == "note":
-            single_track_midi.addNote(
-                track=0,  # Single track in the new MIDI
-                channel=event["channel"],
-                pitch=event["pitch"],
-                time=time,
-                duration=event["duration"],
-                volume=event["volume"]
-            )
+        if (event.evtname == "NoteOn"):
+            single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, duration, event.volume) 
 
 class Video2music:
     def __init__(
@@ -738,8 +724,8 @@ class Video2music:
             # generated ChordID to ChordSymbol
             chord_genlist = []
             chordID_genlist= chord_sequence[0].cpu().numpy()
-            for i in chordID_genlist:
-                chord_genlist.append(chordInvDic[str(i)])
+            for index in chordID_genlist:
+                chord_genlist.append(chordInvDic[str(index)])
             
             chord_offsetlist = convert_format_id_to_offset(chord_genlist)
             f_path_midi = output_dir / "output.mid"
@@ -748,13 +734,23 @@ class Video2music:
 
             # ChordSymbol to MIDI file with voicing
             inst = inst.squeeze(0) # inst shape = (300, 40)
-            num_tracks = inst.shape[1]
+            # Save instrument file
+            df = pd.DataFrame(inst.cpu().numpy())
+            df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)                
+            
+            inst_mean = inst.mean(dim=0)
+            mask = inst_mean >= 0.5
+            chosen_inst_index = mask.nonzero(as_tuple=True)[0]
+            chosen_inst = inst[:, mask]
+
+            num_tracks = chosen_inst_index.shape[0]
 
             muli_track_midi = MIDIFile(num_tracks)
-            for track in range(num_tracks):
-                muli_track_midi.addTempo(track, 0, tempo)
+            muli_track_midi.addTempo(0, 0, tempo)
+            track = 0
+            for track in range(num_tracks):                
                 midi_chords_orginal = []
-                for i, k in enumerate(chord_genlist):
+                for index, k in enumerate(chord_genlist):
                     k = k.replace(":", "")
                     if k == "N":
                         midi_chords_orginal.append([])
@@ -767,6 +763,7 @@ class Video2music:
                 else:
                     trans = transposition_value
 
+                # Add notes
                 for i, chord in enumerate(midi_chords):
                     if inst[i, track] >= 0.5:
                         if densitylist[i] == 0:
@@ -845,46 +842,40 @@ class Video2music:
                 fs = FluidSynth(sound_font=self.SF2_FILE)
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
-                # Save instrument file
-                df = pd.DataFrame(inst.cpu().numpy())
-                df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)
-
                 flac_files = []
-                for filename in os.listdir("soundfonts"):
-                    if filename.startswith("default") or not filename.endswith(".sf2"):
-                        continue
-
-                    index, name = filename.split('_', 1)
-                    # instrument_name = name.split('.')[0]
+                curr_track = 1 # index 0 is tempo
+                for index in chosen_inst_index:
+                    index = index.item()                    
+                    if index in replace_instrument_index_dict.keys():
+                        index = replace_instrument_index_dict[index]
+                    
                     instrument_name = instrument_inv_dict[str(index)]
+                    filename = filename = f"{str(index)}_{instrument_name}.sf2"
                     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
-
-                    index = int(index)
-                    track = muli_track_midi.tracks[index] # Get track by index
                     single_track_midi = MIDIFile(1)
                     single_track_midi.addTempo(0, 0, tempo)
-
-                    copy_track(muli_track_midi, single_track_midi, index)
-
+                    copy_track(muli_track_midi, single_track_midi, curr_track)
+                    
                     # Save single-tracks MIDI file
                     with open(f_path_midi_instrument, "wb") as outputFile:
                         single_track_midi.writeFile(outputFile)
-
-                    # if index in replace_instrument_index_dict.keys():
-                    #     index = replace_instrument_index_dict[index]
-                    #     instrument_name = instrument_inv_dict[str(index)]
-                    #     filename = f"{str(index)}_{instrument_name}.sf2"
-
-                    sf = os.path.join("soundfonts", filename)
+                    
+                    f_path_sf = os.path.join("soundfonts", filename)
                     flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")
-                    fs = FluidSynth(sound_font=sf)
+                    fs = FluidSynth(sound_font=f_path_sf)
                     fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
                     flac_files.append(flac_output)
+                    
+                    curr_track += 1
 
                 mixed = AudioSegment.from_file(flac_files[0])
                 for audio_path in flac_files[1:]:
                     mixed = mixed.overlay(AudioSegment.from_file(audio_path))
                 mixed.export(f_path_flac, format="flac")
+
+            # Save multi-tracks MIDI file
+            with open(f_path_midi, "wb") as outputFile:
+                muli_track_midi.writeFile(outputFile)
 
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))

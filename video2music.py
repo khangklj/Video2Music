@@ -766,7 +766,7 @@ class Video2music:
                 for index, chord in enumerate(midi_chords):
                     if chosen_inst[index, track] < 0.5:
                         continue
-                    # if inst[index, track] >= 0.5:
+                    
                     if densitylist[index] == 0:
                         if len(chord) >= 4:
                             if chord_offsetlist[index] % 2 == 0:
@@ -864,38 +864,6 @@ class Video2music:
                     flac_files.append(flac_output)
                     
                     curr_track += 1
-
-
-                # for filename in os.listdir("soundfonts"):
-                #     if filename.startswith("default") or not filename.endswith(".sf2"):
-                #         continue
-
-                #     index, name = filename.split('_', 1)                    
-                #     instrument_name = instrument_inv_dict[str(index)]
-                #     f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
-
-                #     index = int(index) + 1 # 0 is Tempo
-                #     # track = muli_track_midi.tracks[index].eventList # Get track by index;
-                #     single_track_midi = MIDIFile(1)
-                #     single_track_midi.addTempo(0, 0, tempo)
-
-                #     copy_track(muli_track_midi, single_track_midi, index)
-
-                #     # Save single-tracks MIDI file
-                #     # with open(f_path_midi_instrument, "wb") as outputFile:
-                #     #     single_track_midi.writeFile(outputFile)
-
-                #     # if index in replace_instrument_index_dict.keys():
-                #     #     index = replace_instrument_index_dict[index]
-                #     #     instrument_name = instrument_inv_dict[str(index)]
-                #     #     filename = f"{str(index)}_{instrument_name}.sf2"
-
-                    
-                #     sf = os.path.join("soundfonts", filename)
-                #     flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")
-                #     fs = FluidSynth(sound_font=sf)
-                #     fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
-                #     flac_files.append(flac_output)
 
                 mixed = AudioSegment.from_file(flac_files[0])
                 for audio_path in flac_files[1:]:

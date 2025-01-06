@@ -764,6 +764,8 @@ class Video2music:
                     trans = transposition_value
 
                 for index, chord in enumerate(midi_chords):
+                    if chosen_inst[index, chosen_inst_index[track]] <= 0.5:
+                        continue
                     # if inst[index, track] >= 0.5:
                     if densitylist[index] == 0:
                         if len(chord) >= 4:
@@ -908,7 +910,7 @@ class Video2music:
             # Save multi-tracks MIDI file
             with open(f_path_midi, "wb") as outputFile:
                 muli_track_midi.writeFile(outputFile)
-                
+
             # Render generated music into input video
             audio_mp = mp.AudioFileClip(str(f_path_flac))
             video_mp = mp.VideoFileClip(str(video))

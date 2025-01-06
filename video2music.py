@@ -763,7 +763,7 @@ class Video2music:
 
                 # Add notes
                 for i, chord in enumerate(midi_chords):
-                    if inst[i, track] >= 0.5:
+                    if inst[i, track-1] >= 0.5:
                         if densitylist[i] == 0:
                             if len(chord) >= 4:
                                 if chord_offsetlist[i] % 2 == 0:

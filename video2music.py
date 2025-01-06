@@ -438,6 +438,74 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         if (event.evtname == "NoteOn"):
             single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
 
+def addChord(midifile, track, chord, chord_offset, density_val, trans_val, time, duration, velocity):
+                if density_val == 0:
+                    if len(chord) >= 4:
+                        if chord_offset % 2 == 0:
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 1, duration,  velocity)
+                        else:
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1, duration,  velocity)
+                elif density_val == 1:
+                    if len(chord) >= 4:
+                        if chord_offset % 2 == 0:
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1, duration,  velocity)
+                        else:
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1, duration,  velocity)
+                elif density_val == 2:
+                    if len(chord) >= 4:
+                        if chord_offset % 2 == 0:
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1.5, duration,  velocity)
+                        else:
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1.5, duration,  velocity)
+                elif density_val == 3:
+                    if len(chord) >= 4:
+                        if chord_offset % 2 == 0:
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.25, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.75, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1.5, duration,  velocity)
+                        else:
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0.25, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 0.75, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1.5, duration,  velocity)
+                elif density_val == 4:
+                    if len(chord) >= 4:
+                        if chord_offset % 2 == 0:
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.25, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.75, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1.25, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 1.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1.75, duration,  velocity)
+                        else:
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0, duration,  velocity)
+                            midifile.addNote(track, 0, chord[0]+trans_val, time + 0.25, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 0.75, duration,  velocity)
+                            midifile.addNote(track, 0, chord[3]+trans_val, time + 1, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1.25, duration,  velocity)
+                            midifile.addNote(track, 0, chord[1]+trans_val, time + 1.5, duration,  velocity)
+                            midifile.addNote(track, 0, chord[2]+trans_val, time + 1.75, duration,  velocity)
+
 class Video2music:
     def __init__(
         self,
@@ -745,95 +813,37 @@ class Video2music:
 
             multi_track_midi = MIDIFile(num_tracks)
             multi_track_midi.addTempo(0, 0, tempo)
+            generated_midi = MIDIFile(1)
+            generated_midi.addTempo(0, 0, tempo)
             
-            for track in range(1, num_tracks):            
-                midi_chords_orginal = []
-                for index, k in enumerate(chord_genlist):
-                    k = k.replace(":", "")
-                    if k == "N":
-                        midi_chords_orginal.append([])
-                    else:
-                        midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
-                midi_chords = voice(midi_chords_orginal)
-
-                if key != None:
-                    trans = traspose_key_dic[key]
+            midi_chords_orginal = []
+            for index, k in enumerate(chord_genlist):
+                k = k.replace(":", "")
+                if k == "N":
+                    midi_chords_orginal.append([])
                 else:
-                    trans = transposition_value
+                    midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
+            midi_chords = voice(midi_chords_orginal)
 
-                # Add notes
+            if key != None:
+                trans = traspose_key_dic[key]
+            else:
+                trans = transposition_value
+
+            # For multi_track_midi
+            for track in range(0, num_tracks):
+                # For generated_midi
+                if track == 0:
+                    addChord(generated_midi, 0, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i])
+                
+                # For multi_track_midi
                 for i, chord in enumerate(midi_chords):
                     if inst[i, track-1] == 1.0:
-                        if densitylist[i] == 0:
-                            if len(chord) >= 4:
-                                if chord_offsetlist[i] % 2 == 0:
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                else:
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                        elif densitylist[i] == 1:
-                            if len(chord) >= 4:
-                                if chord_offsetlist[i] % 2 == 0:
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                else:
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                        elif densitylist[i] == 2:
-                            if len(chord) >= 4:
-                                if chord_offsetlist[i] % 2 == 0:
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                                else:
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                        elif densitylist[i] == 3:
-                            if len(chord) >= 4:
-                                if chord_offsetlist[i] % 2 == 0:
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                                else:
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                        elif densitylist[i] == 4:
-                            if len(chord) >= 4:
-                                if chord_offsetlist[i] % 2 == 0:
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.25 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
-                                else:
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[0]+trans,  i * duration + 0.25 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 0.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 0.75 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[3]+trans,  i * duration + 1 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.25 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[1]+trans,  i * duration + 1.5 ,  duration,  velolistExp[i])
-                                    multi_track_midi.addNote(track, 0, chord[2]+trans,  i * duration + 1.75 ,  duration,  velolistExp[i])
-
-            # Save multi-tracks MIDI file
+                        addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i])
+                                    
+            # Save generated_midi file
             with open(f_path_midi, "wb") as outputFile:
-                multi_track_midi.writeFile(outputFile)
+                generated_midi.writeFile(outputFile)
      
             # Convert midi to audio (e.g., flac)
             if custom_sound_font == False:

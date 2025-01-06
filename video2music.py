@@ -737,8 +737,8 @@ class Video2music:
             num_tracks = inst.shape[1]
 
             muli_track_midi = MIDIFile(num_tracks)
-            for track in range(num_tracks):
-                muli_track_midi.addTempo(track, 0, tempo)
+            muli_track_midi.addTempo(0, 0, tempo)
+            for track in range(num_tracks):                
                 midi_chords_orginal = []
                 for index, k in enumerate(chord_genlist):
                     k = k.replace(":", "")

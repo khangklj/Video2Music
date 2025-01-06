@@ -744,10 +744,10 @@ class Video2music:
             chosen_inst = inst[:, mask]
 
             num_tracks = chosen_inst_index.shape[0]
-            print("num_tracks:", num_tracks)
 
             muli_track_midi = MIDIFile(num_tracks)
             muli_track_midi.addTempo(0, 0, tempo)
+            track = 0
             for track in range(num_tracks):                
                 midi_chords_orginal = []
                 for index, k in enumerate(chord_genlist):
@@ -764,7 +764,7 @@ class Video2music:
                     trans = transposition_value
 
                 for index, chord in enumerate(midi_chords):
-                    if chosen_inst[index, chosen_inst_index[track]] <= 0.5:
+                    if chosen_inst[index, track] < 0.5:
                         continue
                     # if inst[index, track] >= 0.5:
                     if densitylist[index] == 0:
@@ -833,17 +833,12 @@ class Video2music:
                                 muli_track_midi.addNote(track, 0, chord[2]+trans,  index * duration + 1.25 ,  duration,  velolistExp[index])
                                 muli_track_midi.addNote(track, 0, chord[1]+trans,  index * duration + 1.5 ,  duration,  velolistExp[index])
                                 muli_track_midi.addNote(track, 0, chord[2]+trans,  index * duration + 1.75 ,  duration,  velolistExp[index])
-
                        
             # Convert midi to audio (e.g., flac)
             if custom_sound_font == False:
                 fs = FluidSynth(sound_font=self.SF2_FILE)
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
-            else:                
-                # DEBUG
-                for event in muli_track_midi.tracks[1].eventList:
-                    print(event)
-
+            else:
                 flac_files = []
                 curr_track = 1 # index 0 is tempo
                 for index in chosen_inst_index:

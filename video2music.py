@@ -867,6 +867,7 @@ class Video2music:
             else:
                 trans = transposition_value
 
+            non_empty_tracks = set()
             # For multi_track_midi
             for track in range(num_tracks):
                 for i, chord in enumerate(midi_chords):
@@ -878,6 +879,7 @@ class Video2music:
                     # For multi_track_midi
                     multi_track_midi.addTempo(track, 0, tempo_instrument[track])
                     if inst[i, track] == 1.0:
+                        non_empty_tracks.add(track)
                         addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], 
                                   trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                                     
@@ -891,7 +893,7 @@ class Video2music:
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
                 flac_files = []
-                for track in range(num_tracks):
+                for track in non_empty_tracks:
                     if track not in replace_instrument_index_dict.keys() and \
                         len(multi_track_midi.tracks[track].eventList) > 1:
                         

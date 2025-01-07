@@ -895,7 +895,7 @@ class Video2music:
                     if track not in replace_instrument_index_dict.keys() and \
                         len(multi_track_midi.tracks[track].eventList) > 1:
                         
-                        print(track)
+                        # print(track)
                         instrument_name = instrument_inv_dict[str(track)]
                         filename = filename = f"{str(track)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")

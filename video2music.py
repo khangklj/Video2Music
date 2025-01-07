@@ -895,8 +895,8 @@ class Video2music:
                     if track not in replace_instrument_index_dict.keys() and \
                         len(multi_track_midi.tracks[track].eventList) > 1:
                         
-                        # print(track)
                         instrument_name = instrument_inv_dict[str(track)]
+                        print(track, instrument_name)
                         filename = filename = f"{str(track)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
                         single_track_midi = MIDIFile(1)
@@ -913,8 +913,11 @@ class Video2music:
                         fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
                         flac_files.append(flac_output)
 
-                mixed = AudioSegment.from_file(flac_files[0])
-                for audio_path in flac_files[1:]:
+                base_audio_index = 15
+                mixed = AudioSegment.from_file(flac_files[base_audio_index])
+                for i, audio_path in enumerate(flac_files):
+                    if base_audio_index == i:
+                        continue
                     mixed = mixed.overlay(AudioSegment.from_file(audio_path))
                 mixed.export(f_path_flac, format="flac")
 
@@ -922,6 +925,7 @@ class Video2music:
             audio_mp = mp.AudioFileClip(str(f_path_flac))
             video_mp = mp.VideoFileClip(str(video))
 
+            assert video_mp.duration > 0 and audio_mp > 0
             audio_mp = audio_mp.subclip(0, video_mp.duration)
             final = video_mp.set_audio(audio_mp)
 

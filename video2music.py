@@ -913,7 +913,7 @@ class Video2music:
                         fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
                         flac_files.append(flac_output)
 
-                base_audio_index = 15
+                base_audio_index = 5
                 mixed = AudioSegment.from_file(flac_files[base_audio_index])
                 for i, audio_path in enumerate(flac_files):
                     if base_audio_index == i:

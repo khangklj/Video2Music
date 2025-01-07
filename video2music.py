@@ -433,7 +433,7 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
         raise ValueError(f"Track index {track_index} is out of range for multi-track MIDI.")
 
     single_track_midi.addTempo(0, 0, tempo)
-    single_track_midi.tracks[0] = copy.deepcopy(multi_track_midi.tracks[track_index])
+    single_track_midi.tracks[1] = copy.deepcopy(multi_track_midi.tracks[track_index])
     # for event in events:
     #     if (event.evtname == "NoteOn"):
     #         single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
@@ -846,9 +846,9 @@ class Video2music:
             df = pd.DataFrame(inst.cpu().numpy())
             df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)                
             
-            num_tracks = inst.shape[1]
+            num_inst = inst.shape[1]
 
-            multi_track_midi = MIDIFile(num_tracks) # For instrument rendering
+            midi_list = [MIDIFile(1) for _ in range(num_inst)] # For instrument rendering
             
             generated_midi = MIDIFile(1) # For saving midi file
             generated_midi.addTempo(0, 0, base_tempo)
@@ -867,20 +867,21 @@ class Video2music:
             else:
                 trans = transposition_value
 
-            non_empty_tracks = set()
+            choosed_instrument = set()
             # For multi_track_midi
-            for track in range(num_tracks):
+            for inst_id in range(num_inst):
+                midi_list[inst_id].addTempo(0, 0, tempo_instrument[inst_id])
+
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
-                    if track == 0:
-                        addChord(generated_midi, 0, chord, chord_offsetlist[i], densitylist[i], 
+                    if inst_id == 0:
+                        addChord(generated_midi, 1, chord, chord_offsetlist[i], densitylist[i], 
                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                     
                     # For multi_track_midi
-                    multi_track_midi.addTempo(track, 0, tempo_instrument[track])
-                    if inst[i, track] == 1.0:
-                        non_empty_tracks.add(track)
-                        addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], 
+                    if inst[i, inst_id] == 1.0:
+                        choosed_instrument.add(inst_id)
+                        addChord(midi_list[inst_id], 1, chord, chord_offsetlist[i], densitylist[i], 
                                   trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                                     
             # Save generated_midi file
@@ -893,19 +894,16 @@ class Video2music:
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
                 flac_files = []
-                for track in non_empty_tracks:
-                    if track not in replace_instrument_index_dict.keys():                        
-                        instrument_name = instrument_inv_dict[str(track)]
-                        print(track, instrument_name)
-                        filename = filename = f"{str(track)}_{instrument_name}.sf2"
+                for inst_id in choosed_instrument:
+                    if inst_id not in replace_instrument_index_dict.keys():                        
+                        instrument_name = instrument_inv_dict[str(inst_id)]
+                        print(inst_id, instrument_name)
+                        filename = f"{str(inst_id)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
-                        single_track_midi = MIDIFile(1)
-                        
-                        copy_track(multi_track_midi, single_track_midi, track, tempo_instrument[track])
-                    
+                                                                    
                         # Save single-tracks MIDI file
                         with open(f_path_midi_instrument, "wb") as outputFile:
-                            single_track_midi.writeFile(outputFile)
+                            midi_list[inst_id].writeFile(outputFile)
                     
                         f_path_sf = os.path.join("soundfonts", filename)
                         flac_output = os.path.join(output_dir, f"output_{instrument_name}.flac")

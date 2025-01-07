@@ -94,6 +94,8 @@ replace_instrument_index_dict = {
     31: 11
 }
 
+arpeggio_instrument_list = [3, 7, 8, 11, 14, 27, 31, 37, 38, 39]
+
 max_conseq_N = 0
 max_conseq_chord = 2
 base_tempo = 120
@@ -441,7 +443,8 @@ def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_in
     #     elif (event.evtname == "NoteOff"):
     #         single_track_midi.addNote(0, event.channel, event.pitch, event.tick / 960, event.duration, event.volume) 
 
-def addChord(midifile, chord, chord_offset, density_val, trans_val, time, duration, velocity, emotion_index):
+def addChord(midifile, chord, chord_offset, density_val, trans_val, time, duration, 
+             velocity, emotion_index, arpeggio_chord=False):
     if emotion_index in (1, 2):   # Fearful, Tense
         trans_val += -2
     elif emotion_index in (3,):    # Sad
@@ -451,72 +454,85 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
     else:                         # Neutral
         trans_val += 0
     
-    if density_val == 0:
+    # Inner Chord Notes
+    first_velo = 1.0
+    second_velo = 0.83
+    third_velo = 0.85
+    fourth_velo = 0.98
+
+    if arpeggio_chord:
+        if density_val == 0:
+            if len(chord) >= 4:
+                if chord_offset % 2 == 0:
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 1, duration,  velocity*second_velo)
+                else:
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 0, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity*fourth_velo)
+        elif density_val == 1:
+            if len(chord) >= 4:
+                if chord_offset % 2 == 0:
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity*third_velo)
+                else:
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 0, duration,  velocity*fourth_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity*third_velo)
+        elif density_val == 2:
+            if len(chord) >= 4:
+                if chord_offset % 2 == 0:
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1.5, duration,  velocity*fourth_velo)
+                else:
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 0, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1.5, duration,  velocity*fourth_velo)
+        elif density_val == 3:
+            if len(chord) >= 4:
+                if chord_offset % 2 == 0:
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.25, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 0.5, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.75, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity*fourth_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1.5, duration,  velocity*third_velo)
+                else:
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0.25, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 0.75, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity*fourth_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1.5, duration,  velocity*third_velo)
+        elif density_val == 4:
+            if len(chord) >= 4:
+                if chord_offset % 2 == 0:
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.25, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 0.5, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.75, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity*fourth_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1.25, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 1.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1.75, duration,  velocity*third_velo)
+                else:
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[0]+trans_val, time + 0.25, duration,  velocity*first_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 0.75, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity*fourth_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1.25, duration,  velocity*third_velo)
+                    midifile.addNote(0, 0, chord[1]+trans_val, time + 1.5, duration,  velocity*second_velo)
+                    midifile.addNote(0, 0, chord[2]+trans_val, time + 1.75, duration,  velocity*third_velo)
+    else:
         if len(chord) >= 4:
-            if chord_offset % 2 == 0:
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 1, duration,  velocity)
-            else:
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity)
-    elif density_val == 1:
-        if len(chord) >= 4:
-            if chord_offset % 2 == 0:
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity)
-            else:
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity)
-    elif density_val == 2:
-        if len(chord) >= 4:
-            if chord_offset % 2 == 0:
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1.5, duration,  velocity)
-            else:
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1.5, duration,  velocity)
-    elif density_val == 3:
-        if len(chord) >= 4:
-            if chord_offset % 2 == 0:
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.25, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.75, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1.5, duration,  velocity)
-            else:
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0.25, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 0.75, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1.5, duration,  velocity)
-    elif density_val == 4:
-        if len(chord) >= 4:
-            if chord_offset % 2 == 0:
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.25, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.75, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1.25, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 1.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1.75, duration,  velocity)
-            else:
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0, duration,  velocity)
-                midifile.addNote(0, 0, chord[0]+trans_val, time + 0.25, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 0.75, duration,  velocity)
-                midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1.25, duration,  velocity)
-                midifile.addNote(0, 0, chord[1]+trans_val, time + 1.5, duration,  velocity)
-                midifile.addNote(0, 0, chord[2]+trans_val, time + 1.75, duration,  velocity)
+            midifile.addNote(0, 0, chord[0] + trans_val, time, duration, velocity*first_velo)
+            midifile.addNote(0, 0, chord[1] + trans_val, time, duration, velocity*second_velo)
+            midifile.addNote(0, 0, chord[2] + trans_val, time, duration, velocity*third_velo)
+            midifile.addNote(0, 0, chord[3] + trans_val, time, duration, velocity*fourth_velo)
 
 class Video2music:
     def __init__(
@@ -662,8 +678,10 @@ class Video2music:
                 feature_key = torch.tensor([0]).float()
         else: # Key is not given
             if emotion_idx in (1, 2, 3): # Minor
+                key = 'A minor'
                 feature_key = torch.tensor([1]).float()
             else: # Major
+                key = 'C major'
                 feature_key = torch.tensor([0]).float()
         
         feature_key = feature_key.to(self.device)
@@ -860,7 +878,7 @@ class Video2music:
                 if k == "N":
                     midi_chords_orginal.append([])
                 else:
-                    midi_chords_orginal.append(Chord(k).getMIDI("c", 4))
+                    midi_chords_orginal.append(Chord(k).getMIDI(key[0].lower(), 4))
             midi_chords = voice(midi_chords_orginal)
 
             if key != None:
@@ -877,14 +895,17 @@ class Video2music:
                     # For generated_midi
                     if inst_id == 0:
                         print(chord)
-                        addChord(generated_midi, chord, chord_offsetlist[i], densitylist[i], 
-                                 trans, i * duration, duration, velolistExp[i], emotion_indice[i])
+                        addChord(generated_midi, chord, chord_offsetlist[i], densitylist[i], trans, 
+                                 i * duration, duration, velolistExp[i], emotion_indice[i], 
+                                 arpeggio_chord=True)
                     
                     # For multi_track_midi
                     if inst[i, inst_id] == 1.0:
                         choosed_instrument.add(inst_id)
+                        arpeggio_chord = inst_id in arpeggio_instrument_list
                         addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
-                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i])
+                                 trans, i * duration, duration, velolistExp[i], emotion_indice[i], 
+                                 arpeggio_chord=arpeggio_chord)
                                     
             # Save generated_midi file
             with open(f_path_midi, "wb") as outputFile:

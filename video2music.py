@@ -876,6 +876,7 @@ class Video2music:
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
                     if inst_id == 0:
+                        print(chord)
                         addChord(generated_midi, chord, chord_offsetlist[i], densitylist[i], 
                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                     

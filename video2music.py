@@ -893,7 +893,7 @@ class Video2music:
                 flac_files = []
                 for track in range(num_tracks):
                     if track not in replace_instrument_index_dict.keys() and \
-                        len(multi_track_midi.tracks[track].eventList) > 0:
+                        len(multi_track_midi.tracks[track].eventList) > 1:
                         
                         print(track)
                         instrument_name = instrument_inv_dict[str(track)]

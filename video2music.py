@@ -85,7 +85,6 @@ flatsharpDic = {
     'Bb':'A#'
 }
 
-
 replace_instrument_index_dict = {
     13: 14,
     18: 10,
@@ -97,7 +96,10 @@ replace_instrument_index_dict = {
 
 max_conseq_N = 0
 max_conseq_chord = 2
-tempo = 120
+base_tempo = 120
+tempo_instrument = [105, 85, 100, 90, 115, 70, 130, 120, 75, 95, 80, base_tempo, 70, 125, 120, 120,
+                    95, 110, 100, 110, 80, 80, 100, 80, 90, 70, 75, 130, 100, 60, 95, base_tempo,
+                    105, 90, 125, 90, 105, 75, 100, 85]
 numerator, denominator = 4, 4 # Time signature (Nhịp 4/4)
 duration = 2
 
@@ -105,7 +107,6 @@ min_loudness = 0  # Minimum loudness level in the input range
 max_loudness = 50  # Maximum loudness level in the input range
 min_velocity = 49  # Minimum velocity value in the output range
 max_velocity = 112  # Maximum velocity value in the output range
-
 
 def split_video_into_frames(video, frame_dir):
     output_path = os.path.join(frame_dir, f"%03d.jpg")
@@ -173,7 +174,6 @@ def gen_emotion_feature(frame_dir, emotion_dir):
         f.write("time exciting_prob fearful_prob tense_prob sad_prob relaxing_prob neutral_prob\n")
         for i in range(0, len(emolist) ):
             f.write(str(i) + " "+emolist[i]+"\n")
-
 
 def gen_scene_feature(video, scene_dir, frame_dir):
     video_stream = open_video(str(video))
@@ -419,7 +419,7 @@ def convert_format_id_to_offset(id_list):
     return offset_list
 
 # By ChatGPT
-def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_index: int = 0):
+def copy_track(multi_track_midi: MIDIFile, single_track_midi: MIDIFile, track_index: int = 0, tempo: int = base_tempo):
     """
     Copies the i-th track of a multi-track MIDIFile object to a single-track MIDIFile object.
 
@@ -846,12 +846,12 @@ class Video2music:
             df = pd.DataFrame(inst.cpu().numpy())
             df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)                
             
-            num_tracks = inst.shape[1] + 1 # first track is for meta data
+            num_tracks = inst.shape[1]
 
             multi_track_midi = MIDIFile(num_tracks) # For instrument rendering
-            multi_track_midi.addTempo(0, 0, tempo)
+            
             generated_midi = MIDIFile(1) # For saving midi file
-            generated_midi.addTempo(0, 0, tempo)
+            generated_midi.addTempo(0, 0, base_tempo)
             
             midi_chords_orginal = []
             for index, k in enumerate(chord_genlist):
@@ -868,7 +868,7 @@ class Video2music:
                 trans = transposition_value
 
             # For multi_track_midi
-            for track in range(0, num_tracks):
+            for track in range(num_tracks):
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
                     if track == 0:
@@ -876,7 +876,8 @@ class Video2music:
                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                     else:
                         # For multi_track_midi
-                        if inst[i, track-1] == 1.0:
+                        multi_track_midi.addTempo(track, 0, tempo_instrument[track])
+                        if inst[i, track] == 1.0:
                             addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], 
                                      trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                                     
@@ -890,14 +891,13 @@ class Video2music:
                 fs.midi_to_audio(str(f_path_midi), str(f_path_flac))
             else:
                 flac_files = []
-                for track in range(1, num_tracks):
-                    index = track - 1
-                    if index not in replace_instrument_index_dict.keys() and \
+                for track in range(num_tracks):
+                    if track not in replace_instrument_index_dict.keys() and \
                         len(multi_track_midi.tracks[track].eventList) > 0:
                         
-                        print(index)
-                        instrument_name = instrument_inv_dict[str(index)]
-                        filename = filename = f"{str(index)}_{instrument_name}.sf2"
+                        print(track)
+                        instrument_name = instrument_inv_dict[str(track)]
+                        filename = filename = f"{str(track)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
                         single_track_midi = MIDIFile(1)
                         

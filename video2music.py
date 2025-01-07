@@ -894,9 +894,7 @@ class Video2music:
             else:
                 flac_files = []
                 for track in non_empty_tracks:
-                    if track not in replace_instrument_index_dict.keys() and \
-                        len(multi_track_midi.tracks[track].eventList) > 1:
-                        
+                    if track not in replace_instrument_index_dict.keys():                        
                         instrument_name = instrument_inv_dict[str(track)]
                         print(track, instrument_name)
                         filename = filename = f"{str(track)}_{instrument_name}.sf2"

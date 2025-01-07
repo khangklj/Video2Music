@@ -901,7 +901,7 @@ class Video2music:
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
                         single_track_midi = MIDIFile(1)
                         
-                        copy_track(multi_track_midi, single_track_midi, track)
+                        copy_track(multi_track_midi, single_track_midi, track, tempo_instrument[track])
                     
                         # Save single-tracks MIDI file
                         with open(f_path_midi_instrument, "wb") as outputFile:
@@ -922,7 +922,7 @@ class Video2music:
             audio_mp = mp.AudioFileClip(str(f_path_flac))
             video_mp = mp.VideoFileClip(str(video))
 
-            audio_mp = audio_mp.subclip(0, video_mp.duration )
+            audio_mp = audio_mp.subclip(0, video_mp.duration)
             final = video_mp.set_audio(audio_mp)
 
             final.write_videofile(str(f_path_video_out), 

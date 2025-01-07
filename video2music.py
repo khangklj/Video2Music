@@ -97,9 +97,10 @@ replace_instrument_index_dict = {
 max_conseq_N = 0
 max_conseq_chord = 2
 base_tempo = 120
-tempo_instrument = [105, 85, 100, 90, 115, 70, 130, 120, 75, 95, 80, base_tempo, 70, 125, 120, 120,
-                    95, 110, 100, 110, 80, 80, 100, 80, 90, 70, 75, 130, 100, 60, 95, base_tempo,
-                    105, 90, 125, 90, 105, 75, 100, 85]
+# tempo_instrument = [105, 85, 100, 90, 115, 70, 130, 120, 75, 95, 80, base_tempo, 70, 125, 120, 120,
+#                     95, 110, 100, 110, 80, 80, 100, 80, 90, 70, 75, 130, 100, 60, 95, base_tempo,
+#                     105, 90, 125, 90, 105, 75, 100, 85]
+tempo_instrument = [base_tempo] * 40
 numerator, denominator = 4, 4 # Time signature (Nhịp 4/4)
 duration = 2
 

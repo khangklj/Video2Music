@@ -781,11 +781,11 @@ class Video2music:
             y_loudness_np_lv = (y_loudness_np * 100).astype(int)
             y_loudness_np_lv = np.clip(y_loudness_np_lv, 0, 50)
 
-            feature_emotion = feature_emotion.permute(1, 0, 2)
-            window_size = 5
-            avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size
-            feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
-            feature_emotion = feature_emotion.permute(1, 0, 2).squeeze()
+            # feature_emotion = feature_emotion.permute(1, 0, 2)
+            # window_size = 5
+            # avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size
+            # feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
+            # feature_emotion = feature_emotion.permute(1, 0, 2).squeeze()
             emotion_indice = torch.argmax(feature_emotion, dim=1).cpu()
 
             velolistExp = []
@@ -872,11 +872,13 @@ class Video2music:
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
                     if track == 0:
-                        addChord(generated_midi, 0, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i], emotion_indice[i])
+                        addChord(generated_midi, 0, chord, chord_offsetlist[i], densitylist[i], 
+                                 trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                     else:
                         # For multi_track_midi
                         if inst[i, track-1] == 1.0:
-                            addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], trans, i * duration, duration, velolistExp[i], emotion_indice[i])
+                            addChord(multi_track_midi, track, chord, chord_offsetlist[i], densitylist[i], 
+                                     trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                                     
             # Save generated_midi file
             with open(f_path_midi, "wb") as outputFile:

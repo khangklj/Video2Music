@@ -875,13 +875,13 @@ class Video2music:
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
                     if inst_id == 0:
-                        addChord(generated_midi, 1, chord, chord_offsetlist[i], densitylist[i], 
+                        addChord(generated_midi, chord, chord_offsetlist[i], densitylist[i], 
                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                     
                     # For multi_track_midi
                     if inst[i, inst_id] == 1.0:
                         choosed_instrument.add(inst_id)
-                        addChord(midi_list[inst_id], 1, chord, chord_offsetlist[i], densitylist[i], 
+                        addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
                                   trans, i * duration, duration, velolistExp[i], emotion_indice[i])
                                     
             # Save generated_midi file

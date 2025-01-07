@@ -95,6 +95,13 @@ replace_instrument_index_dict = {
 }
 
 arpeggio_instrument_list = [3, 7, 8, 11, 14, 27, 31, 37, 38, 39]
+left_panning_instrument_list = [13, 14, 16, 25, 28, 29, 34, 39]
+right_panning_instrument_list = [0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 18, 19, 22, 26, 27]
+center_panning_instrument_list = [7, 15, 17, 20, 21, 23, 24, 30, 32, 32, 33, 35, 36, 37, 38]
+
+left_panning_val = 32
+center_panning_val = 64
+right_panning_val = 96
 
 max_conseq_N = 0
 max_conseq_chord = 2
@@ -459,6 +466,7 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
     second_velo = 0.83
     third_velo = 0.85
     fourth_velo = 0.98
+    fifth_velo = 0.9
 
     if arpeggio_chord:
         if density_val == 0:
@@ -533,6 +541,8 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
             midifile.addNote(0, 0, chord[1] + trans_val, time, duration, int(velocity*second_velo))
             midifile.addNote(0, 0, chord[2] + trans_val, time, duration, int(velocity*third_velo))
             midifile.addNote(0, 0, chord[3] + trans_val, time, duration, int(velocity*fourth_velo))
+            if len(chord) == 5:
+                midifile.addNote(0, 0, chord[4] + trans_val, time, duration, int(velocity*fifth_velo))
 
 class Video2music:
     def __init__(
@@ -890,11 +900,19 @@ class Video2music:
             # For multi_track_midi
             for inst_id in range(num_inst):
                 midi_list[inst_id].addTempo(0, 0, tempo_instrument[inst_id])
+                arpeggio_chord = inst_id in arpeggio_instrument_list
+                if inst_id in left_panning_instrument_list:
+                    panning_val = left_panning_val
+                elif inst_id in center_panning_instrument_list:
+                    panning_val = center_panning_val
+                else:
+                    panning_val = right_panning_val
+                midi_list[inst_id].addControllerEvent(0, 0, 0, panning_val, 0)
 
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi
                     if inst_id == 0:
-                        print(chord)
+                        # print(chord)
                         addChord(generated_midi, chord, chord_offsetlist[i], densitylist[i], trans, 
                                  i * duration, duration, velolistExp[i], emotion_indice[i], 
                                  arpeggio_chord=True)
@@ -902,7 +920,6 @@ class Video2music:
                     # For multi_track_midi
                     if inst[i, inst_id] == 1.0:
                         choosed_instrument.add(inst_id)
-                        arpeggio_chord = inst_id in arpeggio_instrument_list
                         addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i], 
                                  arpeggio_chord=arpeggio_chord)

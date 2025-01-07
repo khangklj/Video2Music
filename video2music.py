@@ -925,7 +925,7 @@ class Video2music:
             audio_mp = mp.AudioFileClip(str(f_path_flac))
             video_mp = mp.VideoFileClip(str(video))
 
-            assert video_mp.duration > 0 and audio_mp > 0
+            assert video_mp.duration > 0 and audio_mp.duration > 0
             audio_mp = audio_mp.subclip(0, video_mp.duration)
             final = video_mp.set_audio(audio_mp)
 

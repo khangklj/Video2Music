@@ -841,7 +841,7 @@ class Video2music:
 
             # ChordSymbol to MIDI file with voicing
             inst = inst.squeeze(0) # inst shape = (300, 40)
-            inst = torch.where(inst >= 0.5, 1.0, 0.0)
+            inst = torch.where(inst >= 0.3, 1.0, 0.0)
             # Save instrument file
             df = pd.DataFrame(inst.cpu().numpy())
             df.to_csv(os.path.join(output_dir, "inst.csv"), index=False)                
@@ -894,7 +894,7 @@ class Video2music:
                     index = track - 2
                     if index not in replace_instrument_index_dict.keys() and \
                         len(multi_track_midi.tracks[track].eventList) > 0:
-                        print(index)
+                        
                         instrument_name = instrument_inv_dict[str(index)]
                         filename = filename = f"{str(index)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")

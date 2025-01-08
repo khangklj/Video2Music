@@ -82,6 +82,8 @@ cat /etc/ImageMagick-6/policy.xml | sed 's/none/read,write/g'> /etc/ImageMagick-
 * `evaluate.py`: evaluation script
 * `generate.py`: inference script
 * `video2music.py`: Video2Music module that outputs video with generated background music from input video
+* `demo_training.ipynb`: demo notebook for training model
+* `demo_generate.ipynb`: demo notebook for inference
 
 ## Training
 
@@ -100,10 +102,6 @@ cat /etc/ImageMagick-6/policy.xml | sed 's/none/read,write/g'> /etc/ImageMagick-
   ```shell
   python generate.py
   ```
-
-## TODO
-
-- ...
 
 ## Citation
 If you find this resource useful, [please cite the original work](https://doi.org/10.1016/j.eswa.2024.123640):

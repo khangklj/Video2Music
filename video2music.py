@@ -946,7 +946,7 @@ class Video2music:
                         choosed_instrument.add(inst_id)
 
                         addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
-                                 trans, i * duration, duration, int(velocity), emotion_indice[i], 
+                                 trans, i * duration, duration, velocity, emotion_indice[i], 
                                  arpeggio_chord=arpeggio_chord)
                                     
             # Save generated_midi file

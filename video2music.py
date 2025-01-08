@@ -926,7 +926,7 @@ class Video2music:
                 else:
                     panning_val = right_panning_val
 
-                midi_list[inst_id].addControllerEvent(0, 0, 0, panning_val, 0)
+                # midi_list[inst_id].addControllerEvent(0, 0, 0, panning_val, 0)
 
                 for i, chord in enumerate(midi_chords):
                     # For generated_midi

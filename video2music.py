@@ -900,13 +900,14 @@ class Video2music:
             # For multi_track_midi
             for inst_id in range(num_inst):
                 midi_list[inst_id].addTempo(0, 0, tempo_instrument[inst_id])
-                arpeggio_chord = inst_id in arpeggio_instrument_list
+
                 if inst_id in left_panning_instrument_list:
                     panning_val = left_panning_val
                 elif inst_id in center_panning_instrument_list:
                     panning_val = center_panning_val
                 else:
                     panning_val = right_panning_val
+
                 midi_list[inst_id].addControllerEvent(0, 0, 0, panning_val, 0)
 
                 for i, chord in enumerate(midi_chords):
@@ -919,7 +920,11 @@ class Video2music:
                     
                     # For multi_track_midi
                     if inst[i, inst_id] == 1.0:
+                        arpeggio_chord = inst_id in arpeggio_instrument_list
+                        arpeggio_chord |= emotion_indice[i] in (0, 1, 2) # Exciting, Fearful, Tense
+
                         choosed_instrument.add(inst_id)
+
                         addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
                                  trans, i * duration, duration, velolistExp[i], emotion_indice[i], 
                                  arpeggio_chord=arpeggio_chord)
@@ -937,7 +942,7 @@ class Video2music:
                 for inst_id in choosed_instrument:
                     if inst_id not in replace_instrument_index_dict.keys():                        
                         instrument_name = instrument_inv_dict[str(inst_id)]
-                        # print(inst_id, instrument_name)
+                        print(inst_id, instrument_name)
                         filename = f"{str(inst_id)}_{instrument_name}.sf2"
                         f_path_midi_instrument = os.path.join(output_dir, f"output_{instrument_name}.mid")
 

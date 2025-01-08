@@ -67,13 +67,13 @@ cat /etc/ImageMagick-6/policy.xml | sed 's/none/read,write/g'> /etc/ImageMagick-
 * `saved_models/`: saved model files
 * `utilities/`
   * `run_model_vevo.py`: code for running model (AMT)
-  * `run_model_regression.py`: code for running model (bi-GRU)
+  * `run_model_regression.py`: code for running regression model
   * `argument_funcs.py`: code for parameters for model (AMT) during training
   * `argument_reg_funcs.py`: code for parameters for regression model during training
   * `argument_generate_funcs.py`: code for parameters for both model during inference
 * `model/`
   * `video_music_transformer.py`: Affective Multimodal Transformer (AMT) model 
-  * `video_regression.py`: Bi-GRU regression model used for predicting note density/loudness
+  * `video_regression.py`: Regression model used for predicting note density/loudness
 * `dataset/`
   * `vevo_dataset.py`: Dataset loader
 * `script/` : code for extracting video/music features (sementic, motion, emotion, scene offset, loudness, and note density)

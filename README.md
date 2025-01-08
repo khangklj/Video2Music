@@ -1,18 +1,4 @@
-<div align="center">
-
 # Video2Music: Suitable Music Generation from Videos using an Affective Multimodal Transformer model
-
-
-
-[Demo](https://huggingface.co/spaces/amaai-lab/video2music) | [Website and Examples](https://amaai-lab.github.io/Video2Music/) | [Paper](https://doi.org/10.1016/j.eswa.2024.123640) | [Dataset (MuVi-Sync)](https://zenodo.org/records/10057093)
-
-[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/amaai-lab/video2music)  [![arXiv](https://img.shields.io/badge/arXiv-2311.00968-brightgreen.svg?style=flat-square)](https://arxiv.org/abs/2311.00968)
-
-</div>
-
-This repository contains the code and dataset accompanying the paper "Video2Music: Suitable Music Generation from Videos using an Affective Multimodal Transformer model" by Dr. Jaeyong Kang, Prof. Soujanya Poria, and Prof. Dorien Herremans.
-
-🔥 Live demo available on [HuggingFace](https://huggingface.co/spaces/amaai-lab/video2music) and [Replicate](https://replicate.com/amaai-lab/video2music).
 
 <div align="center">
   <img src="v2m.png" width="400"/>
@@ -20,12 +6,6 @@ This repository contains the code and dataset accompanying the paper "Video2Musi
 
 ## Introduction
 We propose a novel AI-powered multimodal music generation framework called Video2Music. This framework uniquely uses video features as conditioning input to generate matching music using a Transformer architecture. By employing cutting-edge technology, our system aims to provide video creators with a seamless and efficient solution for generating tailor-made background music.
-
-![](framework.png)
-
-
-## Change Log
-- 2023-11-28: add new input method (YouTube URL) on HuggingFace
 
 ## Quickstart Guide
 
@@ -41,34 +21,44 @@ input_primer = "C Am F G"
 input_key = "C major"
 
 video2music = Video2music()
-output_filename = video2music.generate(input_video, input_primer, input_key)
+output_filename = video2music.generate(input_video, primer=input_primer, key=input_key)
 
 IPython.display.Video(output_filename)
 ```
 
 ## Installation
 
-This repo is developed using python version 3.8
+**For training**
 
 ```bash
-apt-get update
-apt-get install ffmpeg
-apt-get install fluidsynth
-git clone https://github.com/AMAAI-Lab/Video2Music
+git clone https://github.com/Phan-Trung-Thuan/Video2Music.git
 cd Video2Music
 pip install -r requirements.txt
+pip install --upgrade gensim
 ```
 
-* Download the processed training data `AMT.zip` from [HERE](https://drive.google.com/file/d/1qpcBXF04pgdy9hqRexr0mTx7L9_CAFpt/view?usp=drive_link) and extract the zip file and put the extracted two files directly under this folder (`saved_models/AMT/`)
+**For inference**
+```bash
+apt-get update -y
+apt-get install ffmpeg -y
+apt-get install fluidsynth -y
+pip install -r requirements.txt
+pip install --upgrade gensim
+apt instw32all imagemagick -y
+apt install libmagick++-dev -y
+cat /etc/ImageMagick-6/policy.xml | sed 's/none/read,write/g'> /etc/ImageMagick-6/policy.xml
+```
 
-* Download the soundfont file `default_sound_font.sf2` from [HERE](https://drive.google.com/file/d/1B9qjgimW9h6Gg5k8PZNt_ArWwSMJ4WuJ/view?usp=drive_link) and put the file directly under this folder (`soundfonts/`)
+* Download the default soundfont file [default_sound_font.sf2](https://drive.google.com/file/d/1B9qjgimW9h6Gg5k8PZNt_ArWwSMJ4WuJ/view?usp=drive_link) or using custom soundfonts processed by us [soundfonts.zip](https://drive.google.com/uc?id=1mx9Wob4Hydo1TzQg-z6P0WZ6Kvhn-CsN) and put the (extracted) file(s) directly under this folder (`soundfonts/`)
+
+  Note: to use custom soundfonts, please set option custom_sound_font=True in video2music.generate() (video2music.py) 
 
 * Our code is built on pytorch version 1.12.1 (torch==1.12.1 in the requirements.txt). But you might need to choose the correct version of `torch` based on your CUDA version
 
 ## Dataset
 
 * Obtain the dataset:
-  * MuVi-Sync [(Link)](https://zenodo.org/records/10057093)
+  * MuVi-Sync-dataset-v3 [(Link)](https://kaggle.com/datasets/a4a8f326fe8985d9aac2d69ec8d06dac49e7147ee36cc60752634b037fdc596c)
  
 * Put all directories started with `vevo` in the dataset under this folder (`dataset/`) 
 
@@ -78,25 +68,31 @@ pip install -r requirements.txt
 * `utilities/`
   * `run_model_vevo.py`: code for running model (AMT)
   * `run_model_regression.py`: code for running model (bi-GRU)
+  * `argument_funcs.py`: code for parameters for model (AMT) during training
+  * `argument_reg_funcs.py`: code for parameters for regression model during training
+  * `argument_generate_funcs.py`: code for parameters for both model during inference
 * `model/`
   * `video_music_transformer.py`: Affective Multimodal Transformer (AMT) model 
   * `video_regression.py`: Bi-GRU regression model used for predicting note density/loudness
-  * `positional_encoding.py`: code for Positional encoding
-  * `rpr.py`: code for RPR (Relative Positional Representation)
 * `dataset/`
   * `vevo_dataset.py`: Dataset loader
 * `script/` : code for extracting video/music features (sementic, motion, emotion, scene offset, loudness, and note density)
 * `train.py`: training script (AMT)
-* `train_regression.py`: training script (bi-GRU)
+* `train_regression.py`: training script (regression model)
 * `evaluate.py`: evaluation script
 * `generate.py`: inference script
 * `video2music.py`: Video2Music module that outputs video with generated background music from input video
-* `demo.ipynb`: Jupyter notebook for Quickstart Guide
 
 ## Training
 
   ```shell
   python train.py
+  ```
+
+  or
+  
+  ```shell
+  python train_regression.py
   ```
 
 ## Inference
@@ -105,18 +101,9 @@ pip install -r requirements.txt
   python generate.py
   ```
 
-
-## Subjective Evaluation by Listeners
-
-| **Model** | **Overall Music Quality** ↑ | **Music-Video Correspondence** ↑ | **Harmonic Matching** ↑ | **Rhythmic Matching** ↑ | **Loudness Matching** ↑ |
-|--------------------|:-----------:|:----------:|:----------:|:----------:|:----------:|
-| Music Transformer  | 3.4905      | 2.7476     | 2.6333     | 2.8476     | 3.1286     |
-| Video2Music        | 4.2095      | 3.6667     | 3.4143     | 3.8714     | 3.8143     |
-
-
 ## TODO
 
-- [ ] Add other instruments (e.g., drum) for live demo
+- ...
 
 ## Citation
 If you find this resource useful, [please cite the original work](https://doi.org/10.1016/j.eswa.2024.123640):

@@ -465,10 +465,10 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
     
     # Inner Chord Notes
     first_velo = 1.1
-    second_velo = 0.88
-    third_velo = 0.9
-    fourth_velo = 0.98
-    fifth_velo = 0.9
+    second_velo = 0.95
+    third_velo = 0.98
+    fourth_velo = 1.0
+    fifth_velo = 0.95
     diminish_velo = 0.6 # only for arpeggio_chord=False
 
     if arpeggio_chord:
@@ -480,6 +480,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                 else:
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 0, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  int(velocity*fourth_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
         elif density_val == 1:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -490,6 +493,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 0, duration,  int(velocity*fourth_velo))
                     midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  int(velocity*second_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  int(velocity*third_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 1.5, duration,  int(velocity*fifth_velo))
         elif density_val == 2:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -502,6 +508,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  int(velocity*second_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 1.5, duration,  int(velocity*fourth_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
         elif density_val == 3:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -518,6 +527,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 0.75, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  int(velocity*fourth_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1.5, duration,  int(velocity*third_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
         elif density_val == 4:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -538,6 +550,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1.25, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[1]+trans_val, time + 1.5, duration,  int(velocity*second_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1.75, duration,  int(velocity*third_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
     else:
         if len(chord) >= 4:
             midifile.addNote(0, 0, chord[0] + trans_val, time, duration, int(velocity*first_velo*diminish_velo))

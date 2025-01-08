@@ -103,6 +103,8 @@ left_panning_val = 32
 center_panning_val = 64
 right_panning_val = 96
 
+low_velocity_instrument_list = [14]
+
 max_conseq_N = 0
 max_conseq_chord = 2
 base_tempo = 120
@@ -462,11 +464,12 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
         trans_val += 0
     
     # Inner Chord Notes
-    first_velo = 1.0
-    second_velo = 0.83
-    third_velo = 0.85
-    fourth_velo = 0.98
-    fifth_velo = 0.9
+    first_velo = 1.1
+    second_velo = 0.95
+    third_velo = 0.98
+    fourth_velo = 1.0
+    fifth_velo = 0.95
+    diminish_velo = 0.6 # only for arpeggio_chord=False
 
     if arpeggio_chord:
         if density_val == 0:
@@ -477,6 +480,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                 else:
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 0, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  int(velocity*fourth_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
         elif density_val == 1:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -487,6 +493,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 0, duration,  int(velocity*fourth_velo))
                     midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  int(velocity*second_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  int(velocity*third_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 1.5, duration,  int(velocity*fifth_velo))
         elif density_val == 2:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -499,6 +508,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[1]+trans_val, time + 0.5, duration,  int(velocity*second_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 1.5, duration,  int(velocity*fourth_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
         elif density_val == 3:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -515,6 +527,9 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 0.75, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[3]+trans_val, time + 1, duration,  int(velocity*fourth_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1.5, duration,  int(velocity*third_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
         elif density_val == 4:
             if len(chord) >= 4:
                 if chord_offset % 2 == 0:
@@ -535,14 +550,17 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1.25, duration,  int(velocity*third_velo))
                     midifile.addNote(0, 0, chord[1]+trans_val, time + 1.5, duration,  int(velocity*second_velo))
                     midifile.addNote(0, 0, chord[2]+trans_val, time + 1.75, duration,  int(velocity*third_velo))
+                
+                if len(chord) == 5:
+                    midifile.addNote(0, 0, chord[4]+trans_val, time + 2, duration,  int(velocity*fifth_velo))
     else:
         if len(chord) >= 4:
-            midifile.addNote(0, 0, chord[0] + trans_val, time, duration, int(velocity*first_velo))
-            midifile.addNote(0, 0, chord[1] + trans_val, time, duration, int(velocity*second_velo))
-            midifile.addNote(0, 0, chord[2] + trans_val, time, duration, int(velocity*third_velo))
-            midifile.addNote(0, 0, chord[3] + trans_val, time, duration, int(velocity*fourth_velo))
+            midifile.addNote(0, 0, chord[0] + trans_val, time, duration, int(velocity*first_velo*diminish_velo))
+            midifile.addNote(0, 0, chord[1] + trans_val, time, duration, int(velocity*second_velo*diminish_velo))
+            midifile.addNote(0, 0, chord[2] + trans_val, time, duration, int(velocity*third_velo*diminish_velo))
+            midifile.addNote(0, 0, chord[3] + trans_val, time, duration, int(velocity*fourth_velo*diminish_velo))
             if len(chord) == 5:
-                midifile.addNote(0, 0, chord[4] + trans_val, time, duration, int(velocity*fifth_velo))
+                midifile.addNote(0, 0, chord[4] + trans_val, time, duration, int(velocity*fifth_velo*diminish_velo))
 
 class Video2music:
     def __init__(
@@ -923,10 +941,12 @@ class Video2music:
                         arpeggio_chord = inst_id in arpeggio_instrument_list
                         arpeggio_chord |= emotion_indice[i] in (0, 1, 2) # Exciting, Fearful, Tense
 
+                        velocity = velolistExp[i] * (1.15 if inst_id in low_velocity_instrument_list else 1.0)
+
                         choosed_instrument.add(inst_id)
 
                         addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
-                                 trans, i * duration, duration, velolistExp[i], emotion_indice[i], 
+                                 trans, i * duration, duration, velocity, emotion_indice[i], 
                                  arpeggio_chord=arpeggio_chord)
                                     
             # Save generated_midi file

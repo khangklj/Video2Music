@@ -103,6 +103,8 @@ left_panning_val = 32
 center_panning_val = 64
 right_panning_val = 96
 
+low_velocity_instrument_list = [14]
+
 max_conseq_N = 0
 max_conseq_chord = 2
 base_tempo = 120
@@ -924,10 +926,12 @@ class Video2music:
                         arpeggio_chord = inst_id in arpeggio_instrument_list
                         arpeggio_chord |= emotion_indice[i] in (0, 1, 2) # Exciting, Fearful, Tense
 
+                        velocity = velolistExp[i] * (1.15 if inst_id in low_velocity_instrument_list else 1.0)
+
                         choosed_instrument.add(inst_id)
 
                         addChord(midi_list[inst_id], chord, chord_offsetlist[i], densitylist[i], 
-                                 trans, i * duration, duration, velolistExp[i], emotion_indice[i], 
+                                 trans, i * duration, duration, int(velocity), emotion_indice[i], 
                                  arpeggio_chord=arpeggio_chord)
                                     
             # Save generated_midi file

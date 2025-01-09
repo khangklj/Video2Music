@@ -434,7 +434,8 @@ def _multi_tensor_radanw(
 
         eta = [lr / tensor for tensor in grouped_exp_diff_sqs_sqrt]
 
-        buffer = torch._foreach_mul(grouped_exp_diffs, eta, -(1 - beta3))
+        buffer = torch._foreach_mul(grouped_exp_diffs, eta)
+        torch._foreach_mul_(buffer, -(1 - beta3))
         torch._foreach_add_(grouped_params, grouped_exp_diffs)
 
         torch._foreach_zero_(grouped_neg_prev_grads)

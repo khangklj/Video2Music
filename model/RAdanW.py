@@ -315,8 +315,8 @@ def _single_tensor_radanw(
         param.add_(exp_diff.mul_(eta), alpha=-(1 - beta3))
 
         neg_prev_grad.zero_().add_(grad, alpha=-1.0)
-        
-        print('multi tensor')
+
+        print('single tensor')
 
 def _multi_tensor_radanw(
     params: List[Tensor],

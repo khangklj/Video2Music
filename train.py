@@ -6,6 +6,7 @@ import torch.nn as nn
 from torch.optim.lr_scheduler import LambdaLR, CosineAnnealingLR
 from torch.utils.data import DataLoader
 from torch.optim import Adam, AdamW, RAdam
+from model.RAdanW import RAdanW
 from lion_pytorch import Lion
 
 from dataset.vevo_dataset import compute_vevo_accuracy, create_vevo_datasets
@@ -242,6 +243,9 @@ def main( vm = "" , isPrintArgs = True ):
     elif args.optimizer == 'RAdamW':
         opt = RAdam(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2), eps=ADAM_EPSILON,
                     weight_decay=0.01, decoupled_weight_decay=True)
+    elif args.optimizer == 'RAdanW':
+        opt = RAdanW(model.parameters(), lr=lr, betas=(ADAM_BETA_1, ADAM_BETA_2, 0.92, 0.99), 
+                     eps=ADAM_EPSILON, weight_decay=0.01)
     elif args.optimizer == 'Lion':
         opt = Lion(model.parameters(), lr=lr / 4, betas=(0.95, 0.98), weight_decay=1.0)
 

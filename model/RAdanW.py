@@ -100,7 +100,7 @@ class RAdanW(Optimizer):
                     p, memory_format=torch.preserve_format
                 )
 
-            if 'neg_prev_grad' not in state or group['step'] == 1:
+            if 'neg_prev_grad' not in state or state['step'] == 1:
                 state['neg_prev_grad'] = p.grad.clone().mul_(-1.0)
 
             exp_avgs.append(state["exp_avg"])

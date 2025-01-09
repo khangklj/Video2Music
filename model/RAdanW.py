@@ -315,6 +315,8 @@ def _single_tensor_radanw(
         param.add_(exp_diff.mul_(eta), alpha=-(1 - beta3))
 
         neg_prev_grad.zero_().add_(grad, alpha=-1.0)
+        
+        print('multi tensor')
 
 def _multi_tensor_radanw(
     params: List[Tensor],
@@ -442,3 +444,5 @@ def _multi_tensor_radanw(
         torch._foreach_zero_(grouped_neg_prev_grads)
         buffer = torch._foreach_mul(grouped_grads, -1.0)
         torch._foreach_add_(grouped_neg_prev_grads, buffer)
+
+        print('multi tensor')

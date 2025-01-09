@@ -834,7 +834,7 @@ class Video2music:
             # feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
             # feature_emotion = feature_emotion.permute(1, 0, 2).squeeze()
             os.makedirs('logs', exist_ok=True)
-            np.save("logs/feature_emotion.npy", feature_emotion.squeeze().cpu().numpy())
+            np.save("logs/feature_emotion.npy", feature_emotion.cpu().numpy())
             emotion_indice = torch.argmax(feature_emotion.squeeze(), dim=1).cpu()
 
             velolistExp = []

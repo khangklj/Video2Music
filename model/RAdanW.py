@@ -379,9 +379,6 @@ def _multi_tensor_radanw(
         torch._foreach_mul_(grouped_exp_avg_sqs, beta2)
         torch._foreach_addcmul_(grouped_exp_avg_sqs, grouped_grads, grouped_grads, 1 - beta2)
 
-        # correcting bias for the first moving moment
-        bias_corrected_exp_avg = torch._foreach_div(grouped_exp_avgs, bias_correction1)
-
         # ============< RAdam >============ #
         # maximum length of the approximated SMA
         rho_inf = 2 / (1 - beta2) - 1
@@ -389,9 +386,6 @@ def _multi_tensor_radanw(
         rho_t_list = [rho_inf - 2 * _get_value(step) * (beta2 ** _get_value(step)) /
                       (1 - beta2 ** _get_value(step)) for step in grouped_state_steps]
         
-        # Delete the local intermediate since it won't be used anymore to save on peak memory
-        del grouped_grads
-
         rect = [
             _dispatch_sqrt(
                 (rho_t - 4)

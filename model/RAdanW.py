@@ -300,21 +300,21 @@ def _single_tensor_radanw(
         param.add_(bias_corrected_exp_avg * lr * adaptive_lr * rect, alpha=-1.0)
 
         # ============< Adan >============ #
-        # neg_prev_grad.add_(grad)                                    # g_t - g_(t-1)
-        # exp_diff.mul_(beta3).add_(neg_prev_grad, alpha=1 - beta3)   # d_t
+        neg_prev_grad.add_(grad)                                    # g_t - g_(t-1)
+        exp_diff.mul_(beta3).add_(neg_prev_grad, alpha=1 - beta3)   # d_t
 
-        # exp_diff_sq.mul_(beta4).add_(grad.add_(neg_prev_grad, alpha=1 - beta3).pow_(2), alpha=1 - beta4)     # n_t
+        exp_diff_sq.mul_(beta4).add_(grad.add_(neg_prev_grad, alpha=1 - beta3).pow_(2), alpha=1 - beta4)     # n_t
         
-        # exp_diff_sq_sqrt = exp_diff_sq.sqrt()
-        # if differentiable:
-        #     exp_diff_sq_sqrt = exp_diff_sq_sqrt.add(eps)
-        # else:
-        #     exp_diff_sq_sqrt = exp_diff_sq_sqrt.add_(eps)
-        # eta = lr / exp_diff_sq_sqrt                                 # eta_t
+        exp_diff_sq_sqrt = exp_diff_sq.sqrt()
+        if differentiable:
+            exp_diff_sq_sqrt = exp_diff_sq_sqrt.add(eps)
+        else:
+            exp_diff_sq_sqrt = exp_diff_sq_sqrt.add_(eps)
+        eta = lr / exp_diff_sq_sqrt                                 # eta_t
 
-        # param.add_(exp_diff.mul_(eta), alpha=-(1 - beta3))
+        param.add_(exp_diff.mul_(eta), alpha=-(1 - beta3))
 
-        # neg_prev_grad.zero_().add_(grad, alpha=-1.0)
+        neg_prev_grad.zero_().add_(grad, alpha=-1.0)
 
 def _multi_tensor_radanw(
     params: List[Tensor],
@@ -415,29 +415,30 @@ def _multi_tensor_radanw(
         torch._foreach_addcmul_(grouped_params, grouped_exp_avgs, buffer)
         
         # ============< Adan >============ #
-        # torch._foreach_add_(grouped_neg_prev_grads, grouped_grads)
+        torch._foreach_add_(grouped_neg_prev_grads, grouped_grads)
         
-        # torch._foreach_mul_(grouped_exp_diffs, beta3)
-        # buffer = torch._foreach_mul(grouped_neg_prev_grads, 1 - beta3)
-        # torch._foreach_add_(grouped_exp_diffs, buffer)      # d_t
+        torch._foreach_mul_(grouped_exp_diffs, beta3)
+        buffer = torch._foreach_mul(grouped_neg_prev_grads, 1 - beta3)
+        torch._foreach_add_(grouped_exp_diffs, buffer)      # d_t
 
-        # torch._foreach_mul_(grouped_exp_diff_sqs, beta4)
-        # buffer = torch._foreach_mul(grouped_neg_prev_grads, 1 - beta3)
-        # torch._foreach_add_(grouped_grads, buffer)
-        # torch._foreach_pow_(buffer, 2)
-        # torch._foreach_mul_(buffer, 1 - beta4)
+        torch._foreach_mul_(grouped_exp_diff_sqs, beta4)
+        buffer = torch._foreach_mul(grouped_neg_prev_grads, 1 - beta3)
+        torch._foreach_add_(grouped_grads, buffer)
+        torch._foreach_pow_(buffer, 2)
+        torch._foreach_mul_(buffer, 1 - beta4)
 
-        # torch._foreach_add_(grouped_exp_diff_sqs, buffer)   # n_t
+        torch._foreach_add_(grouped_exp_diff_sqs, buffer)   # n_t
 
-        # grouped_exp_diff_sqs_sqrt = torch._foreach_sqrt(grouped_exp_diff_sqs)
-        # torch._foreach_add_(grouped_exp_diff_sqs_sqrt, eps)
+        grouped_exp_diff_sqs_sqrt = torch._foreach_sqrt(grouped_exp_diff_sqs)
+        torch._foreach_add_(grouped_exp_diff_sqs_sqrt, eps)
 
-        # eta = [lr / tensor for tensor in grouped_exp_diff_sqs_sqrt]
+        eta = [lr / tensor for tensor in grouped_exp_diff_sqs_sqrt]
 
-        # buffer = torch._foreach_mul(grouped_exp_diffs, eta)
-        # torch._foreach_mul_(buffer, -(1 - beta3))
-        # torch._foreach_add_(grouped_params, grouped_exp_diffs)
+        buffer = torch._foreach_mul(grouped_exp_diffs, eta)
+        torch._foreach_mul_(buffer, -(1 - beta3))
+        torch._foreach_mul_(buffer, 1 - lr * weight_decay)
+        torch._foreach_add_(grouped_params, grouped_exp_diffs)
 
-        # torch._foreach_zero_(grouped_neg_prev_grads)
-        # buffer = torch._foreach_mul(grouped_grads, -1.0)
-        # torch._foreach_add_(grouped_neg_prev_grads, buffer)
+        torch._foreach_zero_(grouped_neg_prev_grads)
+        buffer = torch._foreach_mul(grouped_grads, -1.0)
+        torch._foreach_add_(grouped_neg_prev_grads, buffer)

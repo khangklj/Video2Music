@@ -1000,7 +1000,7 @@ class VideoMusicTransformer(nn.Module):
         ### Video (SemanticList + SceneOffset + Motion + Emotion) (ENCODER) ###
         # Semantic
         vf_concat = feature_semantic_list.float()
-                 
+        
         # Scene offset
         if not self.scene_embed:
             vf_concat = torch.cat([vf_concat, feature_scene_offset.unsqueeze(-1).float()], dim=-1) # -> (max_seq_video, batch_size, d_model+1)

@@ -833,6 +833,8 @@ class Video2music:
             # avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size
             # feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
             # feature_emotion = feature_emotion.permute(1, 0, 2).squeeze()
+            os.makedirs('logs', exist_ok=True)
+            np.save("logs/feature_emotion.npy", feature_emotion.cpu().numpy())
             emotion_indice = torch.argmax(feature_emotion.squeeze(), dim=1).cpu()
 
             velolistExp = []
@@ -976,11 +978,12 @@ class Video2music:
                         fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
                         flac_files.append(flac_output)
 
-                base_audio_index = 5
-                mixed = AudioSegment.from_file(flac_files[base_audio_index])
+                # base_audio_index = 5
+                # mixed = AudioSegment.from_file(flac_files[base_audio_index])
+                mixed = AudioSegment.from_file(flac_files[0])
                 for i, audio_path in enumerate(flac_files):
-                    if base_audio_index == i:
-                        continue
+                    # if base_audio_index == i:
+                        # continue
                     mixed = mixed.overlay(AudioSegment.from_file(audio_path))
                 mixed.export(f_path_flac, format="flac")
 

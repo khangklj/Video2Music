@@ -192,54 +192,39 @@ class VevoDataset(Dataset):
 
         # Augmentation
         if self.augmentation:
-            self.augmented_dataset = []
             print('Augmentation...')
-            for i in tqdm(range(len(self.dataset))):
-                sample = copy.deepcopy(self.dataset[i])
-                for key in sample.keys():
-                    if key == 'key':
-                        continue
-                    try:
-                        padding_dim = sample1[key].shape[1]
-                    except:
-                        padding_dim = 1
-                    self.paddingSample(sample, key, padding_dim)
-
-                self.augmented_dataset.append(sample)
-
-                # Find the most similar sample based on emotion
-                simi_idx = -1
-                min_dist = 100
-                window_size = 20
-                split_rate = [1/3, 2/3]
-                # split_rate = [1/2]
-                for rate1 in split_rate:
-                    for rate2 in split_rate:
-                        for j in range(i + 1, len(self.dataset)):
-                            dist = self.emotionDistance(self.dataset[i], self.dataset[j], 
-                                                        idx1=self.find_fit_index(self.dataset[i]['scene_offset'].squeeze(), 
-                                                                                idx=int(self.dataset[i]['scene_offset'].shape[0] * rate1)),
-                                                        idx2=self.find_fit_index(self.dataset[j]['scene_offset'].squeeze(), 
-                                                                                idx=int(self.dataset[j]['scene_offset'].shape[0] * rate2)),
-                                                        window_size=window_size)
-                            if dist < min_dist:
-                                min_dist = dist
-                                simi_idx = j
-                        
-                        if simi_idx != -1:
-                            # print(f'\nSample {i}-{round(rate1, 1)} similar with sample {simi_idx}-{round(rate2, 1)} distance {min_dist}')
-                            sample1 = self.dataset[simi_idx]
-                            sample2 = self.dataset[i]
-                            self.augmented_dataset.extend(self.swap(sample1, sample2, 
-                                                                    int(self.dataset[simi_idx]['scene_offset'].shape[0] * rate1), 
-                                                                    int(self.dataset[i]['scene_offset'].shape[0] * rate2)))
+            num_iterations = 2 * len(self.dataset)
+            augmented_dataset = []
+            print(self.dataset[0])
+            for _ in range(num_iterations):
+                a, b = random.sample(self.dataset, 2)  # Pick 2 distinct elements
+                l = random.uniform(0.2, 0.8)
+                c = {
+                    "x": a["x"] * l + b["x"] * (l - 1),
+                    "chord": a["chord"] * l + b["chord"] * (l - 1),
+                    "x_root": a["x_root"] * l + b["x_root"] * (l - 1),
+                    "tgt_root": a["tgt_root"] * l + b["tgt_root"] * (l - 1),
+                    "chord_root": a["chord_root"] * l + b["chord_root"] * (l - 1),
+                    "x_attr": a["x_attr"] * l + b["x_attr"] * (l - 1),
+                    "tgt_attr": a["tgt_attr"] * l + b["tgt_attr"] * (l - 1),
+                    "chord_attr": a["chord_attr"] * l + b["chord_attr"] * (l - 1),
+                    "semanticList": a["semanticList"] * l + b["semanticList"] * (l - 1),
+                    "key": a["key"] * l + b["key"] * (l - 1),
+                    "key_val": a["key_val"] * l + b["key_val"] * (l - 1),
+                    "scene_offset": a["scene_offset"] * l + b["scene_offset"] * (l - 1),
+                    "motion": a["motion"] * l + b["motion"] * (l - 1),
+                    "emotion": a["emotion"] * l + b["emotion"] * (l - 1),
+                    "tgt_emotion": a["tgt_emotion"] * l + b["tgt_emotion"] * (l - 1),
+                    "tgt_emotion_prob": a["tgt_emotion_prob"] * l + b["tgt_emotion_prob"] * (l - 1),
+                    "note_density": a["note_density"] * l + b["note_density"] * (l - 1),
+                    "loudness": a["loudness"] * l + b["loudness"] * (l - 1),
+                    "instrument": a["instrument"] * l + b["instrument"] * (l - 1)
+                }
+                augmented_dataset.append(c)
             print('Augmentation adchieve', len(self.augmented_dataset), 'samples')
 
     def __len__(self):
-        if self.augmentation:
-            return len(self.augmented_dataset)
-        else:
-            return len(self.dataset)
+        return len(self.dataset)
 
     def emotionDistance(self, sample1, sample2, idx1=300//2, idx2=300//2, window_size=20):
         if idx1 < window_size or idx2 < window_size:
@@ -644,10 +629,7 @@ class VevoDataset(Dataset):
         return sample1, sample2
 
     def __getitem__(self, idx):
-        if self.augmentation:
-            return self.augmented_dataset[idx]
-        else:
-            return self.dataset[idx]
+        return self.dataset[idx]
 
 def create_vevo_datasets(dataset_root = "./dataset", max_seq_chord=300, max_seq_video=300, vis_models="2d/clip_l14p", emo_model="6c_l14p", motion_type=0, split_ver="v1", random_seq=True, is_video=True, augmentation=False):
 

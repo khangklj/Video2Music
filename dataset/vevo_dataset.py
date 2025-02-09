@@ -195,7 +195,6 @@ class VevoDataset(Dataset):
             print('Augmentation...')
             num_iterations = 2 * len(self.dataset)
             augmented_dataset = []
-            print(self.dataset[0])
             for _ in range(num_iterations):
                 a, b = random.sample(self.dataset, 2)  # Pick 2 distinct elements
                 l = random.uniform(0.2, 0.8)
@@ -221,7 +220,8 @@ class VevoDataset(Dataset):
                     "instrument": a["instrument"] * l + b["instrument"] * (l - 1)
                 }
                 augmented_dataset.append(c)
-            print('Augmentation adchieve', len(self.augmented_dataset), 'samples')
+            self.dataset.extend(augmented_dataset)
+            print('Augmentation adchieve', len(self.dataset), 'samples')
 
     def __len__(self):
         return len(self.dataset)

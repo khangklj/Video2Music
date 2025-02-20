@@ -281,8 +281,8 @@ class SharedMoELayer(Module):
         # Logging
         update_expert_counts(selected_experts, self.training)
 
-        # weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
-        weights = F.sigmoid(weights / t).to(get_device())
+        weights = softmax(weights / t, dim=-1, dtype=torch.float).to(get_device())
+        # weights = F.sigmoid(weights / t).to(get_device())
         out = torch.zeros((*x.shape[:-1], self.d_model), device=get_device())
         for i, expert in enumerate(self.experts):
             token_idx, batch_idx, topk_idx = torch.where(selected_experts == i)

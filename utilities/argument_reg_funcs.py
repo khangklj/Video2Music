@@ -13,7 +13,7 @@ epochs = 50
 n_layers = 6
 motion_type = 1
 dropout = 0.2
-lr = 10e-3
+lr = 10e-5
 scene_embed = False
 optimizer = 'RAdamW' # Adam / AdamW / RAdam / RAdamW
 

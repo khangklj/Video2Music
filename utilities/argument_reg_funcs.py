@@ -4,7 +4,7 @@ from .constants import *
 version = VERSION
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
-regModel = 'bimamba+'
+regModel = 'bigru'
 augmentation = True
 batch_size = 32
 d_model = 128
@@ -15,7 +15,7 @@ motion_type = 1
 dropout = 0.2
 lr = 5e-4
 scene_embed = False
-optimizer = 'RAdam' # Adam / AdamW / RAdam / RAdamW
+optimizer = 'Adam' # Adam / AdamW / RAdam / RAdamW
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

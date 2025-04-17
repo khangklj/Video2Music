@@ -338,7 +338,7 @@ class VideoMusicTransformer_V2(nn.Module):
         if self.chord_embed:
             chord_embedding_model = Word2Vec.load(chordEmbeddingModelPath)
             embedding_weights = torch.tensor(chord_embedding_model.wv.vectors)
-            embedding_weights.requires_grad = False
+            embedding_weights.requires_grad = True
             self.chord_embedding_model = torch.nn.Embedding.from_pretrained(embedding_weights, freeze=True)
 
         # Input embedding for video and music features

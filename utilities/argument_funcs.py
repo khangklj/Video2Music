@@ -15,7 +15,7 @@ dropout = 0.2
 droptoken = 0.0
 lr = None
 optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW / Lion
-auxiliary_loss = False # False / True
+auxiliary_loss = True # False / True
 drop_loss = False # False / True
 balancing = False # True / False
 

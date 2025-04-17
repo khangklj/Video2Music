@@ -14,10 +14,10 @@ split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'RAdanW' # Adam / AdamW / RAdam / RAdamW / Lion
+optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW / Lion
 auxiliary_loss = True # False / True
 drop_loss = True # False / True
-balancing = True # True / False
+balancing = False # True / False
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

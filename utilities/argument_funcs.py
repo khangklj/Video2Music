@@ -5,7 +5,7 @@ version = VERSION
 rpr = True
 augmentation = False
 chord_embed = True
-music_gen_version = '2.2'
+music_gen_version = '2.1'
 batch_size = 24
 epochs = 50
 motion_type = 1
@@ -17,7 +17,7 @@ lr = None
 optimizer = 'AdamW' # Adam / AdamW / RAdam / RAdamW / Lion
 auxiliary_loss = True # False / True
 drop_loss = False # False / True
-balancing = False # True / False
+balancing = True # True / False
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

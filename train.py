@@ -47,7 +47,7 @@ def main( vm = "" , isPrintArgs = True ):
     args = parse_train_args()[0]
 
     # Logging
-    if args.music_gen_version != None && args.music_gen_version in ('2.3'):
+    if args.music_gen_version != None and args.music_gen_version in ('2.3'):
         change_maxvio_logging_state(True)
 
     if isPrintArgs:

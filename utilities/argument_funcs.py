@@ -4,20 +4,20 @@ from .constants import *
 version = VERSION
 rpr = True
 augmentation = False
-chord_embed = True
-music_gen_version = '2.1'
-batch_size = 24
+chord_embed = False
+music_gen_version = None
+batch_size = 20
 epochs = 50
-motion_type = 1
+motion_type = 0
 split_ver = SPLIT_VER
 split_path = "split_" + split_ver
 dropout = 0.2
 droptoken = 0.0
 lr = None
-optimizer = 'RAdamW' # Adam / AdamW / RAdam / RAdamW / Lion
-auxiliary_loss = True # False / True
+optimizer = 'Adam' # Adam / AdamW / RAdam / RAdamW / Lion
+auxiliary_loss = False # False / True
 drop_loss = False # False / True
-balancing = True # True / False
+balancing = False # True / False
 
 def parse_train_args():
     parser = argparse.ArgumentParser()

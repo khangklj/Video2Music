@@ -120,6 +120,26 @@ max_loudness = 50  # Maximum loudness level in the input range
 min_velocity = 49  # Minimum velocity value in the output range
 max_velocity = 112  # Maximum velocity value in the output range
 
+def find_longest_flac_file(flac_files):
+    if not flac_files:
+        return None
+
+    max_duration = 0
+    longest_file = None
+
+    for file_path in flac_files:
+        try:
+            audio = AudioSegment.from_file(file_path)
+            duration = len(audio)
+            if duration > max_duration:
+                max_duration = duration
+                longest_file = file_path
+        except Exception as e:
+            print(f"Error loading file {file_path}: {e}")
+
+    return longest_file
+
+
 def split_video_into_frames(video, frame_dir):
     output_path = os.path.join(frame_dir, f"%03d.jpg")
     cmd = f"ffmpeg -i {video} -vf \"select=bitor(gte(t-prev_selected_t\,1)\,isnan(prev_selected_t))\" -vsync 0 -qmin 1 -q:v 1 {output_path}"        
@@ -978,13 +998,21 @@ class Video2music:
                         fs.midi_to_audio(str(f_path_midi_instrument), str(flac_output))
                         flac_files.append(flac_output)
 
-                # base_audio_index = 5
-                # mixed = AudioSegment.from_file(flac_files[base_audio_index])
-                mixed = AudioSegment.from_file(flac_files[0])
-                for i, audio_path in enumerate(flac_files):
-                    # if base_audio_index == i:
-                        # continue
-                    mixed = mixed.overlay(AudioSegment.from_file(audio_path))
+                # # base_audio_index = 5
+                # # mixed = AudioSegment.from_file(flac_files[base_audio_index])
+                # mixed = AudioSegment.from_file(flac_files[0])
+                # for i, audio_path in enumerate(flac_files):
+                #     # if base_audio_index == i:
+                #         # continue
+                #     mixed = mixed.overlay(AudioSegment.from_file(audio_path))
+                # mixed.export(f_path_flac, format="flac")
+
+                # Find the longest FLAC file
+                longest_flac = find_longest_flac_file(flac_files)
+                mixed = AudioSegment.from_file(longest_flac)
+                for audio_path in flac_files:
+                    if audio_path != longest_flac:
+                        mixed = mixed.overlay(AudioSegment.from_file(audio_path))
                 mixed.export(f_path_flac, format="flac")
 
             # Render generated music into input video

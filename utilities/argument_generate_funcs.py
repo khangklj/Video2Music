@@ -98,7 +98,7 @@ def parse_generate_args():
         parser.add_argument("-vis_models", type=str, default="", help="...")
 
     parser.add_argument("-emo_model", type=str, default="6c_l14p", help="...")
-    parser.add_argument("-motion_type", type=int, default=1, help="0 as original, 1 as our option 1, 2 as out option 2")
+    parser.add_argument("-motion_type", type=int, default=0, help="0 as original, 1 as our option 1, 2 as out option 2")
     parser.add_argument("-rpr", type=bool, default=RPR, help="...")
 
     return parser.parse_known_args()

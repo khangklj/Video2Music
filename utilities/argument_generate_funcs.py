@@ -71,7 +71,7 @@ def parse_generate_args():
     parser.add_argument("-max_sequence_video", type=int, default=300, help="Maximum video sequence to consider")
     parser.add_argument("-max_sequence_chord", type=int, default=300, help="Maximum chord sequence to consider")
 
-    parser.add_argument("-chord_embed", type=bool, default=True, help="Use chord embedding or not")
+    parser.add_argument("-chord_embed", type=bool, default=False, help="Use chord embedding or not")
     
     # Chord generation model
     parser.add_argument("-n_layers", type=int, default=6, help="Number of decoder layers to use")
@@ -79,16 +79,16 @@ def parse_generate_args():
     parser.add_argument("-d_model", type=int, default=512, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward", type=int, default=1024, help="Dimension of the feedforward layer")
     parser.add_argument('-rms_norm', type=bool, default=False, help="Use RMSNorm instead of LayerNorm")
-    parser.add_argument('-music_gen_version', type=str, default='2.2', help="Version number. None is original musgic generation AMT model")
+    parser.add_argument('-music_gen_version', type=str, default=None, help="Version number. None is original musgic generation AMT model")
     parser.add_argument("-scene_embed", type=bool, default=False, help="Use scene offset embedding or not")
-    parser.add_argument("-balancing", type=bool, default=True, help="False / True")
+    parser.add_argument("-balancing", type=bool, default=False, help="False / True")
 
     # Reg model
-    parser.add_argument("-n_layers_reg", type=int, default=6, help="Number of layers to use")
-    parser.add_argument("-d_model_reg", type=int, default=128, help="Dimension of the model (output dim of embedding layers, etc.)")
+    parser.add_argument("-n_layers_reg", type=int, default=2, help="Number of layers to use")
+    parser.add_argument("-d_model_reg", type=int, default=64, help="Dimension of the model (output dim of embedding layers, etc.)")
     parser.add_argument("-dim_feedforward_reg", type=int, default=256, help="Dimension of the feedforward layer")
     parser.add_argument('-use_KAN_reg', type=bool, default=False, help="Use KANLinear instead of Linear")
-    parser.add_argument('-regModel', type=str, default='bimamba+', help="Version name. None is original loudness and note density Regression model")
+    parser.add_argument('-regModel', type=str, default='bigru', help="Version name. None is original loudness and note density Regression model")
 
     parser.add_argument("-is_video", type=bool, default=IS_VIDEO, help="MusicTransformer or VideoMusicTransformer")
 

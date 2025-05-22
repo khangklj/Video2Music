@@ -1020,7 +1020,13 @@ class Video2music:
             video_mp = mp.VideoFileClip(str(video))
 
             assert video_mp.duration > 0 and audio_mp.duration > 0
-            audio_mp = audio_mp.subclip(0, video_mp.duration)
+            ###
+            clip_duration = min(video_mp.duration, audio_mp.duration)
+            audio_mp = audio_mp.subclip(0, clip_duration)
+            ###            
+            ###
+            # audio_mp = audio_mp.subclip(0, video_mp.duration)
+            ###
             final = video_mp.set_audio(audio_mp)
 
             final.write_videofile(str(f_path_video_out), 

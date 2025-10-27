@@ -82,17 +82,20 @@ class VideoMusicTransformer_V1(nn.Module):
                 nn.SiLU(),
                 nn.Dropout(self.dropout),
                 nn.Linear(self.d_model*2, self.d_model)
-            )
-            
-        att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
-        if version_name in ('1.0', '1.1'):
+            )        
+        if version_name in ('1.2.3'):
+            RoPE = RotaryPositionalEmbeddings(self.d_model, max_sequence_video)
+            att = CustomMultiheadAttention(self.d_model, self.nhead, self.dropout, RoPE=RoPE) 
+        else:
+            att = nn.MultiheadAttention(self.d_model, self.nhead, self.dropout)
+        if version_name in ('1.0', '1.1', '1.3.4'):
             moelayer = MoELayer(expert, self.d_model, self.n_experts, self.n_experts_per_token, self.dropout)
         else:
             moelayer = SharedMoELayer(expert, self.d_model, n_experts=self.n_experts, 
                                       n_experts_per_token=self.n_experts_per_token, balancing=False,
                                       dropout=self.dropout)
 
-        if version_name != '1.3.3':
+        if version_name not in ('1.3.3', '1.3.4'):
             # Encoder
             encoder_layer = TransformerEncoderLayer(att, moelayer, pre_norm=False, norm=norm, dropout=self.dropout)
             encoder = TransformerEncoder(encoder_layer, self.nlayers, norm)

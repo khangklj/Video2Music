@@ -815,6 +815,8 @@ class Video2music:
         # self.model.eval()
         # self.modelReg.eval()
 
+        os.makedirs('logs', exist_ok=True)
+        np.save("logs/feature_emotion_before.npy", feature_emotion.cpu().numpy())
         feature_emotion = feature_emotion.permute(1, 0, 2)
         window_size = 5
         avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size

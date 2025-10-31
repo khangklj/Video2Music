@@ -819,7 +819,7 @@ class Video2music:
         window_size = 5
         avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size
         feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
-        feature_emotion = feature_emotion.permute(1, 0, 2).squeeze()
+        feature_emotion = feature_emotion.permute(1, 0, 2)
 
         with torch.set_grad_enabled(False):
             chord_sequence = self.model.generate(feature_semantic_list=feature_semantic_list, 

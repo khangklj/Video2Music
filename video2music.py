@@ -41,6 +41,7 @@ import pandas as pd
 
 from utilities.argument_generate_funcs import parse_generate_args, print_generate_args
 from utilities.device import get_device, use_cuda
+import torch.nn.functional as F
 
 all_key_names = ['C major', 'G major', 'D major', 'A major',
                  'E major', 'B major', 'F major', 'Bb major',
@@ -817,11 +818,16 @@ class Video2music:
 
         os.makedirs('logs', exist_ok=True)
         np.save("logs/feature_emotion_before.npy", feature_emotion.cpu().numpy())
-        feature_emotion = feature_emotion.permute(0, 2, 1)
+        # feature_emotion = feature_emotion.permute(0, 2, 1)
+        # window_size = 5
+        # avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size
+        # feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
+        # feature_emotion = feature_emotion.permute(0, 2, 1)
+        feature_emotion = feature_emotion.permute(0, 2, 1)  # (1, 6, 300)       
         window_size = 5
-        avg_kernel = torch.ones(1, 1, window_size).to(get_device()) / window_size
-        feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2)
-        feature_emotion = feature_emotion.permute(0, 2, 1)
+        feature_emotion = F.avg_pool1d(feature_emotion, kernel_size=window_size, padding=window_size//2, stride=1)
+        feature_emotion = F.softmax(feature_emotion, dim=2)        
+        feature_emotion = feature_emotion.permute(0, 2, 1) # (1, 300, 6)        
 
         with torch.set_grad_enabled(False):
             chord_sequence = self.model.generate(feature_semantic_list=feature_semantic_list, 

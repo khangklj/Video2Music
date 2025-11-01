@@ -825,8 +825,8 @@ class Video2music:
         # feature_emotion = feature_emotion.permute(0, 2, 1)
         feature_emotion = feature_emotion.permute(0, 2, 1)  # (1, 6, 300)       
         window_size = 5
-        feature_emotion = F.avg_pool1d(feature_emotion, kernel_size=window_size, padding=window_size//2, stride=1)
-        feature_emotion = F.softmax(feature_emotion, dim=2)        
+        avg_kernel = torch.ones(6, 1, window_size).to(get_device()) / window_size
+        feature_emotion = torch.nn.functional.conv1d(feature_emotion, avg_kernel, padding=window_size//2, groups=6)        
         feature_emotion = feature_emotion.permute(0, 2, 1) # (1, 300, 6)        
 
         with torch.set_grad_enabled(False):

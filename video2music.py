@@ -483,6 +483,7 @@ def addChord(midifile, chord, chord_offset, density_val, trans_val, time, durati
         trans_val += 1
     else:                         # Neutral
         trans_val += 0
+    trans_val = 0  # FLAG
     
     # Inner Chord Notes
     first_velo = 1.1
